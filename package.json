@@ -1,0 +1,24 @@
+{
+  "name": "scoresaber",
+  "version": "1.0.0",
+  "description": "ScoreSaber-related stuff",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/BaliBalo/ScoreSaber.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/BaliBalo/ScoreSaber/issues"
+  },
+  "homepage": "https://github.com/BaliBalo/ScoreSaber#readme",
+  "dependencies": {
+    "express": "^4.16.4",
+    "request": "^2.88.0",
+    "request-promise": "^4.2.4"
+  }
+}
