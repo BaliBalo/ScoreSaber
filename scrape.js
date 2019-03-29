@@ -1,20 +1,72 @@
-const request = require('request-promise');
+const request = require('request-promise-native');
+const { promiseSequence, timetag } = require('./utils');
 
-async function getSong(item) {
+// Approximation (shoud rather take a bunch of scores for each song and deduce it from that)
+const PP_PER_STAR = 42.1;
+
+async function addBeatSaverData(item) {
 	if (!item || !item.id) {
 		return;
 	}
 	// Save request in data folder ?
 	// A specific hash shouldn't have its metadata changed too much
-	await request('https://beatsaver.com/api/songs/search/hash/' + id);
+	const data = await request({
+		uri: 'https://beatsaver.com/api/songs/search/hash/' + id,
+		json: true
+	});
+	const song = data.songs[0];
+	if (!song) {
+		return;
+	}
+	item.beatSaverKey = song.key;
+	item.downloads = song.downloadCount;
+	item.upvotes = song.upVotes;
+	item.downvotes = song.downVotes;
+	item.rating = song.rating;
+	item.beatSaverLink = song.linkUrl;
+	item.download = song.downloadUrl;
+	let diffData = song.difficulties[item.diff];
+	if (diffData) {
+		item.duration = song.stats.time;
+		item.noteCount = song.stats.notes;
+		item.obstacleCount = song.stats.obstacles;
+	}
 }
 
-function getPage() {
-	// http://scoresaber.com/api.php?function=get-leaderboards&cat=3&page=1&limit=20
+async function getFromPage(page, list = []) {
+	console.log(timetag(), 'Getting page ' + page);
+	const data = await request({
+		uri: 'http://scoresaber.com/api.php?function=get-leaderboards&cat=3&limit=20&page=' + page,
+		json: true
+	});
+	let songs = data.songs.map(song => {
+		let diffMatch = song.diff.match(/^_(Easy|Normal|Hard|Expert|ExpertPlus)_SoloStandard$/);
+		if (!diffMatch) {
+			return;
+		}
+		return {
+			id: song.id,
+			name: song.name,
+			artist: song.songSubName,
+			mapper: song.author,
+			bpm: song.bpm,
+			diff: diffMatch[1],
+			scores: song.scores,
+			recentScores: song['24hr'],
+			stars: song.stars,
+			pp: song.stars * PP_PER_STAR
+		};
+	}).filter(e => e);
+	await promiseSequence(songs, addBeatSaverData);
+	list = list.concat(songs);
+	if (data.songs.length) {
+		return getFromPage(page + 1, list);
+	}
+	return list;
 }
 
-function getAll() {
-	
+async function getAll() {
+	 let list = await getFromPage(1);
 }
 
 
@@ -61,13 +113,13 @@ function getAll() {
 // 					"stats": {
 // 						"time": 1391.0390625,
 // 						"slashstat": {
-// 							"1": 1115,
 // 							"0": 1049,
-// 							"3": 178,
+// 							"1": 1115,
 // 							"2": 173,
-// 							"6": 216,
-// 							"5": 184,
+// 							"3": 178,
 // 							"4": 147,
+// 							"5": 184,
+// 							"6": 216,
 // 							"7": 187,
 // 							"8": 120
 // 						},
