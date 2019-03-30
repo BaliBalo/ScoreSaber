@@ -1,3 +1,5 @@
+const fs = require('fs');
+const path = require('path');
 const request = require('request-promise-native');
 const { promiseSequence, timetag } = require('./utils');
 
@@ -11,7 +13,7 @@ async function addBeatSaverData(item) {
 	// Save request in data folder ?
 	// A specific hash shouldn't have its metadata changed too much
 	const data = await request({
-		uri: 'https://beatsaver.com/api/songs/search/hash/' + id,
+		uri: 'https://beatsaver.com/api/songs/search/hash/' + item.id,
 		json: true
 	});
 	const song = data.songs[0];
@@ -27,9 +29,9 @@ async function addBeatSaverData(item) {
 	item.download = song.downloadUrl;
 	let diffData = song.difficulties[item.diff];
 	if (diffData) {
-		item.duration = song.stats.time;
-		item.noteCount = song.stats.notes;
-		item.obstacleCount = song.stats.obstacles;
+		item.duration = diffData.stats.time;
+		item.noteCount = diffData.stats.notes;
+		item.obstacleCount = diffData.stats.obstacles;
 	}
 }
 
@@ -66,9 +68,15 @@ async function getFromPage(page, list = []) {
 }
 
 async function getAll() {
-	 let list = await getFromPage(1);
+	try {
+		let list = await getFromPage(1);
+		fs.writeFileSync(path.resolve(__dirname, 'data/ranked.json'), JSON.stringify(list));
+	} catch(err) {
+		console.log('Error scraping scoresaber', err);
+	}
 }
 
+getAll();
 
 // Scoresaber:
 // {
