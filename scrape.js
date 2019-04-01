@@ -47,6 +47,7 @@ async function getFromPage(page, list = []) {
 			return;
 		}
 		return {
+			uid: song.uid,
 			id: song.id,
 			name: song.name,
 			artist: song.songSubName,
