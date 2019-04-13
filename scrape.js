@@ -71,7 +71,10 @@ async function getFromPage(page, list = []) {
 async function getAll() {
 	try {
 		let list = await getFromPage(1);
-		fs.writeFileSync(path.resolve(__dirname, 'data/ranked.json'), JSON.stringify(list));
+		fs.writeFileSync(path.resolve(__dirname, 'data/ranked.json'), JSON.stringify({
+			list,
+			timestamp: Date.now()
+		}));
 	} catch(err) {
 		console.log('Error scraping scoresaber', err);
 	}
