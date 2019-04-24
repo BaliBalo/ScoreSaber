@@ -4,7 +4,7 @@ const request = require('request-promise-native');
 const { promiseSequence, timetag } = require('./utils');
 
 // Approximation (shoud rather take a bunch of scores for each song and deduce it from that)
-const PP_PER_STAR = 42.1;
+const PP_PER_STAR = 42.114296;
 
 async function addBeatSaverData(item) {
 	if (!item || !item.id) {
