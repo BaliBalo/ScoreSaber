@@ -184,7 +184,7 @@ function getImageSrc(el) {
 	let rankedMaps = {};
 	let lastUpdate = Date.now();
 	let rankedMapsUpdate = 0;
-	let rankedMapsPromise = fetchJSON('https://scoresaber.balibalo.xyz/ranked');
+	let rankedMapsPromise = fetchJSON('/ranked');
 	function parseUser(id, doc) {
 		let nameEl = doc.querySelector('h5.title');
 		let name = nameEl && nameEl.textContent.trim();
