@@ -299,6 +299,10 @@ function getImageSrc(el) {
 			lastUpdate = Date.now();
 			await getRecentScores(user.id, since);
 		} catch(e) { /* Nothing */ }
+		updatePlayerProfile();
+		played.update();
+		unplayed.update();
+		updateEstCurve();
 		document.body.classList.remove('refreshing');
 	}
 
