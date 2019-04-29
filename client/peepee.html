@@ -4,9 +4,75 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<meta http-equiv="X-UA-Compatible" content="ie=edge">
-	<title>Coming soon</title>
+	<title>Yeehaw gamer 🤠</title>
+	<link rel="stylesheet" href="/client/peepee.css">
 </head>
 <body>
-	🤠 Yeehaw gamer. This page is coming soon
+	<input type="checkbox" id="show-help">
+	<div class="pick">
+		<div class="title">
+			ThisIsMy<span class="blue">PeePee</span>
+			<!-- Hey<span class="blue">Hey</span> -->
+		</div>
+		<form id="user">
+			<div class="input-submit-wrapper">
+				<input type="text" id="profile" placeholder="scoresaber profile url"><!--
+				--><button type="submit"></button>
+			</div>
+			<div id="user-fetch-info"></div>
+			<div class="history"></div>
+		</form>
+	</div>
+	<div class="results">
+		<button id="refresh">Refresh</button>
+		<label for="show-help" class="help-btn">Help</label>
+		<div class="player">
+			<div class="avatar"></div>
+			<div class="infos-list">
+				<div class="name-container">
+					<div class="flag"></div>
+					<div class="name"></div>
+				</div>
+				<div class="performance">
+					<span class="rank"></span><span class="sep"></span><span class="pp"></span>
+				</div>
+			</div>
+		</div>
+		<div class="lists">
+			<div class="list unplayed"></div>
+			<div class="list played"></div>
+		</div>
+	</div>
+	<div id="help">
+		<label for="show-help" class="backdrop"></label>
+		<div class="modal">
+			<div class="question">How often is the list of ranked songs updated?</div>
+			<div class="answer">The ranked songs list is gathered using the APIs from ScoreSaber and BeatSaver and is updated once a day (subject to change).<br><br>
+				The last update was <span id="last-update">???</span>.
+			</div>
+			<div class="question">What are the sorting options?</div>
+			<div class="answer">
+				<div class="sort-name">Score est.</div>
+				<div class="sort-desc">
+					The algorithm looks at your current scores and tries to figure out what score (percentage) you would get for each difficulty level. Recent scores affect the curve more than older ones.<br>
+					<canvas id="score-est-curve"></canvas>
+				</div>
+				<div class="sort-name">Rank</div>
+				<div class="sort-desc">
+					For each song, the score of the person ranked at your global rank is used if better than your current score (works mostly for high-ranked players).
+				</div>
+				<div class="sort-name">Max pp</div>
+				<div class="sort-desc">
+					Songs are sorted using their raw pp value (reached at a score of around 94.33%).
+				</div>
+			</div>
+			<div class="question">Things are inaccurate</div>
+			<div class="answer">Due to ScoreSaber rounding some values and keeping some information private, the results of this tool are not 100% accurate. It's as close as possible though.</div>
+			<div class="question">Something is broken / I have an idea</div>
+			<div class="answer">Send me an email or something I dunno</div>
+		</div>
+	</div>
+	<script src="https://ajax.googleapis.com/ajax/libs/webfont/1.5.10/webfont.js"></script>
+	<script src="/client/peepee.js"></script>
 </body>
 </html>
