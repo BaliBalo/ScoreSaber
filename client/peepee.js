@@ -232,7 +232,7 @@ function getImageSrc(el) {
 			let timeEl = row.querySelector('.time');
 			let timeValue = Date.now();
 			if (timeEl) {
-				let dateStr = (timeEl.title || '').replace(/^.*(\d{4}-\d{2}\d{2}) (\d{2}:\d{2}:\d{2}).*$/, '$1T$2Z');
+				let dateStr = (timeEl.title || '').replace(/^.*(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}).*$/, '$1T$2Z');
 				timeValue = +new Date(dateStr) || timeValue;
 			}
 			let weightedEl = row.querySelector('.ppWeightedValue');
@@ -289,7 +289,7 @@ function getImageSrc(el) {
 				return Object.assign({}, base, song);
 			}).filter(e => e);
 			parsed.forEach(e => playerSongs[e.uid] = e);
-			if (oldest > since) {
+			if (oldest >= since) {
 				return getRecentScores(id, since, page + 1);
 			}
 		}
