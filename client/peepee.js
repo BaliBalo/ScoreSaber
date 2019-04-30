@@ -623,7 +623,6 @@ function getImageSrc(el) {
 			this.elements.sort((b, a) => {
 				return (a.estimateFull || 0) - (b.estimateFull || 0);
 			});
-			// console.log(this.elements);
 			this.elements.slice(0, this.displayed).forEach(el => {
 				if (!el.markup) {
 					this.createMarkup(el);
