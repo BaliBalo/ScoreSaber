@@ -230,6 +230,11 @@ function getImageSrc(el) {
 			let rankEl = row.querySelector('.rank');
 			let rankMatch = rankEl && rankEl.textContent.match(/#?([\d,]+)/);
 			let timeEl = row.querySelector('.time');
+			let timeValue = Date.now();
+			if (timeEl) {
+				let dateStr = (timeEl.title || '').replace(/^.*(\d{4}-\d{2}\d{2}) (\d{2}:\d{2}:\d{2}).*$/, '$1T$2Z');
+				timeValue = +new Date(dateStr) || timeValue;
+			}
 			let weightedEl = row.querySelector('.ppWeightedValue');
 			let weightedMatch = weightedEl && weightedEl.textContent.match(/([\d.]+)/);
 			let scoreEl = row.querySelector('.scoreBottom');
@@ -240,7 +245,7 @@ function getImageSrc(el) {
 			return {
 				uid,
 				rank: rankMatch && +rankMatch[1].replace(/\D/g, '') || Infinity,
-				at: +new Date((timeEl && timeEl.title) || 0),
+				at: timeValue,
 				userPP: pp,
 				weighted: weightedMatch && +weightedMatch[1] || 0,
 				// Actual percentage, used for PP calc etc.
