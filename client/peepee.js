@@ -448,7 +448,10 @@ function getImageSrc(el) {
 				let rank = user.rank;
 				let key = 'scoreAtRank'+rank;
 				if (!element.hasOwnProperty(key)) {
-					let score = await getScoreAtRank(element.uid, rank);
+					let score = 0;
+					if (rank <= element.scores) {
+						score = await getScoreAtRank(element.uid, rank);
+					}
 					element[key] = score;
 				}
 				updateEstimate(element, element[key]);
