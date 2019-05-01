@@ -263,13 +263,14 @@ function getImageSrc(el) {
 		}
 		let parsed = parsePage(doc);
 		if (parsed) {
+			let len = parsed.length;
 			parsed = parsed.map(song => {
 				let base = rankedMaps[song.uid];
 				if (!base) return;
 				return Object.assign({}, base, song);
 			}).filter(e => e);
 			parsed.forEach(e => playerSongs[e.uid] = e);
-			if (parsed.length === PER_PAGE) {
+			if (len === PER_PAGE) {
 				// There is (probably) more
 				return getPages(id, from + 1);
 			}
