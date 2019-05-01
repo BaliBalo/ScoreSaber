@@ -264,6 +264,7 @@ function getImageSrc(el) {
 		}
 		let parsed = parsePage(doc);
 		if (parsed) {
+			parsed = parsed.filter(song => song.userPP);
 			let len = parsed.length;
 			parsed = parsed.map(song => {
 				let base = rankedMaps[song.uid];
