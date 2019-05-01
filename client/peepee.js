@@ -185,6 +185,7 @@ function getImageSrc(el) {
 	let lastUpdate = Date.now();
 	let rankedMapsUpdate = 0;
 	let rankedMapsPromise = fetchJSON('/ranked');
+	let fullPP = 0;
 	function parseUser(id, doc) {
 		let nameEl = doc.querySelector('h5.title');
 		let name = nameEl && nameEl.textContent.trim();
@@ -305,6 +306,7 @@ function getImageSrc(el) {
 			lastUpdate = Date.now();
 			await getRecentScores(user.id, since);
 		} catch(e) { /* Nothing */ }
+		fullPP = getFullPPWithUpdate(0, 0);
 		updatePlayerProfile();
 		played.update();
 		unplayed.update();
@@ -320,14 +322,15 @@ function getImageSrc(el) {
 		scores.sort((a, b) => b - a);
 		let mult = 1;
 		let result = scores.reduce((total, score, i) => total + score * (mult *= (i ? PP_DECAY : 1)), 0);
-		return Math.max(result, user.pp);
+		// return Math.max(result, fullPP);
+		return result;
 	}
 
 	function updateEstimate(song, score) {
 		if (song.score && song.score >= score) {
 			song.estimateScore = song.score;
 			song.estimatePP = song.userPP;
-			song.estimateFull = user.pp;
+			song.estimateFull = fullPP;
 			return;
 		}
 		song.estimateScore = score;
@@ -636,7 +639,7 @@ function getImageSrc(el) {
 				}
 				el._potScore.textContent = round(el.estimateScore, 2) + '%';
 				el._potPP.textContent = round(el.estimatePP, 2) + 'pp';
-				el._potInc.textContent = round(el.estimateFull - user.pp, 2);
+				el._potInc.textContent = round(Math.max(el.estimateFull - fullPP, 0), 2);
 				this.content.appendChild(el.markup);
 			});
 		}
@@ -669,6 +672,7 @@ function getImageSrc(el) {
 			rankedMapsUpdate = rankedMapsData.timestamp;
 			lastUpdateElement.textContent = new Date(rankedMapsUpdate).toString();
 			await getPages(id);
+			fullPP = getFullPPWithUpdate(0, 0);
 			updatePlayerProfile();
 			played.elements = Object.values(playerSongs);
 			unplayed.elements = rankedMapsData.list.filter(song => {
