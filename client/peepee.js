@@ -464,7 +464,11 @@ function getImageSrc(el) {
 				let key = 'scoreAtRank'+rank;
 				if (!element.hasOwnProperty(key)) {
 					let score = 0;
-					if (rank <= element.scores) {
+					let scores = element.scores;
+					if (typeof scores === 'string') {
+						scores = +scores.replace(/,/g, '') || Infinity;
+					}
+					if (rank <= scores) {
 						score = await getScoreAtRank(element.uid, rank);
 					}
 					element[key] = score;

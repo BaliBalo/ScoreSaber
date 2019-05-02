@@ -46,6 +46,10 @@ async function getFromPage(page, list = []) {
 		if (!diffMatch) {
 			return;
 		}
+		let scores = song.scores;
+		if (typeof scores === 'string') {
+			scores = +scores.replace(/,/g, '') || scores;
+		}
 		return {
 			uid: song.uid,
 			id: song.id,
@@ -54,7 +58,7 @@ async function getFromPage(page, list = []) {
 			mapper: song.author,
 			bpm: song.bpm,
 			diff: diffMatch[1],
-			scores: song.scores,
+			scores: scores,
 			recentScores: song['24hr'],
 			stars: song.stars,
 			pp: song.stars * PP_PER_STAR
