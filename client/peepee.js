@@ -497,6 +497,7 @@ function getImageSrc(el) {
 			playlist.onclick = this.createPlaylist.bind(this);
 			titleEl.appendChild(playlist);
 			header.appendChild(titleEl);
+			let methodWrapper = div('method-wrapper');
 			let method = div('method');
 			let methodSelect = create('select');
 			methods.forEach((method, i) => {
@@ -507,7 +508,17 @@ function getImageSrc(el) {
 				this.changeMethod(methods[methodSelect.value]);
 			};
 			method.appendChild(methodSelect);
-			header.appendChild(method);
+			methodWrapper.appendChild(method);
+			let compareForm = create('form', 'compare-form');
+			let compareInput = create('input', 'compare-input');
+			compareInput.type = 'text';
+			compareInput.placeholder = 'compared profile url';
+			compareForm.appendChild(compareInput);
+			let submit = create('button', 'compare-submit');
+			submit.type = 'submit';
+			compareForm.appendChild(submit);
+			methodWrapper.appendChild(compareForm);
+			header.appendChild(methodWrapper);
 			elem.appendChild(header);
 			this.content = div('list-content');
 			this.content.addEventListener('scroll', this.onScroll);

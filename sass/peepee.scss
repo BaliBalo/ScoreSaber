@@ -205,6 +205,9 @@ body {
 }
 
 .results {
+	display: flex;
+	flex-flow: column nowrap;
+	height: 100%;
 	opacity: 0;
 	visibility: hidden;
 	transform: translateY(16px);
@@ -225,6 +228,7 @@ body {
 }
 
 .player {
+	flex: 0 0 auto;
 	text-align: center;
 	padding: 32px 0;
 	.avatar {
@@ -421,6 +425,7 @@ body {
 }
 
 .lists {
+	flex: 1 1 auto;
 	display: flex;
 	flex-flow: row wrap;
 	align-items: flex-start;
@@ -432,6 +437,9 @@ body {
 	flex: 1 1 auto;
 	min-width: 200px;
 	max-width: 800px;
+	height: 100%;
+	display: flex;
+	flex-flow: column nowrap;
 	margin: 0 4px;
 	.playlist {
 		display: inline-block;
@@ -445,6 +453,7 @@ body {
 	}
 }
 .list-header {
+	flex: 0 0 auto;
 	display: flex;
 	flex-flow: row wrap;
 	align-items: center;
@@ -454,9 +463,9 @@ body {
 	font-size: 24px;
 	line-height: 32px;
 }
-.method {
+.method-wrapper {
 	position: relative;
-	&::before { content: 'Sort: '; }
+	text-align: right;
 	&::after {
 		content: '';
 		position: absolute;
@@ -476,18 +485,64 @@ body {
 		visibility: hidden;
 		margin-top: -8px;
 	}
+}
+.method {
+	&::before { content: 'Sort: '; }
 	select {
 		font: inherit;
 	}
 }
-.list.loading .method {
-	&::after {
-		opacity: 1;
-		visibility: visible;
-		margin-top: 0;
+.compare-form {
+	background: white;
+	overflow: hidden;
+	border-radius: 999px;
+	margin: 0;
+	max-height: 0;
+	transition: margin .2s, max-height .2s;
+}
+.show-compare .compare-form {
+	margin: 4px 0;
+	max-height: 24px;
+}
+.compare-input {
+	height: 24px;
+	padding: 0 8px;
+	width: 144px;
+	background: none;
+	border: none;
+	font-family: inherit;
+	vertical-align: middle;
+}
+.compare-submit {
+	background: none;
+	border: none;
+	border-left: 1px solid #aaa;
+	padding: 0;
+	margin: 0;
+	height: 24px;
+	width: 28px;
+	cursor: pointer;
+	position: relative;
+	vertical-align: middle;
+	overflow: hidden;
+	color: transparent;
+	&:before {
+		content: '👌';
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+		color: #000;
+		font-size: 12px;
 	}
 }
+.list.loading .method-wrapper::after {
+	opacity: 1;
+	visibility: visible;
+	margin-top: 0;
+}
 .list-content {
+	flex: 1 1 auto;
 	position: relative;
 	width: 100%;
 	min-height: 104px;
@@ -673,8 +728,10 @@ body {
 		display: none;
 	}
 
+	.list {
+		max-height: 450px;
+	}
 	.list-content {
-		max-height: 400px;
 		.element {
 			flex-flow: row wrap;
 			justify-content: space-between;
