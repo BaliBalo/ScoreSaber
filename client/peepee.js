@@ -218,7 +218,11 @@ function getImageSrc(el) {
 		if (!doc) {
 			return;
 		}
-		let rows = [...doc.querySelectorAll('table.ranking.songs tbody tr')];
+		let songsTable = doc.querySelector('table.ranking.songs tbody');
+		if (!songsTable) {
+			throw new Error('Error while parsing results page - maybe scoresaber is having issues?');
+		}
+		let rows = [...songsTable.querySelectorAll('tr')];
 		return rows.map(row => {
 			let leaderboardLink = row.querySelector('a[href*="/leaderboard/"]');
 			let uidMatch = leaderboardLink && leaderboardLink.href.match(/\/leaderboard\/(\d+)/);
@@ -344,11 +348,9 @@ function getImageSrc(el) {
 		let decay = 1000 * 60 * 60 * 24 * 15;
 		let scores = Object.values(playerSongs);
 		let maxStars = Math.max(...scores.map(e => e.stars));
-		let frontDecay = 3;
 		let data = scores.reduce((o, score) => {
 			let d = 2 * Math.abs(stars - score.stars);
-			let dPlusOne = d + 1;
-			let front = stars > score.stars ? (frontDecay * dPlusOne * dPlusOne) : 1;
+			let front = stars > score.stars ? 1.5 : 1;
 			let at = score.at || now;
 			let time = 1 + Math.max(now - at, 0) / decay;
 			let weight = 1 / (1 + d * d * time * front);
