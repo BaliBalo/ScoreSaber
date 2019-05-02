@@ -328,6 +328,27 @@ body {
     margin: 8px 0; }
     #help .answer + .question {
       margin-top: 24px; }
+  #help .curve-wrapper {
+    position: relative;
+    display: inline-block; }
+    #help .curve-wrapper:hover #export-curve {
+      opacity: 1;
+      visibility: visible;
+      transform: translateX(0); }
+  #help #export-curve {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background: #2c3e50;
+    color: #fff;
+    border: 1px solid #aaa;
+    border-radius: 3px;
+    padding: 4px 8px;
+    cursor: pointer;
+    transition: opacity .15s, visibility .15s, transform .15s;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateX(4px); }
   #help .sort-name {
     margin-top: 8px;
     font-weight: bold; }

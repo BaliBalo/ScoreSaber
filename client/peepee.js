@@ -344,17 +344,21 @@ function getImageSrc(el) {
 		let decay = 1000 * 60 * 60 * 24 * 15;
 		let scores = Object.values(playerSongs);
 		let maxStars = Math.max(...scores.map(e => e.stars));
+		let frontDecay = 3;
 		let data = scores.reduce((o, score) => {
-			let d = 2 * (stars - score.stars);
-			let time = 1 + Math.max(now - score.at, 0) / decay;
-			let weight = 1 / (1 + d * d * time);
+			let d = 2 * Math.abs(stars - score.stars);
+			let dPlusOne = d + 1;
+			let front = stars > score.stars ? (frontDecay * dPlusOne * dPlusOne) : 1;
+			let at = score.at || now;
+			let time = 1 + Math.max(now - at, 0) / decay;
+			let weight = 1 / (1 + d * d * time * front);
 			o.weight += weight;
 			o.sum += score.score * weight;
 			return o;
 		}, { weight: 0, sum: 0 });
 		let result = data.weight ? data.sum / data.weight : 0;
 		if (stars > maxStars) {
-			let d = stars - maxStars;
+			let d = 2 * Math.abs(stars - maxStars);
 			result /= (1 + d * d);
 		}
 		return result;
@@ -362,51 +366,57 @@ function getImageSrc(el) {
 
 	let estCurve = document.getElementById('score-est-curve');
 	let estCurveCtx = estCurve.getContext('2d');
-	function updateEstCurve() {
-		let ctx = estCurveCtx;
-		ctx.clearRect(0, 0, estCurve.width, estCurve.height);
+	function updateEstCurve(ctx, options) {
+		ctx = ctx || estCurveCtx;
+		options = options || {};
+		let c = ctx.canvas;
+		ctx.clearRect(0, 0, c.width, c.height);
+		if (options.background) {
+			ctx.fillStyle = options.background === true ? '#1e1f26' : options.background;
+			ctx.fillRect(0, 0, c.width, c.height);
+		}
 		ctx.strokeStyle = 'white';
-		let numPoints = 100;
-		let maxStars = 12;
-		let maxPercentage = 1.2;
-		let marginX = 34;
-		let marginY = 20;
+		let numPoints = options.numPoints || 100;
+		let maxStars = options.maxStars || 12;
+		let maxPercentage = options.maxPercentage || 1.12;
+		let marginX = options.marginX || 34;
+		let marginY = options.marginY || 20;
 		ctx.fillStyle = 'white';
 		ctx.font = '12px Calibri,Candara,Segoe,"Segoe UI",Optima,Arial,sans-serif';
 		ctx.textBaseline = 'middle';
 		ctx.textAlign = 'right';
 		[...Array(5)].forEach((e, i) => {
 			i += 1;
-			ctx.fillText(20 * i + '%', marginX - 4, (estCurve.height - marginY) * (1 - (i / 5) / maxPercentage), marginX - 4);
+			ctx.fillText(20 * i + '%', marginX - 4, (c.height - marginY) * (1 - (i / 5) / maxPercentage), marginX - 4);
 		});
 		ctx.textBaseline = 'top';
 		ctx.textAlign = 'left';
-		ctx.fillText('star diff', 0, (estCurve.height - marginY) + 4);
+		ctx.fillText('star diff', 0, (c.height - marginY) + 4);
 		ctx.textAlign = 'center';
 		[...Array(maxStars - 1)].forEach((e, i) => {
 			let star = i + 1;
-			ctx.fillText(star, marginX + (estCurve.width - marginX) * star / maxStars, (estCurve.height - marginY) + 4);
+			ctx.fillText(star, marginX + (c.width - marginX) * star / maxStars, (c.height - marginY) + 4);
 		});
 		ctx.strokeStyle = 'rgba(255, 255, 255, .1)';
 		ctx.beginPath();
 		[...Array(11)].forEach((e, i) => {
 			i += 1;
-			let y = (estCurve.height - marginY) * (1 - (i / 10) / maxPercentage);
+			let y = (c.height - marginY) * (1 - (i / 10) / maxPercentage);
 			ctx.moveTo(marginX, y);
-			ctx.lineTo(estCurve.width, y);
+			ctx.lineTo(c.width, y);
 		});
 		ctx.stroke();
 		ctx.strokeStyle = 'white';
 		ctx.beginPath();
 		ctx.moveTo(marginX, 0);
-		ctx.lineTo(marginX, estCurve.height - marginY);
-		ctx.lineTo(estCurve.width, estCurve.height - marginY);
+		ctx.lineTo(marginX, c.height - marginY);
+		ctx.lineTo(c.width, c.height - marginY);
 		ctx.stroke();
 		ctx.fillStyle = 'rgba(120, 10, 0, .9)';
 		ctx.globalCompositeOperation = 'lighter';
 		Object.values(playerSongs).forEach(song => {
-			let x = marginX + (song.stars / maxStars) * (estCurve.width - marginX);
-			let y = (estCurve.height - marginY) * (1 - (song.score / 100) / maxPercentage);
+			let x = marginX + (song.stars / maxStars) * (c.width - marginX);
+			let y = (c.height - marginY) * (1 - (song.score / 100) / maxPercentage);
 			ctx.fillRect(x - 1, y - 1, 2, 2);
 		});
 		ctx.globalCompositeOperation = 'source-over';
@@ -414,8 +424,8 @@ function getImageSrc(el) {
 		for (let i = 0; i < numPoints; i++) {
 			let p = i / (numPoints - 1);
 			let score = getScoreEstimate(p * maxStars) / 100;
-			let x = marginX + p * (estCurve.width - marginX);
-			let y = (estCurve.height - marginY) * (1 - score / maxPercentage);
+			let x = marginX + p * (c.width - marginX);
+			let y = (c.height - marginY) * (1 - score / maxPercentage);
 			ctx.lineTo(x, y);
 		}
 		ctx.stroke();
@@ -695,4 +705,18 @@ function getImageSrc(el) {
 	profileInput.addEventListener('focus', () => profileInput.select());
 
 	document.getElementById('refresh').addEventListener('click', refresh);
+	document.getElementById('export-curve').addEventListener('click', () => {
+		let c = document.createElement('canvas');
+		c.width = 800;
+		c.height = 400;
+		updateEstCurve(c.getContext('2d'), {
+			background: true,
+			numPoints: 500
+		});
+		let link = document.createElement('a');
+		let nameSlug = (user.name || '').replace(/[\W-]+/g, '-').replace(/^-|-$/g, '').toLowerCase();
+		link.download = nameSlug + '-score-curve.png';
+		link.href = c.toDataURL();
+		link.click();
+	});
 })();
