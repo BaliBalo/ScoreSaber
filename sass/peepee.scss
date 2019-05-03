@@ -207,7 +207,6 @@ body {
 .results {
 	display: flex;
 	flex-flow: column nowrap;
-	height: 100%;
 	opacity: 0;
 	visibility: hidden;
 	transform: translateY(16px);
@@ -220,6 +219,7 @@ body {
 		visibility: hidden;
 	}
 	.results {
+		height: 100%;
 		visibility: visible;
 		opacity: 1;
 		transform: translateY(0);
@@ -445,6 +445,7 @@ body {
 		display: inline-block;
 		width: 16px;
 		height: 16px;
+		vertical-align: middle;
 		margin-left: 8px;
 		border: none;
 		background: center / contain no-repeat;
@@ -725,10 +726,14 @@ body {
 	}
 
 	.history {
-		display: none;
+		// display: none;
+		position: relative;
+		margin-top: 16px;
+		padding: 0 16px;
 	}
 
 	.list {
+		height: auto;
 		max-height: 450px;
 	}
 	.list-content {
