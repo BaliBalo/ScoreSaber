@@ -323,6 +323,10 @@ function getImageSrc(el) {
 		} catch(e) { /* Nothing */ }
 		fullPP = getFullPPWithUpdate(0, 0);
 		updatePlayerProfile();
+		played.elements = Object.values(playerSongs);
+		unplayed.elements = rankedMapsData.list.filter(song => {
+			return !playerSongs.hasOwnProperty(song.uid);
+		});
 		played.update();
 		unplayed.update();
 		updateEstCurve();
