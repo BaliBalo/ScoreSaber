@@ -38,12 +38,12 @@ async function addBeatSaverData(item) {
 async function getFromPage(page, list = []) {
 	console.log(timetag(), 'Getting page ' + page);
 	const data = await request({
-		uri: 'http://scoresaber.com/api.php?function=get-leaderboards&cat=3&limit=20&page=' + page,
+		uri: 'http://scoresaber.com/api.php?function=get-leaderboards&cat=3&ranked=1&limit=20&page=' + page,
 		json: true
 	});
 	let songs = data.songs.map(song => {
 		let diffMatch = song.diff.match(/^_(Easy|Normal|Hard|Expert|ExpertPlus)_SoloStandard$/);
-		if (!diffMatch) {
+		if (!diffMatch || !song.stars) {
 			return;
 		}
 		let scores = song.scores;
