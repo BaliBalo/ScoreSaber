@@ -64,11 +64,15 @@ function fetchHTML(url) {
 function fetchScoreSaber(id, page, sort = 1) {
 	return fetchHTML('/proxy/u/'+id+'?sort='+sort+'&page='+(page || 1));
 }
-// Negative mod already included in the displayed percentage
 let MODS = {
 	GN: .04,
 	DA: .02,
 	FS: .08,
+	NF: -.5,
+	NO: -.05,
+	NB: -.1,
+	SS: -.3,
+	NA: -.3
 };
 function getMultFromMods(modString) {
 	return modString ? modString.split(',').reduce((mult, mod) => mult + (MODS[mod.trim()] || 0), 1) : 1;
@@ -323,6 +327,7 @@ function getImageSrc(el) {
 		} catch(e) { /* Nothing */ }
 		fullPP = getFullPPWithUpdate(0, 0);
 		updatePlayerProfile();
+		let rankedMapsData = await rankedMapsPromise;
 		played.elements = Object.values(playerSongs);
 		unplayed.elements = rankedMapsData.list.filter(song => {
 			return !playerSongs.hasOwnProperty(song.uid);
