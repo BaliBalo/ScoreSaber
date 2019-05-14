@@ -10,7 +10,7 @@ body {
 	background: #1e1f26;
 	color: #fff;
 	font-family: Calibri,Candara,Segoe,"Segoe UI",Optima,Arial,sans-serif;
-	overflow: hidden;
+	overflow-x: hidden;
 	margin: 0;
 	&::after {
 		content: 'One sec...';
@@ -205,11 +205,10 @@ body {
 }
 
 .results {
-	display: flex;
-	flex-flow: column nowrap;
+	display: none;
 	opacity: 0;
 	visibility: hidden;
-	transform: translateY(16px);
+	transform: translateY(-16px);
 	transition: opacity .5s, visibility .5s, transform .5s;
 }
 
@@ -219,7 +218,7 @@ body {
 		visibility: hidden;
 	}
 	.results {
-		height: 100%;
+		display: block;
 		visibility: visible;
 		opacity: 1;
 		transform: translateY(0);
@@ -228,7 +227,6 @@ body {
 }
 
 .player {
-	flex: 0 0 auto;
 	text-align: center;
 	padding: 32px 0;
 	.avatar {
@@ -250,7 +248,6 @@ body {
 	.name-container {
 		white-space: nowrap;
 		font-size: 24px;
-		// font-weight: bold;
 		line-height: 32px;
 	}
 	.flag {
@@ -425,11 +422,12 @@ body {
 }
 
 .lists {
-	flex: 1 1 auto;
 	display: flex;
 	flex-flow: row wrap;
 	align-items: flex-start;
 	justify-content: space-around;
+	margin-top: -24px;
+	min-height: 24px;
 }
 
 .list {
@@ -437,10 +435,10 @@ body {
 	flex: 1 1 auto;
 	min-width: 200px;
 	max-width: 800px;
-	height: 100%;
+	height: calc(100vh - 128px);
 	display: flex;
 	flex-flow: column nowrap;
-	margin: 0 4px;
+	margin: 24px 4px 0;
 	.playlist {
 		display: inline-block;
 		width: 16px;
@@ -467,6 +465,14 @@ body {
 .method-wrapper {
 	position: relative;
 	text-align: right;
+}
+.method {
+	display: inline-block;
+	position: relative;
+	&::before { content: 'Sort: '; }
+	select {
+		font: inherit;
+	}
 	&::after {
 		content: '';
 		position: absolute;
@@ -485,12 +491,6 @@ body {
 		opacity: 0;
 		visibility: hidden;
 		margin-top: -8px;
-	}
-}
-.method {
-	&::before { content: 'Sort: '; }
-	select {
-		font: inherit;
 	}
 }
 .compare-form {
@@ -537,7 +537,7 @@ body {
 		font-size: 12px;
 	}
 }
-.list.loading .method-wrapper::after {
+.list.loading .method::after {
 	opacity: 1;
 	visibility: visible;
 	margin-top: 0;
@@ -547,7 +547,6 @@ body {
 	position: relative;
 	width: 100%;
 	min-height: 104px;
-	max-height: calc(100vh - 128px - 32px);
 	border: 2px solid #191919;
 	border-radius: 4px;
 	box-sizing: border-box;
@@ -564,7 +563,6 @@ body {
 		flex-flow: row nowrap;
 		align-items: center;
 		padding: 8px 12px;
-		// background: #051c11;
 		background: #050c11;
 		border-bottom: 1px solid #666;
 		line-height: 21px;
@@ -595,13 +593,34 @@ body {
 		background: center / cover no-repeat;
 	}
 	.name-group {
+		position: relative;
 		flex: 1 1 auto;
-		width: 1px;
+		&::before {
+			content: '.\A.';
+			white-space: pre;
+			visibility: hidden;
+		}
 	}
 	.name-and-artist {
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 100%;
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;
+	}
+	.mapper {
+		position: absolute;
+		top: 21px;
+		left: 0;
+		width: 100%;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+	.difficulty-and-score {
+		white-space: nowrap;
 	}
 	.score-and-rank {
 		margin-left: 4px;
@@ -691,12 +710,6 @@ body {
 		display: inline-block;
 		height: 17px;
 		margin: 0 0 -2px 4px;
-		// padding: 1px;
-		// border: 1px solid #aaa;
-		// border-radius: 2px;
-		// &:hover {
-		// 	border-color: #fff;
-		// }
 		&::before {
 			content: '';
 			display: inline-block;
@@ -726,7 +739,6 @@ body {
 	}
 
 	.history {
-		// display: none;
 		position: relative;
 		margin-top: 16px;
 		padding: 0 16px;

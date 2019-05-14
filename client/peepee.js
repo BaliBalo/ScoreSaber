@@ -568,7 +568,7 @@ function getImageSrc(el) {
 			};
 			let nameSlug = this.title.replace(/[\W-]+/g, '-').replace(/^-|-$/g, '').toLowerCase();
 			let content = 'data:application/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(data));
-			download(content, nameSlug + '-' + date + '.json');
+			download(content, nameSlug + '-' + date + '.bplist');
 		}
 
 		changeMethod(method) {
@@ -592,7 +592,7 @@ function getImageSrc(el) {
 			if (this.display >= this.elements.length) {
 				return;
 			}
-			this.displayed += 10;
+			this.displayed += 20;
 			this.refresh();
 		}
 
@@ -697,7 +697,7 @@ function getImageSrc(el) {
 				this.content.removeChild(this.content.firstChild);
 			}
 			this.elements.sort((b, a) => {
-				return (a.estimateFull || 0) - (b.estimateFull || 0);
+				return (a.estimateFull || 0) - (b.estimateFull || 0) || a.pp - b.pp;
 			});
 			this.elements.slice(0, this.displayed).forEach(el => {
 				if (!el.markup) {
