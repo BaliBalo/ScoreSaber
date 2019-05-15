@@ -501,13 +501,13 @@ function getImageSrc(el) {
 			run: async element => {
 				let rank = user.rank;
 				let key = 'scoreAtRank'+rank;
-				if (!element.hasOwnProperty(key) && (!element.rank || element.rank > rank)) {
+				if (!element.hasOwnProperty(key)) {
 					let score = 0;
 					let scores = element.scores;
 					if (typeof scores === 'string') {
 						scores = +scores.replace(/,/g, '') || Infinity;
 					}
-					if (rank <= scores) {
+					if (rank <= scores && rank > +(element.rank || 0)) {
 						score = await getScoreAtRank(element.uid, rank);
 					}
 					element[key] = score;
@@ -695,7 +695,8 @@ function getImageSrc(el) {
 			if (method.async) {
 				this.elem.classList.add('loading');
 				// TODO: move that to a method.init function?
-				elements.forEach(el => updateEstimate(el, 0)).sort((a, b) => b.pp - a.pp);
+				elements.forEach(el => updateEstimate(el, 0));
+				elements.sort((a, b) => b.pp - a.pp);
 			}
 			this.refresh();
 			for (let i = 0; i < elements.length; i++) {
