@@ -52,6 +52,15 @@ function download(data, filename) {
 	document.body.removeChild(link);
 }
 
+function copyToClipboard(str) {
+	const el = document.createElement('textarea');
+	el.value = str;
+	document.body.appendChild(el);
+	el.select();
+	document.execCommand('copy');
+	document.body.removeChild(el);
+}
+
 function fetchJSON(url) {
 	return fetch(url).then(r => r.json());
 }
@@ -176,22 +185,26 @@ function getImageSrc(el) {
 		}
 	} catch(e) { /* Nothing */ }
 	let $history = document.querySelector('.history');
-	history.slice(0, 5).forEach(user => {
-		if (!user || !user.avatar || !user.rank || !user.name) {
-			return;
-		}
-		let line = div('line');
-		line.onclick = () => {
-			profileInput.value = user.id;
-			onSubmit();
-		};
-		let avatar = div('avatar');
-		avatar.style.backgroundImage = 'url('+user.avatar+')';
-		line.appendChild(avatar);
-		line.appendChild(div('rank', user.rank.toLocaleString()));
-		line.appendChild(div('name', user.name));
-		$history.appendChild(line);
-	});
+	function refreshHistory() {
+		$history.innerHTML = '';
+		history.slice(0, 5).forEach(user => {
+			if (!user || !user.avatar || !user.rank || !user.name) {
+				return;
+			}
+			let line = div('line');
+			line.onclick = () => {
+				profileInput.value = user.id;
+				onSubmit();
+			};
+			let avatar = div('avatar');
+			avatar.style.backgroundImage = 'url('+user.avatar+')';
+			line.appendChild(avatar);
+			line.appendChild(div('rank', user.rank.toLocaleString()));
+			line.appendChild(div('name', user.name));
+			$history.appendChild(line);
+		});
+	}
+	refreshHistory();
 
 	let user = {};
 	let playerSongs = {};
@@ -226,6 +239,7 @@ function getImageSrc(el) {
 		try {
 			localStorage.setItem('history', JSON.stringify(history));
 		} catch(e) { /* Nothing */ }
+		refreshHistory();
 		return user;
 	}
 	function parsePage(doc) {
@@ -328,14 +342,18 @@ function getImageSrc(el) {
 		fullPP = getFullPPWithUpdate(0, 0);
 		updatePlayerProfile();
 		let rankedMapsData = await rankedMapsPromise;
+		updateLists(rankedMapsData, playerSongs);
+		document.body.classList.remove('refreshing');
+	}
+	
+	function updateLists(rankedMapsData, playerSongs) {
 		played.elements = Object.values(playerSongs);
 		unplayed.elements = rankedMapsData.list.filter(song => {
 			return !playerSongs.hasOwnProperty(song.uid);
-		});
+		}).map(e => ({ ...e }));
 		played.update();
 		unplayed.update();
 		updateEstCurve();
-		document.body.classList.remove('refreshing');
 	}
 
 	function getFullPPWithUpdate(uid, pp) {
@@ -483,7 +501,7 @@ function getImageSrc(el) {
 			run: async element => {
 				let rank = user.rank;
 				let key = 'scoreAtRank'+rank;
-				if (!element.hasOwnProperty(key)) {
+				if (!element.hasOwnProperty(key) && (!element.rank || element.rank > rank)) {
 					let score = 0;
 					let scores = element.scores;
 					if (typeof scores === 'string') {
@@ -494,12 +512,12 @@ function getImageSrc(el) {
 					}
 					element[key] = score;
 				}
-				updateEstimate(element, element[key]);
+				updateEstimate(element, element[key] || 0);
 			},
 			async: true
 		},
 		{
-			name: 'Max pp',
+			name: 'Raw pp',
 			run: element => {
 				updateEstimate(element, 94.333333);
 			},
@@ -518,6 +536,7 @@ function getImageSrc(el) {
 			elem.innerHTML = '';
 			let header = div('list-header');
 			let titleEl = div('list-title', title);
+			this.titleEl = titleEl;
 			let playlist = create('button', 'playlist', '', 'Create a playlist');
 			playlist.onclick = this.createPlaylist.bind(this);
 			titleEl.appendChild(playlist);
@@ -598,7 +617,7 @@ function getImageSrc(el) {
 
 		createMarkup(element) {
 			let el = div('element');
-
+			
 			let left = div('left');
 			let pic = div('pic');
 			pic.style.backgroundImage = 'url(https://scoresaber.com/imports/images/songs/'+element.id+'.png)';
@@ -651,6 +670,9 @@ function getImageSrc(el) {
 			secondary.appendChild(div('obstacles', element.obstacleCount, 'Obstacles count'));
 			right.appendChild(secondary);
 			let links = div('links');
+			let bsr = create('button', 'bsr', null, 'Copy !bsr request');
+			bsr.addEventListener('click', () => copyToClipboard('!bsr ' + element.beatSaverKey));
+			links.appendChild(bsr);
 			links.appendChild(link(element.download, 'download', null, 'Download map', '_blank'));
 			links.appendChild(link(element.beatSaverLink, 'beatsaver', null, 'Open on BeatSaver', '_blank'));
 			links.appendChild(link('https://scoresaber.com/leaderboard/' + element.uid, 'leaderboards', null, 'ScoreSaber leaderboard', '_blank'));
@@ -662,6 +684,8 @@ function getImageSrc(el) {
 
 		async update() {
 			let elements = this.elements;
+			let count = elements.length;
+			this.titleEl.title = count + ' leaderboard' + (count === 1 ? '' : 's');
 			let method = this.method;
 			let updating = Date.now();
 			if (this.updating) {
@@ -739,17 +763,12 @@ function getImageSrc(el) {
 			}, {});
 			rankedMapsUpdate = rankedMapsData.timestamp;
 			lastUpdateElement.textContent = new Date(rankedMapsUpdate).toString();
+			playerSongs = {};
 			await getPages(id);
 			fullPP = getFullPPWithUpdate(0, 0);
 			updatePlayerProfile();
-			played.elements = Object.values(playerSongs);
-			unplayed.elements = rankedMapsData.list.filter(song => {
-				return !playerSongs.hasOwnProperty(song.uid);
-			});
-			played.update();
-			unplayed.update();
+			updateLists(rankedMapsData, playerSongs);
 			document.body.classList.add('step-results');
-			updateEstCurve();
 		} catch(err) {
 			console.log(err);
 			triggerAnimation(userForm, 'invalid');
@@ -761,6 +780,10 @@ function getImageSrc(el) {
 	profileInput.addEventListener('paste', () => setTimeout(onSubmit, 0));
 	profileInput.addEventListener('focus', () => profileInput.select());
 
+	document.getElementById('back').addEventListener('click', () => {
+		profileInput.value = '';
+		document.body.classList.remove('step-results');
+	});
 	document.getElementById('refresh').addEventListener('click', refresh);
 	document.getElementById('export-curve').addEventListener('click', () => {
 		let c = document.createElement('canvas');
