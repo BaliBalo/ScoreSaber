@@ -670,18 +670,17 @@ function getImageSrc(el) {
 			this.updating = updating;
 			if (method.async) {
 				this.elem.classList.add('loading');
-				elements.forEach(el => updateEstimate(el, 0));
+				// TODO: move that to a method.init function?
+				elements.forEach(el => updateEstimate(el, 0)).sort((a, b) => b.pp - a.pp);
 			}
 			this.refresh();
 			for (let i = 0; i < elements.length; i++) {
+				await method.run(elements[i]);
 				if (method.async) {
-					await method.run(elements[i]);
 					if (this.updating !== updating) {
 						return;
 					}
 					this.refresh();
-				} else {
-					method.run(elements[i]);
 				}
 			}
 			if (method.async) {
@@ -696,8 +695,8 @@ function getImageSrc(el) {
 			while (this.content.firstChild) {
 				this.content.removeChild(this.content.firstChild);
 			}
-			this.elements.sort((b, a) => {
-				return (a.estimateFull || 0) - (b.estimateFull || 0) || a.pp - b.pp;
+			this.elements.sort((a, b) => {
+				return (b.estimateFull || 0) - (a.estimateFull || 0) || b.pp - a.pp;
 			});
 			this.elements.slice(0, this.displayed).forEach(el => {
 				if (!el.markup) {
