@@ -507,7 +507,7 @@ function getImageSrc(el) {
 					if (typeof scores === 'string') {
 						scores = +scores.replace(/,/g, '') || Infinity;
 					}
-					if (rank <= scores && rank < +(element.rank || 0)) {
+					if (rank <= scores && rank < (+element.rank || Infinity)) {
 						score = await getScoreAtRank(element.uid, rank);
 					}
 					element[key] = score;
