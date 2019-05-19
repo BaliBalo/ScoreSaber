@@ -345,7 +345,7 @@ function getImageSrc(el) {
 		updateLists(rankedMapsData, playerSongs);
 		document.body.classList.remove('refreshing');
 	}
-	
+
 	function updateLists(rankedMapsData, playerSongs) {
 		played.elements = Object.values(playerSongs);
 		unplayed.elements = rankedMapsData.list.filter(song => {
@@ -498,7 +498,7 @@ function getImageSrc(el) {
 		},
 		{
 			name: 'Rank',
-			run: async element => {
+			run: async (element, isCanceled) => {
 				let rank = user.rank;
 				let key = 'scoreAtRank'+rank;
 				if (!element.hasOwnProperty(key)) {
@@ -507,10 +507,13 @@ function getImageSrc(el) {
 					if (typeof scores === 'string') {
 						scores = +scores.replace(/,/g, '') || Infinity;
 					}
-					if (rank <= scores && rank > +(element.rank || 0)) {
+					if (rank <= scores && rank < +(element.rank || 0)) {
 						score = await getScoreAtRank(element.uid, rank);
 					}
 					element[key] = score;
+				}
+				if (isCanceled()) {
+					return;
 				}
 				updateEstimate(element, element[key] || 0);
 			},
@@ -617,7 +620,7 @@ function getImageSrc(el) {
 
 		createMarkup(element) {
 			let el = div('element');
-			
+
 			let left = div('left');
 			let pic = div('pic');
 			pic.style.backgroundImage = 'url(https://scoresaber.com/imports/images/songs/'+element.id+'.png)';
@@ -699,10 +702,11 @@ function getImageSrc(el) {
 				elements.sort((a, b) => b.pp - a.pp);
 			}
 			this.refresh();
+			let isCanceled = () => this.updating !== updating;
 			for (let i = 0; i < elements.length; i++) {
-				await method.run(elements[i]);
+				await method.run(elements[i], isCanceled);
 				if (method.async) {
-					if (this.updating !== updating) {
+					if (isCanceled()) {
 						return;
 					}
 					this.refresh();
@@ -745,6 +749,10 @@ function getImageSrc(el) {
 	async function onSubmit(e) {
 		if (e && e.preventDefault) {
 			e.preventDefault();
+		}
+		// Prevent double submit
+		if (userForm.classList.contains('loading')) {
+			return;
 		}
 		let idMatch = profileInput.value.match(/\d{5,}/);
 		if (!idMatch) {

@@ -362,7 +362,7 @@ body {
   #help .sort-desc {
     padding-left: 16px; }
 
-#show-help:checked ~ #help {
+.step-results #show-help:checked ~ #help {
   opacity: 1;
   visibility: visible; }
 
