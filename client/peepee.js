@@ -61,16 +61,20 @@ function copyToClipboard(str) {
 	document.body.removeChild(el);
 }
 
+async function pause(duration) {
+	await new Promise(res => setTimeout(res, duration));
+}
+
 function fetchJSON(url) {
 	return fetch(url).then(r => r.json());
 }
-function fetchHTML(url) {
+async function fetchHTML(url) {
 	return fetch(url).then(r => r.text()).then(text => {
 		let parser = new DOMParser();
 		return parser.parseFromString(text, 'text/html');
 	});
 }
-function fetchScoreSaber(id, page, sort = 1) {
+async function fetchScoreSaber(id, page, sort = 1) {
 	return fetchHTML('/proxy/u/'+id+'?sort='+sort+'&page='+(page || 1));
 }
 let MODS = {
@@ -305,6 +309,7 @@ function getImageSrc(el) {
 			}).filter(e => e);
 			parsed.forEach(e => playerSongs[e.uid] = e);
 			if (len === PER_PAGE) {
+				await pause(1000);
 				// There is (probably) more
 				return getPages(id, from + 1);
 			}
@@ -488,9 +493,12 @@ function getImageSrc(el) {
 	let difficulties = {
 		ExpertPlus: { className: 'expert-plus', display: 'Expert+' },
 	};
+	let rankScoreCheckCount = 0;
+	const PAUSE_UPDATE = 'PAUSE_UPDATE';
 	let methods = [
 		{
 			name: 'Score est.',
+			init: () => {},
 			run: element => {
 				updateEstimate(element, getScoreEstimate(element.stars));
 			},
@@ -498,9 +506,15 @@ function getImageSrc(el) {
 		},
 		{
 			name: 'Rank',
+			init: elements => {
+				elements.forEach(el => updateEstimate(el, 0));
+				elements.sort((a, b) => b.pp - a.pp);
+				rankScoreCheckCount = 0;
+			},
 			run: async (element, isCanceled) => {
 				let rank = user.rank;
 				let key = 'scoreAtRank'+rank;
+				let usePause = false;
 				if (!element.hasOwnProperty(key)) {
 					let score = 0;
 					let scores = element.scores;
@@ -509,6 +523,8 @@ function getImageSrc(el) {
 					}
 					if (rank <= scores && rank < (+element.rank || Infinity)) {
 						score = await getScoreAtRank(element.uid, rank);
+						rankScoreCheckCount++;
+						usePause = true;
 					}
 					element[key] = score;
 				}
@@ -516,11 +532,18 @@ function getImageSrc(el) {
 					return;
 				}
 				updateEstimate(element, element[key] || 0);
+				if (rankScoreCheckCount >= 20) {
+					return PAUSE_UPDATE;
+				}
+				if (usePause) {
+					await pause(1000);
+				}
 			},
 			async: true
 		},
 		{
 			name: 'Raw pp',
+			init: () => {},
 			run: element => {
 				updateEstimate(element, 94.333333);
 			},
@@ -555,6 +578,14 @@ function getImageSrc(el) {
 				this.changeMethod(methods[methodSelect.value]);
 			};
 			method.appendChild(methodSelect);
+			let unpause = create('button', 'unpause', '', 'Keep going');
+			unpause.addEventListener('click', () => {
+				if (this.updating) {
+					return;
+				}
+				this.update();
+			});
+			method.appendChild(unpause);
 			methodWrapper.appendChild(method);
 			let compareForm = create('form', 'compare-form');
 			let compareInput = create('input', 'compare-input');
@@ -639,7 +670,7 @@ function getImageSrc(el) {
 			difficultyAndScore.appendChild(create('span', 'difficulty ' + (diff.className || srcDiff.toLowerCase()), diff.display || srcDiff));
 			if (element.score) {
 				let scoreAndRank = create('span', 'score-and-rank');
-				scoreAndRank.appendChild(create('span', 'score', element.score));
+				scoreAndRank.appendChild(create('span', 'score', round(element.score, 2)));
 				scoreAndRank.appendChild(create('span', 'sep'));
 				scoreAndRank.appendChild(create('span', 'rank', element.rank.toLocaleString()));
 				difficultyAndScore.appendChild(scoreAndRank);
@@ -691,25 +722,28 @@ function getImageSrc(el) {
 			this.titleEl.title = count + ' leaderboard' + (count === 1 ? '' : 's');
 			let method = this.method;
 			let updating = Date.now();
+			this.elem.classList.remove('paused');
 			if (this.updating) {
 				this.elem.classList.remove('loading');
 			}
 			this.updating = updating;
 			if (method.async) {
 				this.elem.classList.add('loading');
-				// TODO: move that to a method.init function?
-				elements.forEach(el => updateEstimate(el, 0));
-				elements.sort((a, b) => b.pp - a.pp);
 			}
+			await method.init(elements);
 			this.refresh();
 			let isCanceled = () => this.updating !== updating;
 			for (let i = 0; i < elements.length; i++) {
-				await method.run(elements[i], isCanceled);
+				let result = await method.run(elements[i], isCanceled);
 				if (method.async) {
 					if (isCanceled()) {
 						return;
 					}
 					this.refresh();
+				}
+				if (result === PAUSE_UPDATE) {
+					this.elem.classList.add('paused');
+					break;
 				}
 			}
 			if (method.async) {

@@ -477,6 +477,23 @@ body {
 	select {
 		font: inherit;
 	}
+	.unpause {
+		position: absolute;
+		top: 50%;
+		right: 100%;
+		appearance: none;
+		background: center no-repeat;
+		background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' style='width:24px;height:24px' viewBox='0 0 24 24'%3E%3Cpath fill='%23fff' d='M8,5.14V19.14L19,12.14L8,5.14Z' /%3E%3C/svg%3E");
+		border: none;
+		width: 16px;
+		height: 16px;
+		margin-right: 8px;
+		cursor: pointer;
+		transition: transition .2s, opacity .2s, visibility .2s;
+		opacity: 0;
+		visibility: hidden;
+		transform: translate(0, -50%) translateY(-8px);
+	}
 	&::after {
 		content: '';
 		position: absolute;
@@ -496,6 +513,11 @@ body {
 		visibility: hidden;
 		margin-top: -8px;
 	}
+}
+.paused .method .unpause {
+	opacity: 1;
+	visibility: visible;
+	transform: translate(0, -50%) translateY(0);
 }
 .compare-form {
 	background: white;
