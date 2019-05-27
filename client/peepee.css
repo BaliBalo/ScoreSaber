@@ -374,6 +374,32 @@ body {
   margin-top: -24px;
   min-height: 24px; }
 
+@keyframes playlist {
+  from, 5% {
+    transform: scale(1) rotate(0deg); }
+  8%, 12%, 16%, 20%, 24%, 28% {
+    transform: scale(2) rotate(4deg); }
+  10%, 14%, 18%, 22%, 26%, 30% {
+    transform: scale(2) rotate(-4deg); }
+  60%, 64%, 68%, 72%, 76%, 80% {
+    transform: scale(1.7) rotate(0deg); }
+  32%, 58%, 62%, 66%, 70%, 74%, 78%, 82%, 88% {
+    transform: scale(2) rotate(0deg); }
+  90%, 92% {
+    transform: scale(2) rotate(360deg); }
+  95%, to {
+    transform: scale(1) rotate(360deg); } }
+
+@keyframes playlistInfo {
+  from, to {
+    visibility: hidden;
+    opacity: 0;
+    transform: scale(0.8) translate(4px, -2px); }
+  5%, 95% {
+    visibility: visible;
+    opacity: 1;
+    transform: scale(1) translate(0, 0); } }
+
 .list {
   display: inline-block;
   flex: 1 1 auto;
@@ -385,14 +411,42 @@ body {
   margin: 24px 4px 0; }
   .list .playlist {
     display: inline-block;
+    position: relative;
     width: 16px;
     height: 16px;
     vertical-align: middle;
     margin-left: 8px;
     border: none;
-    background: center / contain no-repeat;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' style='width:24px;height:24px' viewBox='0 0 24 24'%3E%3Cpath fill='%23fff' d='M15,6H3V8H15V6M15,10H3V12H15V10M3,16H11V14H3V16M17,6V14.18C16.69,14.07 16.35,14 16,14A3,3 0 0,0 13,17A3,3 0 0,0 16,20A3,3 0 0,0 19,17V8H22V6H17Z' /%3E%3C/svg%3E");
-    cursor: pointer; }
+    background: none;
+    padding: 0;
+    cursor: pointer;
+    outline: none; }
+    .list .playlist::before {
+      content: '';
+      display: block;
+      position: relative;
+      width: 100%;
+      height: 100%;
+      background: center / contain no-repeat;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' style='width:24px;height:24px' viewBox='0 0 24 24'%3E%3Cpath fill='%23fff' d='M15,6H3V8H15V6M15,10H3V12H15V10M3,16H11V14H3V16M17,6V14.18C16.69,14.07 16.35,14 16,14A3,3 0 0,0 13,17A3,3 0 0,0 16,20A3,3 0 0,0 19,17V8H22V6H17Z' /%3E%3C/svg%3E"); }
+    .list .playlist:focus::before {
+      outline: #e59700 auto 5px; }
+
+.unplayed .playlist::before {
+  animation: playlist 7s 5s both; }
+
+.unplayed .playlist::after {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 100%;
+  width: 239px;
+  height: 119px;
+  transform-origin: bottom left;
+  background: url("/client/playlist-info.png") center/contain no-repeat;
+  pointer-events: none;
+  animation: playlistInfo 8s 5s both;
+  outline: none; }
 
 .list-header {
   flex: 0 0 auto;
@@ -456,7 +510,7 @@ body {
   visibility: visible;
   transform: translate(0, -50%) translateY(0); }
 
-.compare-form {
+.compare-form, .rank-form {
   background: white;
   overflow: hidden;
   border-radius: 999px;
@@ -464,11 +518,11 @@ body {
   max-height: 0;
   transition: margin .2s, max-height .2s; }
 
-.show-compare .compare-form {
+.mathod-compare .compare-form, .method-rank .rank-form {
   margin: 4px 0;
   max-height: 24px; }
 
-.compare-input {
+.compare-input, .rank-input {
   height: 24px;
   padding: 0 8px;
   width: 144px;
@@ -477,10 +531,10 @@ body {
   font-family: inherit;
   vertical-align: middle; }
 
-.compare-submit {
+.compare-submit, .rank-submit {
   background: none;
   border: none;
-  border-left: 1px solid #aaa;
+  border-left: 1px solid #ddd;
   padding: 0;
   margin: 0;
   height: 24px;
@@ -490,7 +544,7 @@ body {
   vertical-align: middle;
   overflow: hidden;
   color: transparent; }
-  .compare-submit:before {
+  .compare-submit:before, .rank-submit:before {
     content: '👌';
     position: absolute;
     top: 50%;
@@ -505,11 +559,10 @@ body {
   margin-top: 0; }
 
 .list-content {
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   position: relative;
   width: 100%;
   min-height: 104px;
-  border: 2px solid #191919;
   border-radius: 4px;
   box-sizing: border-box;
   overflow: auto; }

@@ -69,13 +69,22 @@ function fetchJSON(url) {
 	return fetch(url).then(r => r.json());
 }
 async function fetchHTML(url) {
-	return fetch(url).then(r => r.text()).then(text => {
+	return fetch(url).then(r => r.ok ? r.text() : Promise.reject()).then(text => {
+		if (text.indexOf('<html') === -1) {
+			throw new Error('not an HTML page: ' + text);
+		}
 		let parser = new DOMParser();
 		return parser.parseFromString(text, 'text/html');
 	});
 }
-async function fetchScoreSaber(id, page, sort = 1) {
-	return fetchHTML('/proxy/u/'+id+'?sort='+sort+'&page='+(page || 1));
+async function fetchScoreSaber(id, page, sort = 1, retries = 2) {
+	return fetchHTML('/proxy/u/'+id+'?sort='+sort+'&page='+(page || 1)).catch(async e => {
+		if (retries-- > 0) {
+			await pause(1000);
+			return fetchScoreSaber(id, page, sort, retries);
+		}
+		throw e;
+	});
 }
 let MODS = {
 	GN: .04,
@@ -92,7 +101,7 @@ function getMultFromMods(modString) {
 }
 
 let LEADERBOARD_SCORES_PER_PAGE = 12;
-async function getScoreAtRank(leaderboard, rank) {
+async function getScoreAtRank(leaderboard, rank, retries = 2) {
 	if (!leaderboard || !rank) {
 		console.log('Invalid score at rank request', leaderboard, rank);
 		return 0;
@@ -117,6 +126,10 @@ async function getScoreAtRank(leaderboard, rank) {
 		let mult = getMultFromMods(mods && mods.textContent);
 		return match[0] * mult;
 	} catch(e) {
+		if (retries-- > 0) {
+			await pause(1000);
+			return getScoreAtRank(leaderboard, rank, retries);
+		}
 		console.log('Error getting score at rank', e);
 		return 0;
 	}
@@ -495,67 +508,158 @@ function getImageSrc(el) {
 	};
 	let rankScoreCheckCount = 0;
 	const PAUSE_UPDATE = 'PAUSE_UPDATE';
-	let methods = [
-		{
-			name: 'Score est.',
-			init: () => {},
-			run: element => {
-				updateEstimate(element, getScoreEstimate(element.stars));
-			},
-			async: false
-		},
-		{
-			name: 'Rank',
-			init: elements => {
-				elements.forEach(el => updateEstimate(el, 0));
-				elements.sort((a, b) => b.pp - a.pp);
-				rankScoreCheckCount = 0;
-			},
-			run: async (element, isCanceled) => {
-				let rank = user.rank;
-				let key = 'scoreAtRank'+rank;
-				let usePause = false;
-				if (!element.hasOwnProperty(key)) {
-					let score = 0;
-					let scores = element.scores;
-					if (typeof scores === 'string') {
-						scores = +scores.replace(/,/g, '') || Infinity;
-					}
-					if (rank <= scores && rank < (+element.rank || Infinity)) {
-						score = await getScoreAtRank(element.uid, rank);
-						rankScoreCheckCount++;
-						usePause = true;
-					}
-					element[key] = score;
-				}
-				if (isCanceled()) {
-					return;
-				}
-				updateEstimate(element, element[key] || 0);
-				if (rankScoreCheckCount >= 20) {
-					return PAUSE_UPDATE;
-				}
-				if (usePause) {
-					await pause(1000);
-				}
-			},
-			async: true
-		},
-		{
-			name: 'Raw pp',
-			init: () => {},
-			run: element => {
-				updateEstimate(element, 94.333333);
-			},
-			async: false
+	class SortMethod {
+		constructor(list) {
+			this.list = list;
+			this.async = false;
+			this.name = '???';
+			this.id = 'unknown';
 		}
+
+		createOptionsMarkup() {}
+
+		init() {}
+
+		run(element) {
+			updateEstimate(element, 0);
+		}
+	}
+
+	class SortScoreEst extends SortMethod {
+		constructor(list) {
+			super(list);
+			this.name = 'Score est.';
+			this.id = 'estimate';
+		}
+
+		run(element) {
+			updateEstimate(element, getScoreEstimate(element.stars));
+		}
+	}
+
+	class SortRank extends SortMethod {
+		constructor(list) {
+			super(list);
+			this.async = true;
+			this.name = 'Rank';
+			this.id = 'rank';
+		}
+
+		createOptionsMarkup() {
+			let rankForm = create('form', 'rank-form');
+			rankForm.addEventListener('submit', e => e.preventDefault());
+			this.rankInput = create('input', 'rank-input');
+			this.rankInput.type = 'text';
+			this.rankInput.placeholder = (user.rank || 1).toLocaleString() + ' (desired rank)';
+			this.rankInput.addEventListener('change', () => {
+				if (this.list.method === this) {
+					this.list.update();
+				}
+			});
+			rankForm.appendChild(this.rankInput);
+			let submit = create('button', 'rank-submit');
+			submit.type = 'submit';
+			rankForm.appendChild(submit);
+			return rankForm;
+		}
+
+		init(elements) {
+			elements.forEach(el => updateEstimate(el, 0));
+			elements.sort((a, b) => b.pp - a.pp);
+			this.rankInput.placeholder = (user.rank || 1).toLocaleString() + ' (desired rank)';
+			this.rank = ~~(+this.rankInput.value.replace(/,/g, ''));
+			if (!this.rank || this.rank <= 0) {
+				this.rank = user.rank || 9999999;
+			}
+			rankScoreCheckCount = 0;
+		}
+
+		async run(element, isCanceled) {
+			let rank = this.rank;
+			let key = 'scoreAtRank'+rank;
+			let usePause = false;
+			if (!element.hasOwnProperty(key)) {
+				let score = 0;
+				let scores = element.scores;
+				if (typeof scores === 'string') {
+					scores = +scores.replace(/,/g, '') || Infinity;
+				}
+				if (rank <= scores && rank < (+element.rank || Infinity)) {
+					score = await getScoreAtRank(element.uid, rank);
+					rankScoreCheckCount++;
+					usePause = true;
+				}
+				element[key] = score;
+			}
+			if (isCanceled()) {
+				return;
+			}
+			updateEstimate(element, element[key] || 0);
+			if (rankScoreCheckCount >= 20) {
+				return PAUSE_UPDATE;
+			}
+			if (usePause) {
+				await pause(1000);
+			}
+		}
+	}
+
+	// class SortCompare extends SortMethod {
+	// 	constructor(list) {
+	// 		super(list);
+	// 		this.name = 'Compare';
+	// 		this.async = true;
+	// 		this.id = 'unknown';
+	// 	}
+	//
+	// 	createOptionsMarkup() {
+	// 		let compareForm = create('form', 'compare-form');
+	// 		let compareInput = create('input', 'compare-input');
+	// 		compareInput.type = 'text';
+	// 		compareInput.placeholder = 'compared profile url';
+	// 		compareForm.appendChild(compareInput);
+	// 		let submit = create('button', 'compare-submit');
+	// 		submit.type = 'submit';
+	// 		compareForm.appendChild(submit);
+	// 		return compareForm;
+	// 	}
+	//
+	// 	init(elements) {
+	// 		elements.forEach(el => updateEstimate(el, 0));
+	// 		elements.sort((a, b) => b.pp - a.pp);
+	//
+	// 	}
+	//
+	// 	async run(element, isCanceled) {
+	//
+	// 	}
+	// }
+
+	class SortRaw extends SortMethod {
+		constructor(list) {
+			super(list);
+			this.name = 'Raw pp';
+			this.id = 'raw';
+		}
+
+		run(element) {
+			updateEstimate(element, getScoreEstimate(element.stars));
+		}
+	}
+
+	let methods = [
+		SortScoreEst,
+		SortRank,
+		// SortCompare,
+		SortRaw
 	];
 	class List {
 		constructor(elem, title, methods, elements = []) {
 			this.elem = elem;
 			this.title = title;
-			this.methods = methods;
-			this.method = methods[0];
+			// Copy object to ensure new context
+			this.methods = methods.map(Method => new Method(this));
+			this.method = this.methods[0];
 			this.elements = elements;
 			this.displayed = 20;
 			this.onScroll = this.onScroll.bind(this);
@@ -570,12 +674,12 @@ function getImageSrc(el) {
 			let methodWrapper = div('method-wrapper');
 			let method = div('method');
 			let methodSelect = create('select');
-			methods.forEach((method, i) => {
+			this.methods.forEach((method, i) => {
 				let opt = selectOption(method.name, i);
 				methodSelect.appendChild(opt);
 			});
 			methodSelect.onchange = () => {
-				this.changeMethod(methods[methodSelect.value]);
+				this.changeMethod(this.methods[methodSelect.value]);
 			};
 			method.appendChild(methodSelect);
 			let unpause = create('button', 'unpause', '', 'Keep going');
@@ -587,15 +691,12 @@ function getImageSrc(el) {
 			});
 			method.appendChild(unpause);
 			methodWrapper.appendChild(method);
-			let compareForm = create('form', 'compare-form');
-			let compareInput = create('input', 'compare-input');
-			compareInput.type = 'text';
-			compareInput.placeholder = 'compared profile url';
-			compareForm.appendChild(compareInput);
-			let submit = create('button', 'compare-submit');
-			submit.type = 'submit';
-			compareForm.appendChild(submit);
-			methodWrapper.appendChild(compareForm);
+			this.methods.forEach(method => {
+				let markup = method.createOptionsMarkup();
+				if (markup) {
+					methodWrapper.appendChild(markup);
+				}
+			});
 			header.appendChild(methodWrapper);
 			elem.appendChild(header);
 			this.content = div('list-content');
@@ -628,9 +729,15 @@ function getImageSrc(el) {
 			if (this.method === method) {
 				return;
 			}
+			if (this.method) {
+				this.elem.classList.remove('method-' + this.method.id);
+			}
 			this.content.scrollTop = 0;
 			this.displayed = 20;
 			this.method = method;
+			if (this.method) {
+				this.elem.classList.add('method-' + this.method.id);
+			}
 			this.update();
 			this.onScroll();
 		}
