@@ -124,7 +124,8 @@ async function getScoreAtRank(leaderboard, rank, retries = 2) {
 		}
 		let mods = row.querySelector('.mods');
 		let mult = getMultFromMods(mods && mods.textContent);
-		return match[0] * mult;
+		let isOldPercentage = cell && cell.querySelector('span[style*=tomato]');
+		return match[0] * mult * (isOldPercentage ? (110 / 115) : 1);
 	} catch(e) {
 		if (retries-- > 0) {
 			await pause(1000);
