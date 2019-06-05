@@ -1,6 +1,5 @@
 {
   "parser": "babel-eslint",
-  "plugins": ["react"],
   "extends": "eslint:recommended",
   "env": {
     "browser": true,
@@ -13,8 +12,8 @@
     "indent": ["error", "tab", { "SwitchCase": 1 }],
     "no-tabs": "off",
     "no-var": "error",
-    "no-unused-vars": ["warn", { "varsIgnorePattern": "^h$", "ignoreRestSiblings": true }],
-    "no-console": ["warn", { "allow": ["warn", "error"] }],
+    "no-unused-vars": ["warn", { "ignoreRestSiblings": true }],
+    "no-console": "off",
     "no-alert": "error",
     "no-multi-spaces": "off",
     "no-case-declarations": "off",
