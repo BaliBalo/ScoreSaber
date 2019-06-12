@@ -13,7 +13,7 @@ async function addBeatSaverData(item) {
 	// Save request in data folder ?
 	// A specific hash shouldn't have its metadata changed too much
 	const data = await request({
-		uri: 'https://beatsaver.com/api/songs/search/hash/' + item.id,
+		uri: 'https://beatsaver.com/api/maps/by-hash/' + item.id.toLowerCase(),
 		json: true
 	});
 	const song = data.songs[0];
