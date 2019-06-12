@@ -679,6 +679,7 @@ body {
 	.right {
 		flex: 0 0 auto;
 		text-align: right;
+		min-width: 170px;
 	}
 	.pic {
 		flex: 0 0 auto;
@@ -862,6 +863,9 @@ body {
 		.middle {
 			margin: 0;
 			text-align-last: left;
+		}
+		.right {
+			min-width: 0;
 		}
 		.duration { margin-left: 0; }
 		.notes, .obstacles {

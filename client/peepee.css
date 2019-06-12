@@ -593,7 +593,8 @@ body {
     margin: 0 16px; }
   .list-content .right {
     flex: 0 0 auto;
-    text-align: right; }
+    text-align: right;
+    min-width: 170px; }
   .list-content .pic {
     flex: 0 0 auto;
     width: 64px;
@@ -735,6 +736,8 @@ body {
   .list-content .middle {
     margin: 0;
     text-align-last: left; }
+  .list-content .right {
+    min-width: 0; }
   .list-content .duration {
     margin-left: 0; }
   .list-content .notes, .list-content .obstacles {
