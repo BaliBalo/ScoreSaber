@@ -714,7 +714,7 @@ function getImageSrc(el) {
 				return;
 			}
 			let date = (new Date()).toISOString().slice(0, 10);
-			let songs = this.elements.slice(0, count).map(e => ({ key: e.beatSaverKey }));
+			let songs = this.elements.filter(e => e.beatSaverKey).slice(0, count).map(e => ({ key: e.beatSaverKey }));
 			let data = {
 				playlistTitle: this.title + ' (' + date + ')',
 				playlistAuthor: 'Peepee',
