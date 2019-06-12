@@ -802,21 +802,31 @@ function getImageSrc(el) {
 			let right = div('right');
 			let important = div('important');
 			important.appendChild(div('star-difficulty', element.stars, 'Star difficulty'));
-			important.appendChild(div('upvotes', element.upvotes, 'Upvotes'));
-			important.appendChild(div('downvotes', element.downvotes, 'Downvotes'));
+			if (element.upvotes !== undefined) {
+				important.appendChild(div('upvotes', element.upvotes, 'Upvotes'));
+			}
+			if (element.downvotes !== undefined) {
+				important.appendChild(div('downvotes', element.downvotes, 'Downvotes'));
+			}
 			right.appendChild(important);
 			let secondary = div('secondary');
-			secondary.appendChild(div('duration', getDuration(element), 'Duration'));
+			// secondary.appendChild(div('duration', getDuration(element), 'Duration'));
 			secondary.appendChild(div('bpm', round(element.bpm, 2), 'BPM'));
-			secondary.appendChild(div('notes', element.noteCount, 'Notes count'));
-			secondary.appendChild(div('obstacles', element.obstacleCount, 'Obstacles count'));
+			// secondary.appendChild(div('notes', element.noteCount, 'Notes count'));
+			// secondary.appendChild(div('obstacles', element.obstacleCount, 'Obstacles count'));
 			right.appendChild(secondary);
 			let links = div('links');
-			let bsr = create('button', 'bsr', null, 'Copy !bsr request');
-			bsr.addEventListener('click', () => copyToClipboard('!bsr ' + element.beatSaverKey));
-			links.appendChild(bsr);
-			links.appendChild(link(element.download, 'download', null, 'Download map', '_blank'));
-			links.appendChild(link(element.beatSaverLink, 'beatsaver', null, 'Open on BeatSaver', '_blank'));
+			if (element.beatSaverKey) {
+				let bsr = create('button', 'bsr', null, 'Copy !bsr request');
+				bsr.addEventListener('click', () => copyToClipboard('!bsr ' + element.beatSaverKey));
+				links.appendChild(bsr);
+			}
+			if (element.download) {
+				links.appendChild(link(element.download, 'download', null, 'Download map', '_blank'));
+			}
+			if (element.beatSaverLink) {
+				links.appendChild(link(element.beatSaverLink, 'beatsaver', null, 'Open on BeatSaver', '_blank'));
+			}
 			links.appendChild(link('https://scoresaber.com/leaderboard/' + element.uid, 'leaderboards', null, 'ScoreSaber leaderboard', '_blank'));
 			right.appendChild(links);
 			el.appendChild(right);
