@@ -10,14 +10,17 @@ async function addBeatSaverData(item) {
 	if (!item || !item.id) {
 		return;
 	}
-	// Save request in data folder ?
-	// A specific hash shouldn't have its metadata changed too much
-	const data = await request({
-		uri: 'https://beatsaver.com/api/maps/by-hash/' + item.id.toLowerCase(),
-		json: true
-	});
-	const song = data;
+	let song;
+	try {
+		// Save request in data folder ?
+		// A specific hash shouldn't have its metadata changed too much
+		song = await request({
+			uri: 'https://beatsaver.com/api/maps/by-hash/' + item.id.toLowerCase(),
+			json: true
+		});
+	} catch(e) { }
 	if (!song) {
+		console.log('No beatsaver data found for ' + item.name + ' by ' + item.mapper + ' (' + item.uid + ')');
 		return;
 	}
 	item.beatSaverKey = song.key;
@@ -54,8 +57,8 @@ async function getFromPage(page, list = []) {
 			uid: song.uid,
 			id: song.id,
 			name: song.name,
-			artist: song.songSubName,
-			mapper: song.author,
+			artist: song.songAuthorName,
+			mapper: song.levelAuthorName,
 			bpm: song.bpm,
 			diff: diffMatch[1],
 			scores: scores,

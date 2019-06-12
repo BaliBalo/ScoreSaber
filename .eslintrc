@@ -16,6 +16,7 @@
     "no-console": "off",
     "no-alert": "error",
     "no-multi-spaces": "off",
+    "no-empty": ["error", { "allowEmptyCatch": true }],
     "no-case-declarations": "off",
     "no-extra-boolean-cast": "off",
     "keyword-spacing": ["off", { "before": true, "after": true }],
