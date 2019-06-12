@@ -16,23 +16,23 @@ async function addBeatSaverData(item) {
 		uri: 'https://beatsaver.com/api/maps/by-hash/' + item.id.toLowerCase(),
 		json: true
 	});
-	const song = data.songs[0];
+	const song = data;
 	if (!song) {
 		return;
 	}
 	item.beatSaverKey = song.key;
-	item.downloads = song.downloadCount;
-	item.upvotes = song.upVotes;
-	item.downvotes = song.downVotes;
-	item.rating = song.rating;
-	item.beatSaverLink = song.linkUrl;
-	item.download = song.downloadUrl;
-	let diffData = song.difficulties[item.diff];
-	if (diffData) {
-		item.duration = diffData.stats.time;
-		item.noteCount = diffData.stats.notes;
-		item.obstacleCount = diffData.stats.obstacles;
-	}
+	item.downloads = song.stats.downloads;
+	item.upvotes = song.stats.upVotes;
+	item.downvotes = song.stats.downVotes;
+	item.rating = song.stats.rating * 100;
+	item.beatSaverLink = 'https://beatsaver.com/beatmap/52d7' + song.key;
+	item.download = 'https://beatsaver.com' + song.downloadURL;
+	// let diffData = song.difficulties[item.diff];
+	// if (diffData) {
+	// 	item.duration = diffData.stats.time;
+	// 	item.noteCount = diffData.stats.notes;
+	// 	item.obstacleCount = diffData.stats.obstacles;
+	// }
 }
 
 async function getFromPage(page, list = []) {
@@ -105,65 +105,42 @@ getAll();
 //         ...
 
 
-
 // BeatSaver:
 // {
-// 	"songs": [
-// 		{
-// 			"id": 7368,
-// 			"key": "7368-7133",
-// 			"name": "SakiZ - osu!memories",
-// 			"description": "...",
-// 			"uploader": "psyc0pathic",
-// 			"uploaderId": 4747,
-// 			"songName": "osu!memories",
-// 			"songSubName": "SakiZ",
-// 			"authorName": "Various Mappers",
-// 			"bpm": 180,
-// 			"difficulties": {
-// 				"ExpertPlus": {
-// 					"difficulty": "ExpertPlus",
-// 					"rank": 5,
-// 					"audioPath": "osu.ogg",
-// 					"jsonPath": "ExpertPlus.json",
-// 					"stats": {
-// 						"time": 1391.0390625,
-// 						"slashstat": {
-// 							"0": 1049,
-// 							"1": 1115,
-// 							"2": 173,
-// 							"3": 178,
-// 							"4": 147,
-// 							"5": 184,
-// 							"6": 216,
-// 							"7": 187,
-// 							"8": 120
-// 						},
-// 						"events": 4341,
-// 						"notes": 3369,
-// 						"obstacles": 24
-// 					}
-// 				}
-// 			},
-// 			"downloadCount": 29047,
-// 			"playedCount": 570,
-// 			"upVotes": 357,
-// 			"upVotesTotal": 0,
-// 			"downVotes": 35,
-// 			"downVotesTotal": 0,
-// 			"rating": 84.27,
-// 			"version": "7368-7133",
-// 			"createdAt": {
-// 				"date": "2018-10-24 03:08:36.000000",
-// 				"timezone_type": 3,
-// 				"timezone": "UTC"
-// 			},
-// 			"linkUrl": "https://beatsaver.com/browse/detail/7368-7133",
-// 			"downloadUrl": "https://beatsaver.com/download/7368-7133",
-// 			"coverUrl": "https://beatsaver.com/storage/songs/7368/7368-7133.jpg",
-// 			"hashMd5": "01fe311706315676e2fd2aa3b8737ec7",
-// 			"hashSha1": "9054c16bc879bb895cffe83630d6c957f1f60cc5"
-// 		}
-// 	],
-// 	"total": 1
+// 	"metadata": {
+// 		"difficulties": {
+// 			"easy": false,
+// 			"normal": false,
+// 			"hard": false,
+// 			"expert": false,
+// 			"expertPlus": true
+// 		},
+// 		"characteristics": [],
+// 		"songName": "Milk Crown on Sonnetica",
+// 		"songSubName": "nameless",
+// 		"songAuthorName": "Hexagonial",
+// 		"levelAuthorName": "hexagonial",
+// 		"bpm": 255
+// 	},
+// 	"stats": {
+// 		"downloads": 19359,
+// 		"plays": 0,
+// 		"upVotes": 316,
+// 		"downVotes": 69,
+// 		"rating": 0.767376195194179,
+// 		"heat": "515.0139858"
+// 	},
+// 	"description": "An extremely hard map commissioned by Kaoura! Send thanks to him for providing you with this challenge map. :)\r\n\r\nDiscord: discord.gg/EVU9At2 (For updates regarding my maps/commissions, notifications for my streams, and a way to contact me)",
+// 	"deletedAt": null,
+// 	"_id": "5cff621348229f7d88fc8106",
+// 	"key": "3036",
+// 	"name": "nameless - Milk Crown on Sonnetica",
+// 	"uploader": {
+// 		"_id": "5cff0b7398cc5a672c84f2fb",
+// 		"username": "hexagonial"
+// 	},
+// 	"uploaded": "2019-01-22T23:45:58.000Z",
+// 	"hash": "cfca2fe00bcc418dc9ecf64d92fc01ceec52c375",
+// 	"downloadURL": "/api/download/key/3036",
+// 	"coverURL": "/cdn/3036/cfca2fe00bcc418dc9ecf64d92fc01ceec52c375.jpg"
 // }
