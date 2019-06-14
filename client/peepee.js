@@ -323,7 +323,7 @@ function getImageSrc(el) {
 			}).filter(e => e);
 			parsed.forEach(e => playerSongs[e.uid] = e);
 			if (len === PER_PAGE) {
-				await pause(1000);
+				await pause(500);
 				// There is (probably) more
 				return getPages(id, from + 1);
 			}
@@ -600,7 +600,7 @@ function getImageSrc(el) {
 				return PAUSE_UPDATE;
 			}
 			if (usePause) {
-				await pause(1000);
+				await pause(500);
 			}
 		}
 	}
