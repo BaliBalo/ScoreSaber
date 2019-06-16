@@ -572,6 +572,9 @@ body {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%); }
+  .user-76561198052803409 .unplayed .list-content:empty::before {
+    content: 'Wow, you really did them all. Congrats Ruby';
+  }
   .list-content .element {
     display: flex;
     flex-flow: row nowrap;
