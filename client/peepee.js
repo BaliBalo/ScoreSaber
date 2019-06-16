@@ -929,7 +929,7 @@ function getImageSrc(el) {
 			fullPP = getFullPPWithUpdate(0, 0);
 			updatePlayerProfile();
 			updateLists(rankedMapsData, playerSongs);
-			document.body.classList.add('step-results');
+			document.body.classList.add('step-results', 'user-' + id);
 		} catch(err) {
 			console.log(err);
 			triggerAnimation(userForm, 'invalid');
