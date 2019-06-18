@@ -293,6 +293,7 @@ body {
   opacity: 1; }
 
 #help {
+  display: none;
   position: fixed;
   top: 0;
   left: 0;
@@ -362,7 +363,10 @@ body {
   #help .sort-desc {
     padding-left: 16px; }
 
-.step-results #show-help:checked ~ #help {
+.step-results #help {
+  display: block; }
+
+#show-help:checked ~ #help {
   opacity: 1;
   visibility: visible; }
 
@@ -558,6 +562,9 @@ body {
   visibility: visible;
   margin-top: 0; }
 
+.user-76561198052803409 .unplayed .list-content:empty::before {
+  content: 'Wow, you really did them all. Congrats Ruby'; }
+
 .list-content {
   flex: 0 1 auto;
   position: relative;
@@ -572,9 +579,6 @@ body {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%); }
-  .user-76561198052803409 .unplayed .list-content:empty::before {
-    content: 'Wow, you really did them all. Congrats Ruby';
-  }
   .list-content .element {
     display: flex;
     flex-flow: row nowrap;
