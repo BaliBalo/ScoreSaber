@@ -38,7 +38,6 @@ body {
   left: 0;
   width: 100%;
   min-height: 100%;
-  display: flex;
   flex-flow: column nowrap;
   align-items: center;
   justify-content: center;
@@ -51,7 +50,7 @@ body {
   visibility: hidden; }
 
 .wf-neontubes-n4-active .pick {
-  display: block; }
+  display: flex; }
 
 .title {
   font-family: NeonTubes, sans-serif;
