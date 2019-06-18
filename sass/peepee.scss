@@ -25,6 +25,10 @@ body {
 	}
 }
 
+@keyframes appear {
+	from { visibility: hidden; opacity: 0; }
+	to { visibility: visible; opacity: 1; }
+}
 .pick {
 	position: absolute;
 	top: 0;
@@ -36,9 +40,8 @@ body {
 	align-items: center;
 	justify-content: center;
 	overflow: auto;
-	opacity: 0;
-	visibility: hidden;
-	transition: opacity .5s, visibility .5s;
+	display: none;
+	animation: appear .5s;
 }
 .wf-neontubes-n4-active {
 	body::after {
@@ -46,8 +49,7 @@ body {
 		visibility: hidden;
 	}
 	.pick {
-		opacity: 1;
-		visibility: visible;
+		display: block;
 	}
 }
 

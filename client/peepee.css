@@ -24,6 +24,14 @@ body {
     visibility: visible;
     transition: opacity .5s, visibility .5s; }
 
+@keyframes appear {
+  from {
+    visibility: hidden;
+    opacity: 0; }
+  to {
+    visibility: visible;
+    opacity: 1; } }
+
 .pick {
   position: absolute;
   top: 0;
@@ -35,17 +43,15 @@ body {
   align-items: center;
   justify-content: center;
   overflow: auto;
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity .5s, visibility .5s; }
+  display: none;
+  animation: appear .5s; }
 
 .wf-neontubes-n4-active body::after {
   opacity: 0;
   visibility: hidden; }
 
 .wf-neontubes-n4-active .pick {
-  opacity: 1;
-  visibility: visible; }
+  display: block; }
 
 .title {
   font-family: NeonTubes, sans-serif;
