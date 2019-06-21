@@ -406,10 +406,10 @@ function getImageSrc(el) {
 		let maxStars = Math.max(...scores.map(e => e.stars));
 		let data = scores.reduce((o, score) => {
 			let d = 2 * Math.abs(stars - score.stars);
-			let front = stars > score.stars ? d * d : 1 / d;
+			let front = stars > score.stars ? d * d * d : 1;
 			let at = score.at || now;
 			let time = 1 + Math.max(now - at, 0) / decay;
-			let weight = 1 / (1 + d * d * time * front);
+			let weight = 1 / (1 + d * time * front);
 			o.weight += weight;
 			o.sum += score.score * weight;
 			return o;
@@ -535,6 +535,7 @@ function getImageSrc(el) {
 		}
 
 		run(element) {
+			console.log(element.stars, getScoreEstimate(element.stars));
 			updateEstimate(element, getScoreEstimate(element.stars));
 		}
 	}
@@ -566,7 +567,7 @@ function getImageSrc(el) {
 		}
 
 		init(elements) {
-			elements.forEach(el => updateEstimate(el, 0));
+			elements.forEach(el => updateEstimate(el, getScoreEstimate(el.stars)));
 			elements.sort((a, b) => b.pp - a.pp);
 			this.rankInput.placeholder = (user.rank || 1).toLocaleString() + ' (desired rank)';
 			this.rank = ~~(+this.rankInput.value.replace(/,/g, ''));
