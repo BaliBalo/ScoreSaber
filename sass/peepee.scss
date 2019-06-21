@@ -266,6 +266,8 @@ body {
 		max-width: 400px;
 		overflow: hidden;
 		text-overflow: ellipsis;
+		color: currentColor;
+		text-decoration: none;
 	}
 	.performance {
 		line-height: 24px;

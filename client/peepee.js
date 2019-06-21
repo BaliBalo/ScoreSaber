@@ -406,7 +406,7 @@ function getImageSrc(el) {
 		let maxStars = Math.max(...scores.map(e => e.stars));
 		let data = scores.reduce((o, score) => {
 			let d = 2 * Math.abs(stars - score.stars);
-			let front = stars > score.stars ? 1.5 : 1;
+			let front = stars > score.stars ? d * d : 1 / d;
 			let at = score.at || now;
 			let time = 1 + Math.max(now - at, 0) / decay;
 			let weight = 1 / (1 + d * d * time * front);
@@ -500,6 +500,7 @@ function getImageSrc(el) {
 		$profile.avatar.style.backgroundImage = 'url('+user.avatar+')';
 		$profile.flag.style.backgroundImage = 'url('+user.country+')';
 		$profile.name.textContent = user.name;
+		$profile.name.href = 'https://scoresaber.com/u/' + user.id;
 		$profile.rank.textContent = user.rank.toLocaleString();
 		$profile.pp.textContent = user.pp.toLocaleString();
 	}
@@ -929,6 +930,8 @@ function getImageSrc(el) {
 			fullPP = getFullPPWithUpdate(0, 0);
 			updatePlayerProfile();
 			updateLists(rankedMapsData, playerSongs);
+			// Debugging
+			window.playerSongs = playerSongs;
 			document.body.classList.add('step-results', 'user-' + id);
 		} catch(err) {
 			console.log(err);

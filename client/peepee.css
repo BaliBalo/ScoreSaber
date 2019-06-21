@@ -230,7 +230,9 @@ body {
     vertical-align: middle;
     max-width: 400px;
     overflow: hidden;
-    text-overflow: ellipsis; }
+    text-overflow: ellipsis;
+    color: currentColor;
+    text-decoration: none; }
   .player .performance {
     line-height: 24px; }
   .player .rank::before {
