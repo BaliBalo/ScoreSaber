@@ -28,7 +28,7 @@ async function addBeatSaverData(item) {
 	item.upvotes = song.stats.upVotes;
 	item.downvotes = song.stats.downVotes;
 	item.rating = song.stats.rating * 100;
-	item.beatSaverLink = 'https://beatsaver.com/beatmap/52d7' + song.key;
+	item.beatSaverLink = 'https://beatsaver.com/beatmap/' + song.key;
 	item.download = 'https://beatsaver.com' + song.downloadURL;
 	// let diffData = song.difficulties[item.diff];
 	// if (diffData) {
