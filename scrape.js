@@ -30,12 +30,16 @@ async function addBeatSaverData(item) {
 	item.rating = song.stats.rating * 100;
 	item.beatSaverLink = 'https://beatsaver.com/beatmap/' + song.key;
 	item.download = 'https://beatsaver.com' + song.downloadURL;
-	// let diffData = song.difficulties[item.diff];
-	// if (diffData) {
-	// 	item.duration = diffData.stats.time;
-	// 	item.noteCount = diffData.stats.notes;
-	// 	item.obstacleCount = diffData.stats.obstacles;
-	// }
+	let allCharacteristics = song.metadata && song.metadata.characteristics;
+	let stdCharacteristics = allCharacteristics && allCharacteristics.find(e => e.name === 'Standard');
+	let characteristics = stdCharacteristics && stdCharacteristics.difficulties && stdCharacteristics.difficulties[item.diff[0].toLowerCase() + item.diff.slice(1)];
+	if (characteristics) {
+		item.duration = characteristics.duration;
+		item.noteCount = characteristics.notes;
+		// item.obstacleCount = characteristics.obstacles;
+		// item.bombsCount = characteristics.bombs;
+		item.njs = characteristics.njs;
+	}
 }
 
 async function getFromPage(page, list = []) {
@@ -45,6 +49,7 @@ async function getFromPage(page, list = []) {
 		json: true
 	});
 	let songs = data.songs.map(song => {
+		// Only Standard for now
 		let diffMatch = song.diff.match(/^_(Easy|Normal|Hard|Expert|ExpertPlus)_SoloStandard$/);
 		if (!diffMatch || !song.stars) {
 			return;
