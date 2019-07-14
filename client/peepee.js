@@ -371,7 +371,7 @@ function getImageSrc(el) {
 		played.elements = Object.values(playerSongs);
 		unplayed.elements = rankedMapsData.list.filter(song => {
 			return !playerSongs.hasOwnProperty(song.uid);
-		}).map(e => ({ ...e }));
+		}).map(e => Object.assign({}, e));
 		played.update();
 		unplayed.update();
 		updateEstCurve();
@@ -549,7 +549,6 @@ function getImageSrc(el) {
 		}
 
 		run(element) {
-			console.log(element.stars, getScoreEstimate(element.stars));
 			updateEstimate(element, getScoreEstimate(element.stars));
 		}
 	}
@@ -865,10 +864,34 @@ function getImageSrc(el) {
 				links.appendChild(bsr);
 			}
 			if (element.download) {
-				links.appendChild(link(element.download, 'download', null, 'Download map', '_blank'));
+				let dl = link(element.download, 'download', null, 'Download map', '_blank');
+				dl.addEventListener('click', e => {
+					if (e.button !== 0) {
+						return;
+					}
+					e.preventDefault();
+					let iframe = document.createElement('iframe');
+					iframe.style.display = 'none';
+					document.body.appendChild(iframe);
+					let done = () => {
+						window.removeEventListener('blur', onBlur);
+						document.body.removeChild(iframe);
+					};
+					let timeout = setTimeout(function () {
+						done();
+						location.href = element.download;
+					}, 500);
+					let onBlur = () => {
+						clearTimeout(timeout);
+						done();
+					};
+					window.addEventListener('blur', onBlur);
+					iframe.contentWindow.location.href = 'beatsaver://' + element.beatSaverKey;
+				});
+				links.appendChild(dl);
 			}
-			if (element.beatSaverLink) {
-				links.appendChild(link(element.beatSaverLink, 'beatsaver', null, 'Open on BeatSaver', '_blank'));
+			if (element.beatSaverKey) {
+				links.appendChild(link('https://beatsaver.com/beatmap/' + element.beatSaverKey, 'beatsaver', null, 'Open on BeatSaver', '_blank'));
 			}
 			links.appendChild(link('https://scoresaber.com/leaderboard/' + element.uid, 'leaderboards', null, 'ScoreSaber leaderboard', '_blank'));
 			right.appendChild(links);

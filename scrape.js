@@ -28,7 +28,7 @@ async function addBeatSaverData(item) {
 	item.upvotes = song.stats.upVotes;
 	item.downvotes = song.stats.downVotes;
 	item.rating = song.stats.rating * 100;
-	item.beatSaverLink = 'https://beatsaver.com/beatmap/' + song.key;
+	// item.beatSaverLink = 'https://beatsaver.com/beatmap/' + song.key;
 	item.download = 'https://beatsaver.com' + song.downloadURL;
 	let allCharacteristics = song.metadata && song.metadata.characteristics;
 	let stdCharacteristics = allCharacteristics && allCharacteristics.find(e => e.name === 'Standard');
