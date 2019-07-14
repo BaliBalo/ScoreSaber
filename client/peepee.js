@@ -1,5 +1,7 @@
 /* global WebFont */
 
+const scoresaberRLDelay = 300;
+
 function triggerAnimation(el, name) {
 	if (!el) {
 		return;
@@ -323,7 +325,7 @@ function getImageSrc(el) {
 			}).filter(e => e);
 			parsed.forEach(e => playerSongs[e.uid] = e);
 			if (len === PER_PAGE) {
-				await pause(500);
+				await pause(scoresaberRLDelay);
 				// There is (probably) more
 				return getPages(id, from + 1);
 			}
@@ -614,7 +616,7 @@ function getImageSrc(el) {
 				return PAUSE_UPDATE;
 			}
 			if (usePause) {
-				await pause(500);
+				await pause(scoresaberRLDelay);
 			}
 		}
 	}
