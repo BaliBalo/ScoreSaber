@@ -231,8 +231,8 @@ body {
 	text-align: center;
 	padding: 32px 0;
 	.avatar {
-		width: 64px;
-		height: 64px;
+		width: 80px;
+		height: 80px;
 		display: inline-block;
 		background-position: center;
 		background-repeat: no-repeat;
@@ -269,10 +269,10 @@ body {
 		color: currentColor;
 		text-decoration: none;
 	}
-	.performance {
-		line-height: 24px;
+	.performance, .stats {
+		line-height: 20px;
 	}
-	.rank {
+	.rank, .best, .median {
 		&::before {
 			content: '#';
 			color: #aaa;
@@ -483,7 +483,7 @@ body {
 	flex: 1 1 auto;
 	min-width: 200px;
 	max-width: 800px;
-	height: calc(100vh - 128px);
+	height: calc(100vh - 144px);
 	display: flex;
 	flex-flow: column nowrap;
 	margin: 24px 4px 0;
@@ -595,7 +595,7 @@ body {
 	visibility: visible;
 	transform: translate(0, -50%) translateY(0);
 }
-.compare-form, .rank-form {
+.compare-form, .rank-form, .fixed-form {
 	background: white;
 	overflow: hidden;
 	border-radius: 999px;
@@ -603,11 +603,11 @@ body {
 	max-height: 0;
 	transition: margin .2s, max-height .2s;
 }
-.mathod-compare .compare-form, .method-rank .rank-form {
+.method-compare .compare-form, .method-rank .rank-form, .method-raw .fixed-form {
 	margin: 4px 0;
 	max-height: 24px;
 }
-.compare-input, .rank-input {
+.compare-input, .rank-input, .fixed-input {
 	height: 24px;
 	padding: 0 8px;
 	width: 144px;
@@ -616,7 +616,7 @@ body {
 	font-family: inherit;
 	vertical-align: middle;
 }
-.compare-submit, .rank-submit {
+.compare-submit, .rank-submit, .fixed-submit {
 	background: none;
 	border: none;
 	border-left: 1px solid #ddd;
@@ -648,6 +648,7 @@ body {
 	content: 'Wow, you really did them all. Congrats Ruby';
 }
 .list-content {
+	counter-reset: list;
 	flex: 0 1 auto;
 	position: relative;
 	width: 100%;
@@ -664,6 +665,7 @@ body {
 		transform: translate(-50%, -50%);
 	}
 	.element {
+		counter-increment: list;
 		display: flex;
 		flex-flow: row nowrap;
 		align-items: center;
@@ -715,6 +717,9 @@ body {
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;
+		&::before {
+			content: counter(list) '. ';
+		}
 	}
 	.mapper {
 		position: absolute;

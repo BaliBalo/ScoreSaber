@@ -495,6 +495,8 @@ function getImageSrc(el) {
 		name: document.querySelector('.player .name'),
 		rank: document.querySelector('.player .rank'),
 		pp: document.querySelector('.player .pp'),
+		best: document.querySelector('.player .stats .best'),
+		median: document.querySelector('.player .stats .median'),
 	};
 	function updatePlayerProfile() {
 		$profile.avatar.style.backgroundImage = 'url('+user.avatar+')';
@@ -503,6 +505,16 @@ function getImageSrc(el) {
 		$profile.name.href = 'https://scoresaber.com/u/' + user.id;
 		$profile.rank.textContent = user.rank.toLocaleString();
 		$profile.pp.textContent = user.pp.toLocaleString();
+		let ranks = Object.values(playerSongs).map(e => e.rank).sort((a, b) => a - b);
+		let med = ranks[~~(ranks.length / 2)] || 0;
+		let best = ranks[0];
+		let bestCount = ranks.findIndex(e => e !== best);
+		if (bestCount === -1) {
+			bestCount = ranks.length;
+		}
+		$profile.best.textContent = best.toLocaleString();
+		$profile.best.title = bestCount.toLocaleString() + ' leaderboard' + (bestCount === 1 ? '' : 's');
+		$profile.median.textContent = med.toLocaleString();
 	}
 
 	let difficulties = {
@@ -641,12 +653,39 @@ function getImageSrc(el) {
 	class SortRaw extends SortMethod {
 		constructor(list) {
 			super(list);
-			this.name = 'Raw pp';
+			this.name = 'Fixed score';
 			this.id = 'raw';
+			this.score = 94.333333;
+		}
+
+		createOptionsMarkup() {
+			let fixedForm = create('form', 'fixed-form');
+			fixedForm.addEventListener('submit', e => e.preventDefault());
+			this.fixedInput = create('input', 'fixed-input');
+			this.fixedInput.type = 'text';
+			this.fixedInput.placeholder = '94.3333%';
+			this.fixedInput.maxLength = 10;
+			this.fixedInput.addEventListener('change', () => {
+				if (this.list.method === this) {
+					this.list.update();
+				}
+			});
+			fixedForm.appendChild(this.fixedInput);
+			let submit = create('button', 'fixed-submit');
+			submit.type = 'submit';
+			fixedForm.appendChild(submit);
+			return fixedForm;
+		}
+
+		init(elements) {
+			this.score = parseFloat(this.fixedInput.value.trim()) || 94.333333;
+			if (this.score <= 0) {
+				this.score = 0.01;
+			}
 		}
 
 		run(element) {
-			updateEstimate(element, 94.333333);
+			updateEstimate(element, this.score);
 		}
 	}
 
@@ -812,7 +851,7 @@ function getImageSrc(el) {
 			}
 			right.appendChild(important);
 			let secondary = div('secondary');
-			// secondary.appendChild(div('duration', getDuration(element), 'Duration'));
+			secondary.appendChild(div('duration', getDuration(element), 'Duration'));
 			secondary.appendChild(div('bpm', round(element.bpm, 2), 'BPM'));
 			// secondary.appendChild(div('notes', element.noteCount, 'Notes count'));
 			// secondary.appendChild(div('obstacles', element.obstacleCount, 'Obstacles count'));
