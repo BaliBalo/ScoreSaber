@@ -87,8 +87,9 @@ async function getAll() {
 			list,
 			timestamp: Date.now()
 		}));
+		console.log(timetag(), '---- ranked.json updated ----');
 	} catch(err) {
-		console.log('Error scraping scoresaber', err);
+		console.log(timetag(), 'Error scraping scoresaber', err);
 	}
 }
 

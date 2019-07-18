@@ -509,7 +509,7 @@ function getImageSrc(el) {
 		$profile.pp.textContent = user.pp.toLocaleString();
 		let ranks = Object.values(playerSongs).map(e => e.rank).sort((a, b) => a - b);
 		let med = ranks[~~(ranks.length / 2)] || 0;
-		let best = ranks[0];
+		let best = ranks[0] || 0;
 		let bestCount = ranks.findIndex(e => e !== best);
 		if (bestCount === -1) {
 			bestCount = ranks.length;
@@ -852,7 +852,9 @@ function getImageSrc(el) {
 			}
 			right.appendChild(important);
 			let secondary = div('secondary');
-			secondary.appendChild(div('duration', getDuration(element), 'Duration'));
+			if (element.duration) {
+				secondary.appendChild(div('duration', getDuration(element), 'Duration'));
+			}
 			secondary.appendChild(div('bpm', round(element.bpm, 2), 'BPM'));
 			// secondary.appendChild(div('notes', element.noteCount, 'Notes count'));
 			// secondary.appendChild(div('obstacles', element.obstacleCount, 'Obstacles count'));
