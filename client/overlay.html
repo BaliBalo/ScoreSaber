@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<title>Overlay</title>
+	<link href="https://fonts.googleapis.com/css?family=Source+Code+Pro&display=swap" rel="stylesheet">
+	<style>
+		body {
+			background: #333;
+			color: #fff;
+			font-family: 'Source Code Pro', monospace;
+			font-size: 16px;
+			text-shadow: 2px 0 0 #000, -2px 0 0 #000, 0 2px 0 #000, 0 -2px 0 #000, 0 0 4px #000;
+		}
+		.scoreInfo {
+			position: fixed;
+			bottom: 0;
+			left: 0;
+			right: 0;
+			justify-content: center;
+			align-items: flex-end;
+			display: flex;
+			flex-flow: row nowrap;
+			font-size: 32px;
+		}
+		.scoreInfo > div {
+			position: relative;
+			overflow: hidden;
+			background: rgba(0, 0, 0, .8);
+			text-align: center;
+			display: inline-flex;
+			flex-flow: column nowrap;
+			align-items: center;
+			justify-content: center;
+			transform-origin: bottom;
+			transform: translateY(100%) scale(1);
+			transition-property: transform;
+			transition-duration: .5s;
+		}
+		.description {
+			position: absolute;
+			top: 4px;
+			left: 8px;
+			font-size: 12px;
+			color: #aaa;
+			text-shadow: none;
+		}
+		.misses, .time {
+			width: 150px;
+			height: 80px;
+			transition-delay: .2s;
+		}
+		.combo, .rank {
+			width: 180px;
+			height: 100px;
+			transition-delay: .1s;
+			font-size: 36px;
+		}
+		.percentage {
+			width: 250px;
+			height: 120px;
+			font-size: 40px;
+		}
+		.details {
+			position: absolute;
+			bottom: 2px;
+			left: 50%;
+			transform: translateX(-50%);
+			text-align: center;
+			font-size: 16px;
+		}
+		.fcIndicator {
+			text-shadow: none;
+			color: #666;
+			text-shadow: 0 0 5px rgba(150, 200, 250, 0);
+			transition: color .5s, text-shadow .5s;
+		}
+		.fcIndicator::before {
+			content: '';
+			position: absolute;
+			top: 50%;
+			left: -5px;
+			right: -5px;
+			border-top: 1px solid;
+			transform-origin: left;
+			transform: scaleX(1);
+			transition: transform .5s;
+		}
+		.fc .fcIndicator {
+			color: #9af;
+			text-shadow: 0 0 5px rgba(150, 200, 250, 1);
+		}
+		.fc .fcIndicator::before {
+			transform: scaleX(0);
+		}
+		.timeIndicator {
+			position: absolute;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 2px;
+			background: #fff;
+			transform-origin: left;
+			transform: scaleX(0);
+		}
+		.inSong .scoreInfo > div {
+			transform: translateY(0) scale(1);
+		}
+
+		.songInfos, .playerInfos {
+			position: fixed;
+			top: 8px;
+			left: 8px;
+			display: flex;
+			flex-flow: row nowrap;
+			align-items: center;
+			justify-content: flex-start;
+			white-space: nowrap;
+			font-size: 22px;
+		}
+		.songImage, .playerImage {
+			flex: 0 0 auto;
+			width: 84px;
+			height: 84px;
+			margin-right: 8px;
+			opacity: 0;
+			transform: translateX(-10px);
+			transition: opacity .5s, transform .5s;
+		}
+		.songDetails, .playerDetails {
+			display: flex;
+			flex-flow: column nowrap;
+			align-items: flex-start;
+		}
+		.songName, .songAuthor, .songMapper, .pp, .playerRank, .playerCountryRank {
+			display: inline-block;
+			max-width: 300px;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			opacity: 0;
+			transform: translateY(-10px);
+			transition: opacity .5s, transform .5s;
+		}
+		.songAuthor, .playerRank {
+			transition-delay: .1s;
+		}
+		.songMapper, .playerCountryRank {
+			transition-delay: .2s;
+		}
+		.inSong .songImage, body:not(.inSong) .playerImage {
+			opacity: 1;
+			transform: translateX(0);
+		}
+		.inSong .songName, .inSong .songAuthor, .inSong .songMapper, body:not(.inSong) .pp, body:not(.inSong) .playerRank, body:not(.inSong) .playerCountryRank {
+			opacity: 1;
+			transform: translateY(0);
+		}
+		.playerCountryRank {
+			padding-right: 24px;
+			background: right / 16px auto no-repeat;
+		}
+		.songMapper .value::before {
+			content: ' - ';
+			font-size: 12px;
+		}
+		.songMapper .value:empty {
+			display: none;
+		}
+		.difficulty.ExpertPlus { color: #8f48db; }
+		.difficulty.Expert { color: #bf2a42; }
+		.difficulty.Hard { color: tomato; }
+		.difficulty.Normal { color: #59b0f4; }
+		.difficulty.Easy { color: mediumseagreen; }
+
+		.hideSongInfo .songInfos, .hideScoreInfo .scoreInfo {
+			display: none;
+		}
+	</style>
+</head>
+<body>
+	<div class="playerInfos">
+		<img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" class="playerImage">
+		<div class="playerDetails">
+			<div class="pp"></div>
+			<div class="playerRank"></div>
+			<div class="playerCountryRank"></div>
+		</div>
+	</div>
+	<div class="songInfos">
+		<img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" class="songImage">
+		<div class="songDetails">
+			<div class="songName"></div>
+			<div class="songAuthor"></div>
+			<div class="songMapper"><span class="difficulty"></span><span class="value"></span></div>
+		</div>
+	</div>
+	<div class="scoreInfo">
+		<div class="misses">
+			<div class="description">misses</div>
+			<div class="value">0</div>
+			<div class="details fcIndicator">FC</div>
+		</div>
+		<div class="combo">
+			<div class="description">combo</div>
+			<div class="value">0</div>
+		</div>
+		<div class="percentage">
+			<div class="description">score</div>
+			<div class="value">0.00%</div>
+			<div class="details score">0</div>
+		</div>
+		<div class="rank">
+			<div class="description">rank</div>
+			<div class="value">E</div>
+		</div>
+		<div class="time">
+			<div class="description">time</div>
+			<div class="value">0:00</div>
+			<div class="details max"></div>
+			<div class="timeIndicator"></div>
+		</div>
+	</div>
+	<script>
+		const qs = location.search.slice(1).split('&').filter(e => e).reduce((qs, e) => {
+			let split = e.split('=');
+			qs[split[0]] = split.length > 1 ? split[1] : true;
+			return qs;
+		}, {});
+		if (qs.hideSongInfo) {
+			document.body.classList.add('hideSongInfo');
+		}
+		if (qs.hideScoreInfo) {
+			document.body.classList.add('hideScoreInfo');
+		}
+		function formatTime(millis) {
+			let minutesFloat = millis / 60000;
+			let minutes = Math.floor(minutesFloat);
+			let seconds = Math.floor((minutesFloat - minutes) * 60);
+			return minutes + ':' + ('0' + seconds).slice(-2);
+		}
+		function fetchHTML(url) {
+			return fetch(url).then(r => r.ok ? r.text() : Promise.reject()).then(text => {
+				if (text.indexOf('<html') === -1) {
+					throw new Error('not an HTML page: ' + text);
+				}
+				let parser = new DOMParser();
+				return parser.parseFromString(text, 'text/html');
+			});
+		}
+		function getNumber(str) {
+			let match = str.match(/\d[\d,]+(\.\d+)?/);
+			if (!match) {
+				return 0;
+			}
+			return +match[0].replace(/,/g, '') || 0;
+		}
+		const dom = {
+			playerImage: document.querySelector('.playerImage'),
+			pp: document.querySelector('.pp'),
+			playerRank: document.querySelector('.playerRank'),
+			playerCountryRank: document.querySelector('.playerCountryRank'),
+			songImage: document.querySelector('.songImage'),
+			songName: document.querySelector('.songName'),
+			songAuthor: document.querySelector('.songAuthor'),
+			songMapper: document.querySelector('.songMapper .value'),
+			songDiff: document.querySelector('.songMapper .difficulty'),
+			misses: document.querySelector('.misses .value'),
+			combo: document.querySelector('.combo .value'),
+			percentage: document.querySelector('.percentage .value'),
+			score: document.querySelector('.percentage .score'),
+			rank: document.querySelector('.rank .value'),
+			time: document.querySelector('.time .value'),
+			length: document.querySelector('.time .max'),
+			progress: document.querySelector('.timeIndicator'),
+		};
+		const playerID = typeof qs.u === 'string' && qs.u.length > 5 && qs.u;
+		let refreshingUser = false;
+		async function refreshUser() {
+			if (!playerID || refreshingUser) {
+				return;
+			}
+			refreshingUser = true;
+			try {
+				// https://cors-anywhere.herokuapp.com/https://scoresaber.com/u/
+				let urlprefix = location.host === 'scoresaber.balibalo.xyz' ? '/proxy/u/' : 'https://cors-anywhere.herokuapp.com/https://scoresaber.com/u/';
+				let doc = await fetchHTML(urlprefix + playerID);
+				let data = doc.querySelector('.columns ul');
+				let countryData = data.children[0].querySelector('a[href*=country]');
+				dom.pp.textContent = getNumber(data.children[1].textContent).toLocaleString() + 'pp';
+				dom.playerRank.textContent = '#' + getNumber(data.children[0].textContent).toLocaleString();
+				dom.playerCountryRank.textContent = '#' + getNumber(countryData.textContent).toLocaleString();
+				dom.playerCountryRank.style.backgroundImage = 'url("https://scoresaber.com' + countryData.querySelector('img').getAttribute('src') + '")';
+				dom.playerImage.src = doc.querySelector('.avatar img').src;
+			} catch(e) { console.log('err', e); }
+			refreshingUser = false;
+		}
+		refreshUser();
+
+		let maxScore = 0;
+		let songDuration = 0;
+		let songStart = 0;
+		let songPaused = null;
+		let timeUpdater = (function() {
+			let timer = null;
+			let update = () => {
+				let to = songPaused || Date.now();
+				let current = Math.max(Math.min(to - songStart, songDuration), 0) || 0;
+				dom.time.textContent = formatTime(current);
+				dom.progress.style.transform = 'scaleX(' + (songDuration ? current / songDuration : 0) + ')';
+				timer = requestAnimationFrame(update);
+			};
+			return {
+				start: () => {
+					if (timer) {
+						return;
+					}
+					timer = requestAnimationFrame(update);
+				},
+				stop: () => {
+					cancelAnimationFrame(timer);
+					timer = null;
+				}
+			};
+		})();
+
+		function updateCombo(perf) {
+			dom.combo.textContent = perf.combo.toLocaleString();
+		}
+		function updateMisses(perf) {
+			dom.misses.textContent = perf.missedNotes.toLocaleString();
+		}
+		function updatePercentage(perf) {
+			dom.percentage.textContent = (perf.currentMaxScore ? 100 * perf.score / perf.currentMaxScore : 0).toFixed(2) + '%';
+		}
+
+		const events = {
+			hello: (status) => {
+				if (status.game.scene === 'Song') {
+					events.songStart(status);
+				}
+			},
+			songStart: (status) => {
+				document.body.classList.add('inSong');
+				if (status.performance.combo === status.performance.passedNotes) {
+					document.body.classList.add('fc');
+				}
+				let beatmap = status.beatmap;
+				dom.songName.textContent = beatmap.songName || '???';
+				dom.songAuthor.textContent = beatmap.songAuthorName || 'Unknown author';
+				dom.songMapper.textContent = beatmap.levelAuthorName || '';
+				dom.songDiff.textContent = beatmap.difficulty;
+				dom.songDiff.className = 'difficulty ' + beatmap.difficulty.replace('+', 'Plus');
+				dom.songImage.src = 'data:image/png;base64,' + beatmap.songCover;
+				maxScore = beatmap.maxScore;
+				songDuration = beatmap.length;
+				songStart = beatmap.start;
+				songPaused = beatmap.paused;
+				dom.length.textContent = formatTime(songDuration);
+				updateCombo(status.performance);
+				updateMisses(status.performance);
+				events.scoreChanged(status);
+				timeUpdater.start();
+			},
+			finished: () => {
+				timeUpdater.stop();
+				setTimeout(refreshUser, 5000);
+			},
+			failed: () => {
+				timeUpdater.stop();
+			},
+			menu: () => {
+				document.body.classList.remove('inSong');
+				timeUpdater.stop();
+			},
+			obstacleEnter: (status) => {
+				document.body.classList.remove('fc');
+				updateCombo(status.performance);
+			},
+			bombCut: (status) => {
+				document.body.classList.remove('fc');
+				updateCombo(status.performance);
+			},
+			noteCut: (status) => {
+				updateCombo(status.performance);
+			},
+			noteMissed: (status) => {
+				document.body.classList.remove('fc');
+				updateCombo(status.performance);
+				updateMisses(status.performance);
+				updatePercentage(status.performance);
+			},
+			pause: (status) => {
+				songPaused = status.beatmap.paused;
+			},
+			resume: (status) => {
+				songPaused = null;
+				songStart = status.beatmap.start;
+			},
+			scoreChanged: (status) => {
+				let perf = status.performance;
+				dom.rank.textContent = perf.rank;
+				dom.score.textContent = perf.score.toLocaleString();
+				updatePercentage(perf);
+			},
+		};
+
+		function connect() {
+			var socket = new WebSocket('ws://localhost:6557/socket');
+			socket.addEventListener('message', (message) => {
+				var data = JSON.parse(message.data);
+				var event = events[data.event];
+
+				if (typeof event === 'function') {
+					event(data.status, data.time);
+				}
+			});
+			socket.addEventListener('close', () => {
+				console.log('Socket error - reconnecting in 3s');
+				setTimeout(connect, 3000);
+			});
+		}
+		connect();
+	</script>
+</body>
+</html>
