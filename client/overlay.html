@@ -8,12 +8,15 @@
 	<link href="https://fonts.googleapis.com/css?family=Source+Code+Pro&display=swap" rel="stylesheet">
 	<style>
 		body {
-			background: #333;
+			margin: 0;
+			overflow: hidden;
+			background: rgba(0, 0, 0, 0);
 			color: #fff;
 			font-family: 'Source Code Pro', monospace;
 			font-size: 16px;
 			text-shadow: 2px 0 0 #000, -2px 0 0 #000, 0 2px 0 #000, 0 -2px 0 #000, 0 0 4px #000;
 		}
+		.debug { background: #333; }
 		.scoreInfo {
 			position: fixed;
 			bottom: 0;
@@ -228,12 +231,9 @@
 			qs[split[0]] = split.length > 1 ? split[1] : true;
 			return qs;
 		}, {});
-		if (qs.hideSongInfo) {
-			document.body.classList.add('hideSongInfo');
-		}
-		if (qs.hideScoreInfo) {
-			document.body.classList.add('hideScoreInfo');
-		}
+		if (qs.debug) document.body.classList.add('debug');
+		if (qs.hideSongInfo) document.body.classList.add('hideSongInfo');
+		if (qs.hideScoreInfo) document.body.classList.add('hideScoreInfo');
 		function formatTime(millis) {
 			let minutesFloat = millis / 60000;
 			let minutes = Math.floor(minutesFloat);
