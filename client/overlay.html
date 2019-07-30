@@ -250,7 +250,7 @@
 			});
 		}
 		function getNumber(str) {
-			let match = str.match(/\d[\d,]+(\.\d+)?/);
+			let match = str.match(/\d[\d,]*(\.\d+)?/);
 			if (!match) {
 				return 0;
 			}
@@ -292,7 +292,11 @@
 				dom.playerRank.textContent = '#' + getNumber(data.children[0].textContent).toLocaleString();
 				dom.playerCountryRank.textContent = '#' + getNumber(countryData.textContent).toLocaleString();
 				dom.playerCountryRank.style.backgroundImage = 'url("https://scoresaber.com' + countryData.querySelector('img').getAttribute('src') + '")';
-				dom.playerImage.src = doc.querySelector('.avatar img').src;
+				let image = doc.querySelector('.avatar img').getAttribute('src');
+				if (image[0] === '/') {
+					image = 'https://scoresaber.com' + image;
+				}
+				dom.playerImage.src = image;
 			} catch(e) { console.log('err', e); }
 			refreshingUser = false;
 		}
