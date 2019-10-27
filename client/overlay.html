@@ -411,7 +411,7 @@
 		};
 
 		function connect() {
-			var socket = new WebSocket('ws://localhost:6557/socket');
+			var socket = new WebSocket('ws://' + (qs.ip || 'localhost') + ':' + (qs.port || '6557') + '/socket');
 			socket.addEventListener('message', (message) => {
 				var data = JSON.parse(message.data);
 				var event = events[data.event];

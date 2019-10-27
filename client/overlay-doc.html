@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<title>Overlay info</title>
+</head>
+<body>
+	<h3>Usage</h3>
+	Add the page to OBS as a browser source.<br>
+	Recommended size for the browser source: 1920x1080
+	<h3>Options</h3>
+	Query string options (after ? and separated by &amp;)
+	<ul>
+		<li><code>u</code>: your scoresaber ID (number after /u/ in your scoresaber url) - adds your profile picture, PP and rank in the top left corner while not in a song</li>
+		<li><code>hideSongInfo</code>: hides the song info from the top left during a song</li>
+		<li><code>hideScoreInfo</code>: hides the current score info (bottom bar) during a song</li>
+		<li><code>ip</code> / <code>port</code>: override default websocket connection settings (useful for 2 PC setups)</li>
+	</ul>
+	<h3>Examples</h3>
+	<ul>
+		<li><a href="/overlay?u=2429129807113296">overlay?u=2429129807113296</a>: standard overlay showing Taichidesu's rank between songs</li>
+		<li><a href="/overlay?u=2429129807113296&hideSongInfo&hideScoreInfo">overlay?u=2429129807113296&hideSongInfo&hideScoreInfo</a>: overlay showing <em>only</em> Taichidesu's rank between songs, and nothing during songs</li>
+		<li><a href="/overlay?hideSongInfo">overlay?hideSongInfo</a>: overlay not showing anything in the top left corner, only current score info during songs</li>
+	</ul>
+</body>
+</html>

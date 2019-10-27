@@ -67,11 +67,11 @@ async function pause(duration) {
 	await new Promise(res => setTimeout(res, duration));
 }
 
-function fetchJSON(url) {
-	return fetch(url).then(r => r.json());
+function fetchJSON(...args) {
+	return fetch(...args).then(r => r.json());
 }
-async function fetchHTML(url) {
-	return fetch(url).then(r => r.ok ? r.text() : Promise.reject()).then(text => {
+async function fetchHTML(...args) {
+	return fetch(...args).then(r => r.ok ? r.text() : Promise.reject()).then(text => {
 		if (text.indexOf('<html') === -1) {
 			throw new Error('not an HTML page: ' + text);
 		}
@@ -213,6 +213,9 @@ function getImageSrc(el) {
 			}
 			let line = div('line');
 			line.onclick = () => {
+				if (profileInput.disabled) {
+					return;
+				}
 				profileInput.value = user.id;
 				onSubmit();
 			};
@@ -362,6 +365,12 @@ function getImageSrc(el) {
 		} catch(e) { /* Nothing */ }
 		fullPP = getFullPPWithUpdate(0, 0);
 		updatePlayerProfile();
+		// Also update the list of ranked maps
+		let newRankedRequest = fetchJSON('/ranked', { headers: { 'If-Modified-Since': new Date(rankedMapsUpdate).toUTCString() } });
+		try {
+			await newRankedRequest;
+			rankedMapsPromise = newRankedRequest;
+		} catch(e) {}
 		let rankedMapsData = await rankedMapsPromise;
 		updateLists(rankedMapsData, playerSongs);
 		document.body.classList.remove('refreshing');
@@ -370,7 +379,7 @@ function getImageSrc(el) {
 	function updateLists(rankedMapsData, playerSongs) {
 		played.elements = Object.values(playerSongs);
 		unplayed.elements = rankedMapsData.list.filter(song => {
-			return !playerSongs.hasOwnProperty(song.uid);
+			return !Object.prototype.hasOwnProperty.call(playerSongs, song.uid);
 		}).map(e => Object.assign({}, e));
 		played.update();
 		unplayed.update();
@@ -580,8 +589,9 @@ function getImageSrc(el) {
 		}
 
 		init(elements) {
-			elements.forEach(el => updateEstimate(el, getScoreEstimate(el.stars)));
-			elements.sort((a, b) => b.pp - a.pp);
+			// elements.forEach(el => updateEstimate(el, getScoreEstimate(el.stars)));
+			// elements.sort((a, b) => b.pp - a.pp);
+			elements.sort((a, b) => b.stars - a.stars);
 			this.rankInput.placeholder = (user.rank || 1).toLocaleString() + ' (desired rank)';
 			this.rank = ~~(+this.rankInput.value.replace(/,/g, ''));
 			if (!this.rank || this.rank <= 0) {
@@ -594,7 +604,7 @@ function getImageSrc(el) {
 			let rank = this.rank;
 			let key = 'scoreAtRank'+rank;
 			let usePause = false;
-			if (!element.hasOwnProperty(key)) {
+			if (!Object.prototype.hasOwnProperty.call(element, key)) {
 				let score = 0;
 				let scores = element.scores;
 				if (typeof scores === 'string') {
@@ -678,7 +688,7 @@ function getImageSrc(el) {
 			return fixedForm;
 		}
 
-		init(elements) {
+		init() {
 			this.score = parseFloat(this.fixedInput.value.trim()) || 94.333333;
 			if (this.score <= 0) {
 				this.score = 0.01;
@@ -750,13 +760,13 @@ function getImageSrc(el) {
 		}
 
 		createPlaylist() {
-			// eslint-disable-next-line
+			// eslint-disable-next-line no-alert
 			let count = +prompt('Number of items to include in the playlist', 50);
 			if (!count) {
 				return;
 			}
 			let date = (new Date()).toISOString().slice(0, 10);
-			let songs = this.elements.filter(e => e.beatSaverKey).slice(0, count).map(e => ({ hash: e.id, songName: e.name }));
+			let songs = this.elements.filter(e => e.id).slice(0, count).map(e => ({ hash: e.id, songName: e.name }));
 			let data = {
 				playlistTitle: this.title + ' (' + date + ')',
 				playlistAuthor: 'Peepee',

@@ -13,16 +13,6 @@ body {
   font-family: Calibri,Candara,Segoe,"Segoe UI",Optima,Arial,sans-serif;
   overflow-x: hidden;
   margin: 0; }
-  body::after {
-    content: 'One sec...';
-    font-size: 24px;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    opacity: 1;
-    visibility: visible;
-    transition: opacity .5s, visibility .5s; }
 
 @keyframes appear {
   from {
@@ -42,23 +32,24 @@ body {
   align-items: center;
   justify-content: center;
   overflow: auto;
-  display: none;
+  display: flex;
   animation: appear .5s; }
 
-.wf-neontubes-n4-active body::after {
-  opacity: 0;
-  visibility: hidden; }
-
-.wf-neontubes-n4-active .pick {
-  display: flex; }
+.wf-neontubes-n4-active .title {
+  line-height: 1;
+  opacity: 1;
+  margin-bottom: 32px; }
 
 .title {
   font-family: NeonTubes, sans-serif;
   text-transform: uppercase;
-  margin: 0 0 32px;
+  margin: 0;
   color: #fff0f0;
   font-size: 60px;
-  text-shadow: 0 0 40px #ff0404, 0 0 20px #ff0404; }
+  text-shadow: 0 0 40px #ff0404, 0 0 20px #ff0404;
+  line-height: 0;
+  opacity: 0;
+  transition: line-height .3s, opacity .3s, margin-bottom .3s; }
   .title .blue {
     color: #f0faff;
     text-shadow: 0 0 40px #00b4ff, 0 0 20px #00b4ff;

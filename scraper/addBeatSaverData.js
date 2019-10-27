@@ -1,12 +1,8 @@
-const fs = require('fs');
-const path = require('path');
+/* eslint-disable require-atomic-updates */
 const request = require('request-promise-native');
-const { promiseSequence, timetag } = require('./utils');
 
-// Approximation (shoud rather take a bunch of scores for each song and deduce it from that)
-const PP_PER_STAR = 42.114296;
-
-async function addBeatSaverData(item) {
+module.exports = async function addBeatSaverData(item) {
+	console.log('Getting BeatSaver data for', item);
 	if (!item || !item.id) {
 		return;
 	}
@@ -40,79 +36,7 @@ async function addBeatSaverData(item) {
 		// item.bombsCount = characteristics.bombs;
 		item.njs = characteristics.njs;
 	}
-}
-
-async function getFromPage(page, list = []) {
-	console.log(timetag(), 'Getting page ' + page);
-	const data = await request({
-		uri: 'http://scoresaber.com/api.php?function=get-leaderboards&cat=3&ranked=1&limit=20&page=' + page,
-		json: true
-	});
-	let songs = data.songs.map(song => {
-		// Only Standard for now
-		let diffMatch = song.diff.match(/^_(Easy|Normal|Hard|Expert|ExpertPlus)_SoloStandard$/);
-		if (!diffMatch || !song.stars) {
-			return;
-		}
-		let scores = song.scores;
-		if (typeof scores === 'string') {
-			scores = +scores.replace(/,/g, '') || scores;
-		}
-		return {
-			uid: song.uid,
-			id: song.id,
-			name: song.name,
-			artist: song.songAuthorName,
-			mapper: song.levelAuthorName,
-			bpm: song.bpm,
-			diff: diffMatch[1],
-			scores: scores,
-			recentScores: song['24hr'],
-			stars: song.stars,
-			pp: song.stars * PP_PER_STAR
-		};
-	}).filter(e => e);
-	await promiseSequence(songs, addBeatSaverData);
-	list = list.concat(songs);
-	if (data.songs.length) {
-		return getFromPage(page + 1, list);
-	}
-	return list;
-}
-
-async function getAll() {
-	try {
-		let list = await getFromPage(1);
-		fs.writeFileSync(path.resolve(__dirname, 'data/ranked.json'), JSON.stringify({
-			list,
-			timestamp: Date.now()
-		}));
-		console.log(timetag(), '---- ranked.json updated ----');
-	} catch(err) {
-		console.log(timetag(), 'Error scraping scoresaber', err);
-	}
-}
-
-getAll();
-
-// Scoresaber:
-// {
-//     "songs": [
-//         {
-//             "uid": 101208,
-//             "id": "5EC73C4DBD293FA7B7F794E38C8A9E6F",
-//             "name": "Happppy song",
-//             "songSubName": "SOOOO",
-//             "author": "Hexagonial",
-//             "bpm": 226,
-//             "diff": "_ExpertPlus_SoloStandard",
-//             "scores": "920",
-//             "24hr": 34,
-//             "stars": 9.91,
-//             "image": "\/imports\/images\/songs\/5EC73C4DBD293FA7B7F794E38C8A9E6F.png"
-//         },
-//         ...
-
+};
 
 // BeatSaver:
 // {
