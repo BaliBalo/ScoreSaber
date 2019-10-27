@@ -2,7 +2,6 @@
 const request = require('request-promise-native');
 
 module.exports = async function addBeatSaverData(item) {
-	console.log('Getting BeatSaver data for', item);
 	if (!item || !item.id) {
 		return;
 	}
