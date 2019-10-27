@@ -1,4 +1,4 @@
-// const fs = require('fs');
+const fs = require('fs');
 const path = require('path');
 const express = require('express');
 const request = require('request');
@@ -58,9 +58,13 @@ app.get('/ranked', async (req, res) => {
 let top200 = {
 	playlistTitle: 'Top 200 Ranked',
 	playlistAuthor: 'ScoreSaber',
-	image: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABYAAAAWCAYAAADEtGw7AAAABmJLR0QA/wDeABpJUp2zAAAACXBIWXMAAA3XAAAN1wFCKJt4AAAAt0lEQVQ4y9WVsQ6FIAxFrXF/m4sT36Hj+2z/hcnFRJP3BXWxBrDgRYPJ60YJx8ttpcTMlRtE5CfAYGZy13VVKJpQKS/9LdBxfldeTrF8aR73zM/eAslNhVfe42iYSc/b7gHYTHFAau/SCtvpii+gmMchHIBiHodwAIqDM4Dv/dJqe7kqNSsS9jTJK0uh3ILFcusAeJxZKNyKB0BMsajW2i3MfYz/jMoEOb1ymdF+/UlSrN3o72beBhb2VUMsk1n6AAAAAElFTkSuQmCC',
+	image: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
 	songs: []
 };
+try {
+	let scoresaber200Image = fs.readFileSync(path.resolve('client/scoresaber200.png'));
+	top200.image = 'data:image/png;base64,' + new Buffer(scoresaber200Image).toString('base64');
+} catch(e) {}
 let top200Update = new Date().toUTCString();
 async function updateTop200() {
 	try {
