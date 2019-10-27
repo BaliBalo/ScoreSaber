@@ -63,7 +63,7 @@ let top200 = {
 };
 try {
 	let scoresaber200Image = fs.readFileSync(path.resolve('client/scoresaber200.png'));
-	top200.image = 'data:image/png;base64,' + new Buffer(scoresaber200Image).toString('base64');
+	top200.image = 'data:image/png;base64,' + Buffer.from(scoresaber200Image).toString('base64');
 } catch(e) {}
 let top200Update = new Date().toUTCString();
 async function updateTop200() {
