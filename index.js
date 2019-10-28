@@ -4,7 +4,7 @@ const express = require('express');
 const request = require('request');
 const CronJob = require('cron').CronJob;
 // const cors = require('cors');
-const { addUpdateListener, getLastUpdate, ranked } = require('./utils');
+const { timetag, addUpdateListener, getLastUpdate, ranked } = require('./utils');
 const checkNew = require('./scraper/checkNew');
 const removeUnranks = require('./scraper/removeUnranks');
 let auth = {};
@@ -101,5 +101,5 @@ new CronJob('0 0 */2 * * *', removeUnranks, null, true);
 
 (async function() {
 	await updateTop200();
-	app.listen(port, () => console.log('Scoresaber server listening (port '+port+')'));
+	app.listen(port, () => console.log(timetag(), 'Scoresaber server listening (port '+port+')'));
 })();
