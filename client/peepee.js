@@ -802,7 +802,7 @@ function getImageSrc(el) {
 		}
 
 		displayMore() {
-			if (this.display >= this.elements.length) {
+			if (this.displayed >= this.elements.length) {
 				return;
 			}
 			this.displayed += 20;
