@@ -2,11 +2,6 @@ const { promiseSequence, timetag, setLastUpdate, ranked } = require('../utils');
 const addBeatSaverData = require('./addBeatSaverData');
 const scoresaber = require('./scoresaber');
 
-// const Datastore = require('nedb');
-// const ranked = new Datastore({ filename: path.resolve(__dirname, '../data/ranked.db'), autoload: true });
-// const findRanked = promisify(ranked.find.bind(ranked));
-// const insertRanked = promisify(ranked.insert.bind(ranked));
-
 // Approximation (shoud rather take a bunch of scores for each song and deduce it from that)
 const PP_PER_STAR = 42.114296;
 
@@ -52,11 +47,11 @@ async function checkFromPage(page) {
 	}).filter(e => e);
 	await promiseSequence(songs, addBeatSaverData);
 	if (songs.length) {
+		await ranked.insert(songs);
+		await setLastUpdate();
 		let multiline = songs.length > 1;
 		let desc = songs.map(song => (multiline ? '  * ' : '') + [song.mapper, song.name, song.diff].join(' - ') + ' (' + song.uid + ')');
 		console.log(timetag(), 'New ranked map' + (multiline ? 's:\n' : ': ') + desc.join('\n'));
-		await ranked.insert(songs);
-		await setLastUpdate();
 	}
 
 	if (!existing.includes(data.songs[data.songs.length - 1].uid)) {

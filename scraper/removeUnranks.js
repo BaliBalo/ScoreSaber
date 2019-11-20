@@ -24,10 +24,15 @@ async function getIdsFromPage(page, list = []) {
 
 async function run() {
 	let allIds = await getIdsFromPage(1);
-	let removed = await ranked.remove({ uid: { $nin: allIds } }, { multiple: true });
-	if (removed) {
-		console.log(timetag(), 'Removed ' + removed + ' map' + (removed !== 1 ? 's' : '') + ' from ranked list');
+	let condition = { uid: { $nin: allIds } };
+	let toRemove = await ranked.find(condition);
+	if (toRemove.length) {
+		await ranked.remove(condition, { multiple: true });
 		await setLastUpdate();
+
+		let multiline = toRemove.length > 1;
+		let desc = toRemove.map(song => (multiline ? '  * ' : '') + [song.mapper, song.name, song.diff].join(' - ') + ' (' + song.uid + ')');
+		console.log(timetag(), 'Removed ' + toRemove.length + ' map' + (multiline ? 's' : '') + ' from ranked list:' + (multiline ? '\n' : ' ') + desc.join('\n'));
 	}
 }
 
