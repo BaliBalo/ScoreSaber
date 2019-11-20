@@ -1,10 +1,6 @@
 const { timetag, setLastUpdate, ranked } = require('../utils');
 const scoresaber = require('./scoresaber');
 
-// const Datastore = require('nedb');
-// const ranked = new Datastore({ filename: path.join(__dirname, '../data/ranked.db'), autoload: true });
-// const removeRanked = promisify(ranked.remove.bind(ranked));
-
 async function getIdsFromPage(page, list = []) {
 	// console.log(timetag(), 'Getting page ' + page);
 	let data;
@@ -24,6 +20,9 @@ async function getIdsFromPage(page, list = []) {
 
 async function run() {
 	let allIds = await getIdsFromPage(1);
+	if (!allIds) {
+		return console.log('Error getting list of map ids');
+	}
 	let condition = { uid: { $nin: allIds } };
 	let toRemove = await ranked.find(condition);
 	if (toRemove.length) {
