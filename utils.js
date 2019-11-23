@@ -78,6 +78,10 @@ async function removeDupes() {
 		return dupes;
 	}, {});
 	let toRemove = [].concat(...Object.values(dupes));
+	if (!toRemove.length) {
+		return 0;
+	}
+	console.log(timetag(), 'REMOVING ' + toRemove.length + ' DUPES');
 	return ranked.remove({ _id: { $in: toRemove } }, { multiple: true });
 }
 

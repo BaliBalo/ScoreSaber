@@ -101,6 +101,7 @@ const execTask = fn => async (req, res) => {
 		}
 		res.send(message);
 	} catch(e) {
+		console.log(timetag(), 'Error during task', e);
 		res.status(500).send('Error');
 	}
 };
