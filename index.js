@@ -4,7 +4,13 @@ const express = require('express');
 const request = require('request');
 const CronJob = require('cron').CronJob;
 // const cors = require('cors');
-const { timetag, addUpdateListener, getLastUpdate, ranked } = require('./utils');
+const {
+	timetag,
+	addUpdateListener,
+	getLastUpdate,
+	ranked,
+	removeDupes
+} = require('./utils');
 const checkNew = require('./scraper/checkNew');
 const removeUnranks = require('./scraper/removeUnranks');
 let auth = {};
@@ -88,8 +94,12 @@ app.get(/^\/top-?200(\.bplist)?/, (req, res) => {
 const execTask = fn => async (req, res) => {
 	try {
 		console.log(timetag(), 'Manually executing task from', req.path);
-		await fn();
-		res.send('Done');
+		let result = await fn();
+		let message = 'Done';
+		if (result !== undefined) {
+			message += ' - ' + result;
+		}
+		res.send(message);
 	} catch(e) {
 		res.status(500).send('Error');
 	}
@@ -97,6 +107,7 @@ const execTask = fn => async (req, res) => {
 app.use('/admin/check-new', checkAuth, execTask(checkNew));
 app.use('/admin/check-new/full', checkAuth, execTask(checkNew.full));
 app.use('/admin/remove-unranks', checkAuth, execTask(removeUnranks));
+app.use('/admin/remove-dupes', checkAuth, execTask(removeDupes));
 
 new CronJob('0 */5 * * * *', checkNew, null, true);
 new CronJob('0 0 */2 * * *', removeUnranks, null, true);

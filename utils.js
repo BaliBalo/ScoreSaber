@@ -5,7 +5,13 @@ const { promisify } = require('util');
 const lastUpdateFile = path.resolve(__dirname, 'data/lastUpdate');
 
 const Datastore = require('nedb');
-const ranked = new Datastore({ filename: path.resolve(__dirname, 'data/ranked.db'), autoload: true });
+const rankedDB = new Datastore({ filename: path.resolve(__dirname, 'data/ranked.db'), autoload: true });
+const ranked = {
+	db: rankedDB,
+	find: promisify(rankedDB.find.bind(rankedDB)),
+	insert: promisify(rankedDB.insert.bind(rankedDB)),
+	remove: promisify(rankedDB.remove.bind(rankedDB)),
+};
 
 function promiseSequence(array, fn, data) {
 	if (array === undefined || array === null) {
@@ -61,6 +67,20 @@ async function getLastUpdate() {
 	return Date.now();
 }
 
+async function removeDupes() {
+	let all = await ranked.find({});
+	let dupes = all.reduce((dupes, song) => {
+		if (!dupes[song.uid]) {
+			dupes[song.uid] = [];
+		} else {
+			dupes[song.uid].push(song._id);
+		}
+		return dupes;
+	}, {});
+	let toRemove = [].concat(...Object.values(dupes));
+	return ranked.remove({ _id: { $in: toRemove } });
+}
+
 module.exports = {
 	promiseSequence,
 	timetag,
@@ -68,10 +88,6 @@ module.exports = {
 	getLastUpdate,
 	lastUpdateFile,
 	addUpdateListener,
-	ranked: {
-		db: ranked,
-		find: promisify(ranked.find.bind(ranked)),
-		insert: promisify(ranked.insert.bind(ranked)),
-		remove: promisify(ranked.remove.bind(ranked)),
-	}
+	removeDupes,
+	ranked
 };
