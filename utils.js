@@ -82,7 +82,7 @@ async function removeDupes() {
 		return 0;
 	}
 	console.log(timetag(), 'REMOVING ' + toRemove.length + ' DUPES');
-	return ranked.remove({ _id: { $in: toRemove } }, { multiple: true });
+	return ranked.remove({ _id: { $in: toRemove } }, { multi: true });
 }
 
 module.exports = {

@@ -26,7 +26,7 @@ async function run() {
 	let condition = { uid: { $nin: allIds } };
 	let toRemove = await ranked.find(condition);
 	if (toRemove.length) {
-		await ranked.remove(condition, { multiple: true });
+		await ranked.remove(condition, { multi: true });
 		await setLastUpdate();
 
 		let multiline = toRemove.length > 1;
