@@ -5,23 +5,13 @@ const scoresaber = require('./scoresaber');
 // Approximation (shoud rather take a bunch of scores for each song and deduce it from that)
 const PP_PER_STAR = 42.114296;
 
-async function checkFromPage(page) {
-	// console.log(timetag(), 'Checking new ranks page ' + page);
-	let data;
-	try {
-		data = await scoresaber.recentRanks(page);
-	} catch(e) {}
-	if (!data || !data.songs || !data.songs.length) {
-		return;
-	}
-	const existing = (await ranked.find({ uid: { $in: data.songs.map(e => e.uid) } })).map(e => e.uid);
-	let newRanked = data.songs.filter(e => !existing.includes(e.uid));
+async function addNew(songs) {
+	const existing = (await ranked.find({ uid: { $in: songs.map(e => e.uid) } })).map(e => e.uid);
+	let newRanked = songs.filter(e => !existing.includes(e.uid));
 	if (!newRanked.length) {
-		// console.log(timetag(), 'Done checking new ranked maps');
-		return;
+		return 0;
 	}
-
-	let songs = newRanked.map(song => {
+	let songsUpdated = newRanked.map(song => {
 		// Only Standard for now
 		let diffMatch = song.diff.match(/^_(Easy|Normal|Hard|Expert|ExpertPlus)_SoloStandard$/);
 		if (!diffMatch || !song.stars) {
@@ -45,7 +35,7 @@ async function checkFromPage(page) {
 			pp: song.stars * PP_PER_STAR
 		};
 	}).filter(e => e);
-	await promiseSequence(songs, addBeatSaverData);
+	await promiseSequence(songsUpdated, addBeatSaverData);
 	if (songs.length) {
 		await ranked.insert(songs);
 		await setLastUpdate();
@@ -53,38 +43,41 @@ async function checkFromPage(page) {
 		let desc = songs.map(song => (multiline ? '  * ' : '') + [song.mapper, song.name, song.diff].join(' - ') + ' (' + song.uid + ')');
 		console.log(timetag(), 'New ranked map' + (multiline ? 's:\n' : ': ') + desc.join('\n'));
 	}
+	return songs.length;
+}
 
-	if (!existing.includes(data.songs[data.songs.length - 1].uid)) {
-		// newRanked.length === data.length
-		//  ^ dangerous cause if a new map is ranked while we check the page, it will push everything down
-		//    and the next page would only have the first item processed
-		//    checking only the last item only breaks if a full page of new ranks is created while processing a page
+async function checkFromPage(page) {
+	// console.log(timetag(), 'Checking new ranks page ' + page);
+	let data;
+	try {
+		data = await scoresaber.recentRanks(page);
+	} catch(e) {}
+	if (!data || !data.songs || !data.songs.length) {
+		return;
+	}
+	if (addNew(data.songs)) {
 		return checkFromPage(page + 1);
 	}
+}
+
+async function _checkFull(page) {
+	let data;
+	try {
+		data = await scoresaber.ranked(page);
+	} catch(e) {}
+	if (!data || !data.songs || !data.songs.length) {
+		return;
+	}
+	addNew(data.songs);
+	return _checkFull(page + 1);
+}
+async function checkFull() {
+	_checkFull(1);
 }
 
 if (require.main === module) {
 	checkFromPage(1);
 } else {
 	module.exports = async () => checkFromPage(1);
+	module.exports.full = async () => checkFull();
 }
-
-// Scoresaber:
-// {
-// 	"songs": [
-// 		{
-// 			 "uid": 175671,
-// 			 "id": "EA08458FFE4336A205E1CBAE539183E697845358",
-// 			 "name": "Great Distance",
-// 			 "songSubName": "feat.chelly",
-// 			 "songAuthorName": "ryo (supercell)",
-// 			 "levelAuthorName": "Uninstaller",
-// 			 "bpm": 197,
-// 			 "diff": "_Expert_SoloStandard",
-// 			 "scores": "639",
-// 			 "scores_day": 99,
-// 			 "ranked": 1,
-// 			 "stars": 4.49,
-// 			 "image": "\/imports\/images\/songs\/EA08458FFE4336A205E1CBAE539183E697845358.png"
-// 		},
-// 		...

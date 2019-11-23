@@ -95,6 +95,7 @@ const execTask = fn => async (req, res) => {
 	}
 };
 app.use('/admin/check-new', checkAuth, execTask(checkNew));
+app.use('/admin/check-new/full', checkAuth, execTask(checkNew.full));
 app.use('/admin/remove-unranks', checkAuth, execTask(removeUnranks));
 
 new CronJob('0 */5 * * * *', checkNew, null, true);

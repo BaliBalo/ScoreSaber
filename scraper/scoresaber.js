@@ -1,3 +1,7 @@
+// e.g. https://scoresaber.com/api.php?function=get-leaderboards&cat=3&page=1&limit=50&ranked=1
+// cat=1 : ordered by rank date
+// cat=3 : order by star diff
+
 const request = require('request-promise-native');
 
 const wait = ms => new Promise(r => setTimeout(r, ms));
