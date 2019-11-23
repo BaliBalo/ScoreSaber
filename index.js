@@ -43,7 +43,10 @@ Object.keys(paths).forEach(key => paths[key] = path.resolve(paths[key]));
 app.set('etag', 'strong');
 
 // app.use(cors());
-app.use('/client', express.static('client', { extensions: ['html'] }));
+
+let serveStaticFiles = express.static('client', { extensions: ['html'] });
+app.use(['/client'], serveStaticFiles);
+app.get(['/favicon.ico', '/robots.txt'], serveStaticFiles);
 app.get('/', (req, res) => res.sendFile(paths.index));
 app.get('/peepee', (req, res) => res.sendFile(paths.peepee));
 app.get('/overlay', (req, res) => res.sendFile(paths.overlay));
@@ -105,10 +108,10 @@ const execTask = fn => async (req, res) => {
 		res.status(500).send('Error');
 	}
 };
-app.use('/admin/check-new', checkAuth, execTask(checkNew));
-app.use('/admin/check-new/full', checkAuth, execTask(checkNew.full));
-app.use('/admin/remove-unranks', checkAuth, execTask(removeUnranks));
-app.use('/admin/remove-dupes', checkAuth, execTask(removeDupes));
+app.all('/admin/check-new', checkAuth, execTask(checkNew));
+app.all('/admin/check-new/full', checkAuth, execTask(checkNew.full));
+app.all('/admin/remove-unranks', checkAuth, execTask(removeUnranks));
+app.all('/admin/remove-dupes', checkAuth, execTask(removeDupes));
 
 new CronJob('0 */5 * * * *', checkNew, null, true);
 new CronJob('0 0 */2 * * *', removeUnranks, null, true);

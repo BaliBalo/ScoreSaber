@@ -1,0 +1,6 @@
+User-agent: *
+Disallow: /admin/
+Disallow: /proxy/
+Disallow: /ranked
+Disallow: /top200
+Allow: /
