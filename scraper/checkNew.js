@@ -5,13 +5,13 @@ const scoresaber = require('./scoresaber');
 // Approximation (shoud rather take a bunch of scores for each song and deduce it from that)
 const PP_PER_STAR = 42.114296;
 
-async function addNew(songs) {
-	const existing = (await ranked.find({ uid: { $in: songs.map(e => e.uid) } })).map(e => e.uid);
-	let newRanked = songs.filter(e => !existing.includes(e.uid));
+async function addNew(songsRaw) {
+	const existing = (await ranked.find({ uid: { $in: songsRaw.map(e => e.uid) } })).map(e => e.uid);
+	let newRanked = songsRaw.filter(e => !existing.includes(e.uid));
 	if (!newRanked.length) {
 		return 0;
 	}
-	let songsUpdated = newRanked.map(song => {
+	let songs = newRanked.map(song => {
 		// Only Standard for now
 		let diffMatch = song.diff.match(/^_(Easy|Normal|Hard|Expert|ExpertPlus)_SoloStandard$/);
 		if (!diffMatch || !song.stars) {
@@ -35,7 +35,7 @@ async function addNew(songs) {
 			pp: song.stars * PP_PER_STAR
 		};
 	}).filter(e => e);
-	await promiseSequence(songsUpdated, addBeatSaverData);
+	await promiseSequence(songs, addBeatSaverData);
 	if (songs.length) {
 		await ranked.insert(songs);
 		await setLastUpdate();
