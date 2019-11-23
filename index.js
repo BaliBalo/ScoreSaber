@@ -93,7 +93,7 @@ app.get(/^\/top-?200(\.bplist)?/, (req, res) => {
 
 const execTask = fn => async (req, res) => {
 	try {
-		console.log(timetag(), 'Manually executing task from', req.path);
+		console.log(timetag(), 'Manually executing task from ' + req.baseUrl + req.path);
 		let result = await fn();
 		let message = 'Done';
 		if (result !== undefined) {

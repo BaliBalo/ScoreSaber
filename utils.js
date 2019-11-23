@@ -78,7 +78,7 @@ async function removeDupes() {
 		return dupes;
 	}, {});
 	let toRemove = [].concat(...Object.values(dupes));
-	return ranked.remove({ _id: { $in: toRemove } });
+	return ranked.remove({ _id: { $in: toRemove } }, { multiple: true });
 }
 
 module.exports = {
