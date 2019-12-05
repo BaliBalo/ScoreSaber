@@ -29,9 +29,8 @@ async function run() {
 		await ranked.remove(condition, { multi: true });
 		await setLastUpdate();
 
-		let multiline = toRemove.length > 1;
-		let desc = toRemove.map(song => (multiline ? '  * ' : '') + [song.mapper, song.name, song.diff].join(' - ') + ' (' + song.uid + ')');
-		console.log(timetag(), 'Removed ' + toRemove.length + ' map' + (multiline ? 's' : '') + ' from ranked list:' + (multiline ? '\n' : ' ') + desc.join('\n'));
+		let desc = toRemove.map(song => '  - ' + [song.mapper, song.name, song.diff].join(' - ') + ' (' + song.uid + ')');
+		console.log(timetag(), 'Removed ' + toRemove.length + ' map' + (toRemove.length > 1 ? 's' : '') + ' from ranked list:' + desc.join('\n'));
 	}
 }
 

@@ -39,9 +39,8 @@ async function addNew(songsRaw) {
 	if (songs.length) {
 		await ranked.insert(songs);
 		await setLastUpdate();
-		let multiline = songs.length > 1;
-		let desc = songs.map(song => (multiline ? '  * ' : '') + [song.mapper, song.name, song.diff].join(' - ') + ' (' + song.uid + ')');
-		console.log(timetag(), 'New ranked map' + (multiline ? 's:\n' : ': ') + desc.join('\n'));
+		let desc = songs.map(song => '  + ' + [song.mapper, song.name, song.diff].join(' - ') + ' (' + song.uid + ')');
+		console.log(timetag(), songs.length + ' new ranked map' + (songs.length > 1 ? 's' : '') + ':\n' + desc.join('\n'));
 	}
 	return songs.length;
 }
