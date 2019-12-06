@@ -4,14 +4,31 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<meta http-equiv="X-UA-Compatible" content="ie=edge">
-	<title>ScoreSaber-related stuff</title>
+	<title>AYAYA - Things related to ScoreSaber or beat Saber in general</title>
+	<style>
+		aside { position: fixed; top: 0; right: 0; }
+	</style>
 </head>
 <body>
-	Sitemap or something here I guess not sure yet
-	<ul>
-		<li><a href="/peepee">This is my peepee</a>: Get play suggestions based on your scores to improve your global rank</li>
-		<li><a href="/top200.bplist">top200.bplist</a>: playlist of 200 maps with highest pp value</li>
-		<li><a href="/overlay">overlay</a>: obs overlay (needs HTTP status). Visually similar to <a href="https://github.com/megalon/beat-saber-overlay" target="_blank">Megalon's overlay</a> but with emphasis on percentage rather than score, showing current song's name and duration and optionally rank info between song. <a href="/client/overlay-doc.html">Docs</a></li>
-	</ul>
+	<main>
+		<p class="intro">Sitemap or something here I guess not sure yet</p>
+		<ul>
+			<li>
+				<a href="/peepee">This is my peepee</a>: Get play suggestions based on your scores to improve your global rank
+			</li>
+			<li>
+				<a href="/top200.bplist">top200.bplist</a>: playlist of 200 maps with highest pp value
+			</li>
+			<li>
+				<a href="/overlay">overlay</a>: obs overlay (needs HTTP status).
+				Visually similar to <a href="https://github.com/megalon/beat-saber-overlay" target="_blank">Megalon's overlay</a> but with emphasis on percentage rather than score, showing current song's name and duration and optionally rank info between song.
+				<a href="/client/overlay-doc.html">Docs</a>
+			</li>
+		</ul>
+	</main>
+	<aside>
+		<button>Improve</button>
+	</aside>
+	<script src="/client/index.min.js" defer></script>
 </body>
 </html>
