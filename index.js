@@ -113,8 +113,10 @@ app.all('/admin/check-new/full', checkAuth, execTask(checkNew.full));
 app.all('/admin/remove-unranks', checkAuth, execTask(removeUnranks));
 app.all('/admin/remove-dupes', checkAuth, execTask(removeDupes));
 
-new CronJob('0 */5 * * * *', checkNew, null, true);
-new CronJob('0 0 */2 * * *', removeUnranks, null, true);
+if (!process.argv.includes('--dev')) {
+	new CronJob('0 */5 * * * *', checkNew, null, true);
+	new CronJob('0 0 */2 * * *', removeUnranks, null, true);
+}
 
 (async function() {
 	await updateTop200();
