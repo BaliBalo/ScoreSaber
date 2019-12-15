@@ -2,6 +2,7 @@ body {
 	font-family: Frutiger, "Frutiger Linotype", Univers, Calibri, "Gill Sans", "Gill Sans MT", "Myriad Pro", Myriad, "DejaVu Sans Condensed", "Liberation Sans", "Nimbus Sans L", Tahoma, Geneva, "Helvetica Neue", Helvetica, Arial, sans-serif;
 	background: #1e1f26;
 	color: #fff;
+	margin: 8px;
 }
 
 .loading {
@@ -27,19 +28,33 @@ fieldset {
 	border-radius: 4px;
 	border: 1px solid #fff;
 	margin: 16px 0;
-	// padding: 12px 12px;
+	padding: 6px 12px 10px;
 }
 legend {
 	padding: 0 8px;
 }
 
-.filters > div {
-	margin: 12px 0;
+.filters, .preview, .details {
+	> div, > label {
+		display: block;
+		margin: 12px 0;
+		&:last-child {
+			margin-bottom: 0;
+		}
+	}
+	legend + div, legend + label {
+		margin-top: 0;
+	}
+}
+.filters .difficulties {
+	margin-bottom: -8px;
 }
 
 .difficulties {
 	label {
+		display: inline-block;
 		margin-right: 16px;
+		margin-bottom: 8px;
 		cursor: pointer;
 	}
 	span {
@@ -113,27 +128,23 @@ legend {
 	}
 }
 
-.preview {
-	.list {
-		background: #fff;
-		color: #000;
-		height: 200px;
-		max-width: 600px;
-		overflow-y: auto;
-		margin-top: 4px;
-		border-radius: 4px;
-		padding: 8px;
-		white-space: nowrap;
-		font-size: 14px;
-		line-height: 20px;
-	}
+.preview .list {
+	background: #fff;
+	color: #000;
+	height: 200px;
+	box-sizing: border-box;
+	width: calc(100vw - 42px);
+	max-width: 600px;
+	overflow: auto;
+	margin-top: 4px;
+	border-radius: 4px;
+	padding: 8px;
+	white-space: nowrap;
+	font-size: 14px;
+	line-height: 20px;
 }
 
 .details {
-	> div, > label {
-		display: block;
-		margin: 12px 0;
-	}
 	input, select {
 		border: none;
 		background: #fff;
@@ -153,14 +164,19 @@ legend {
 	}
 }
 
+.image-options-container .desc {
+	vertical-align: middle;
+}
+
 .image-options {
+	font-size: 0;
 	display: inline-block;
+	vertical-align: middle;
 	label {
 		position: relative;
 		display: inline-block;
 		margin-right: 16px;
 		cursor: pointer;
-		font-size: 0;
 	}
 	img {
 		height: 32px;
