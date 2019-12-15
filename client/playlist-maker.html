@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<title>Ranked maps playlist maker</title>
+	<link rel="stylesheet" href="/client/playlist-maker.css">
+</head>
+<body>
+	<div class="loading">
+		<span>Loadin</span>
+	</div>
+	<div class="content">
+		<h1>Ranked maps playlist maker</h1>
+		<fieldset class="filters">
+			<legend>Filters</legend>
+			<div class="difficulties">
+
+			</div>
+			<div class="stars">
+				<span class="desc">★ difficulty:</span>
+				<label class="from"><input type="text" placeholder="0"></label><label class="to"><input type="text" placeholder="Infinity"></label>
+			</div>
+			<div class="rating">
+				<span class="desc">Rating:</span>
+				<label class="from"><input type="text" placeholder="0"></label><label class="to"><input type="text" placeholder="100"></label>
+			</div>
+			<div class="duration">
+				<span class="desc">Duration:</span>
+				<label class="from"><input type="text" placeholder="0:00"></label><label class="to"><input type="text" placeholder="Infinity"></label>
+			</div>
+		</fieldset>
+		<fieldset class="preview">
+			<legend>Preview</legend>
+			Count: <span class="result-count">0 leaderboards from 0 maps</span>
+			<div class="list"></div>
+		</fieldset>
+		<fieldset class="details">
+			<legend>Details</legend>
+			<div><span class="desc">Icon:</span><div class="image-options"></div></div>
+			<label><span class="desc">Name:</span><input type="text" class="name" placeholder="Ranked"></label>
+			<label><span class="desc">Author:</span><input type="text" class="author" placeholder="ScoreSaber"></label>
+			<label><span class="desc">Count:</span><input type="text" class="count" placeholder="Infinity"></label>
+			<label>
+				<span class="desc">Sort:</span><!--
+				--><select class="sort">
+					<option value="stars-desc">star diff (high to low)</option>
+					<option value="stars-asc">star diff (low to high)</option>
+					<option value="name-asc">song name</option>
+					<option value="rating-desc">rating (high to low)</option>
+					<option value="rating-asc">rating (low to high)</option>
+				</select>
+			</label>
+		</fieldset>
+		<a href="#" class="download" download="ranked.bplist">Download</a>
+	</div>
+	<script src="/client/playlist-maker.min.js"></script>
+</body>
+</html>
