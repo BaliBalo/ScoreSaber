@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
     "sass": "npx node-sass sass/ -o client/",
-    "sass-watch": "npx node-sass sass/ -o client/ && ./node_modules/node-sass/bin/node-sass -w sass/ -o client/",
-    "compress": "for f in client/*.js; do if [ \"$f\" != \"${f%.min.js}\" ] ; then continue; fi; npx terser $f -o ${f%.js}.min.js; done",
+    "sass-watch": "npx node-sass sass/ -o client/ && npx node-sass -w sass/ -o client/",
+    "compress": "node compress.js",
     "compress-peepee": "npx terser client/peepee.js -o client/peepee.min.js"
   },
   "repository": {
