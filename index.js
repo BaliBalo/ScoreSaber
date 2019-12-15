@@ -37,6 +37,7 @@ const paths = {
 	index: 'client/index.html',
 	peepee: 'client/peepee.html',
 	overlay: 'client/overlay.html',
+	playlistMaker: 'client/playlist-maker.html',
 };
 Object.keys(paths).forEach(key => paths[key] = path.resolve(paths[key]));
 
@@ -50,6 +51,7 @@ app.get(['/favicon.ico', '/robots.txt'], serveStaticFiles);
 app.get('/', (req, res) => res.sendFile(paths.index));
 app.get('/peepee', (req, res) => res.sendFile(paths.peepee));
 app.get('/overlay', (req, res) => res.sendFile(paths.overlay));
+app.get('/playlist-maker', (req, res) => res.sendFile(paths.playlistMaker));
 app.use('/proxy', (req, res) => req.pipe(request('https://scoresaber.com' + req.url)).pipe(res));
 
 app.get('/ranked', async (req, res) => {
