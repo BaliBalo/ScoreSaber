@@ -49,7 +49,7 @@ async function checkFromPage(page) {
 	// console.log(timetag(), 'Checking new ranks page ' + page);
 	let data;
 	try {
-		data = await scoresaber.recentRanks(page);
+		data = await scoresaber.recentRanks(page, ~~(Date.now() / 3600000));
 	} catch(e) {}
 	if (!data || !data.songs || !data.songs.length) {
 		return;

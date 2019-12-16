@@ -26,6 +26,6 @@ async function scoreSaberRequest(path) { return _scoreSaberRequest(path, 0); }
 
 module.exports = {
 	request: scoreSaberRequest,
-	ranked: page => scoreSaberRequest('/api.php?function=get-leaderboards&cat=3&ranked=1&limit=100&page=' + (+page || 1)),
-	recentRanks: page => scoreSaberRequest('/api.php?function=get-leaderboards&cat=1&ranked=1&limit=10&page=' + (+page || 1)),
+	ranked: (page, cacheBreaker) => scoreSaberRequest('/api.php?function=get-leaderboards&cat=3&ranked=1&limit=100&page=' + (+page || 1) + (cacheBreaker ? '&h=' + cacheBreaker : '')),
+	recentRanks: (page, cacheBreaker) => scoreSaberRequest('/api.php?function=get-leaderboards&cat=1&ranked=1&limit=10&page=' + (+page || 1) + (cacheBreaker ? '&h=' + cacheBreaker : '')),
 };
