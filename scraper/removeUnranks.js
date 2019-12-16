@@ -30,7 +30,7 @@ async function run() {
 		await setLastUpdate();
 
 		let desc = toRemove.map(song => '  - ' + [song.mapper, song.name, song.diff].join(' - ') + ' (' + song.uid + ')');
-		console.log(timetag(), 'Removed ' + toRemove.length + ' map' + (toRemove.length > 1 ? 's' : '') + ' from ranked list:' + desc.join('\n'));
+		console.log(timetag(), 'Removed ' + toRemove.length + ' map' + (toRemove.length > 1 ? 's' : '') + ' from ranked list:\n' + desc.join('\n'));
 	}
 }
 
