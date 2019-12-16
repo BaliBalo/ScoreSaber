@@ -45,8 +45,10 @@ async function addNew(songsRaw) {
 	return songs.length;
 }
 
-async function checkFromPage(page) {
-	// console.log(timetag(), 'Checking new ranks page ' + page);
+async function checkFromPage(page, log) {
+	if (log === true) {
+		console.log(timetag(), 'Checking new ranks page ' + page);
+	}
 	let data;
 	try {
 		data = await scoresaber.recentRanks(page, ~~(Date.now() / 3600000));
@@ -54,12 +56,15 @@ async function checkFromPage(page) {
 	if (!data || !data.songs || !data.songs.length) {
 		return;
 	}
-	if (addNew(data.songs)) {
-		return checkFromPage(page + 1);
+	if (await addNew(data.songs)) {
+		return checkFromPage(page + 1, log);
 	}
 }
 
-async function _checkFull(page) {
+async function checkFull(page, log) {
+	if (log === true) {
+		console.log(timetag(), 'Checking new ranks (full) page ' + page);
+	}
 	let data;
 	try {
 		data = await scoresaber.ranked(page);
@@ -67,16 +72,13 @@ async function _checkFull(page) {
 	if (!data || !data.songs || !data.songs.length) {
 		return;
 	}
-	addNew(data.songs);
-	return _checkFull(page + 1);
-}
-async function checkFull() {
-	_checkFull(1);
+	await addNew(data.songs);
+	return checkFull(page + 1, log);
 }
 
 if (require.main === module) {
-	checkFromPage(1);
+	checkFromPage(1, true);
 } else {
-	module.exports = async () => checkFromPage(1);
-	module.exports.full = async () => checkFull();
+	module.exports = async (log) => checkFromPage(1, log);
+	module.exports.full = async (log) => checkFull(1, log);
 }

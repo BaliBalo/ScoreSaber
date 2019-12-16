@@ -96,10 +96,11 @@ app.get(/^\/top-?200(\.bplist)?/, (req, res) => {
 	res.send(top200);
 });
 
-const execTask = fn => async (req, res) => {
+const execTask = (fn, ...args) => async (req, res) => {
 	try {
 		console.log(timetag(), 'Manually executing task from ' + req.baseUrl + req.path);
-		let result = await fn();
+		let result = await fn(...args);
+		console.log(timetag(), 'Finished executing ' + req.baseUrl + req.path);
 		let message = 'Done';
 		if (result !== undefined) {
 			message += ' - ' + result;
@@ -110,8 +111,8 @@ const execTask = fn => async (req, res) => {
 		res.status(500).send('Error');
 	}
 };
-app.all('/admin/check-new', checkAuth, execTask(checkNew));
-app.all('/admin/check-new/full', checkAuth, execTask(checkNew.full));
+app.all('/admin/check-new', checkAuth, execTask(checkNew, true));
+app.all('/admin/check-new/full', checkAuth, execTask(checkNew.full, true));
 app.all('/admin/remove-unranks', checkAuth, execTask(removeUnranks));
 app.all('/admin/remove-dupes', checkAuth, execTask(removeDupes));
 
