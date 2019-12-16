@@ -118,7 +118,7 @@ app.all('/admin/remove-dupes', checkAuth, execTask(removeDupes));
 
 if (!process.argv.includes('--dev')) {
 	new CronJob('0 */5 * * * *', checkNew, null, true);
-	new CronJob('0 0 */3 * * *', removeUnranks, null, true);
+	new CronJob('0 0 * * * *', removeUnranks, null, true);
 }
 
 (async function() {
