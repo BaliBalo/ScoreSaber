@@ -67,6 +67,7 @@ body {
 	text-shadow: 0 0 40px rgb(255, 4, 4), 0 0 20px rgb(255, 4, 4);
 	line-height: 0;
 	opacity: 0;
+	font-weight: normal;
 	transition: line-height .3s, opacity .3s, margin-bottom .3s;
 	.blue {
 		color: rgb(240, 250, 255);
