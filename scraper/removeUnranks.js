@@ -5,7 +5,7 @@ async function getIdsFromPage(page, list = []) {
 	// console.log(timetag(), 'Getting page ' + page);
 	let data;
 	try {
-		data = await scoresaber.ranked(page);
+		data = await scoresaber.ranked(page, ~~(Date.now() / 3600000));
 	} catch(e) {}
 	if (!data || !data.songs) {
 		return;
