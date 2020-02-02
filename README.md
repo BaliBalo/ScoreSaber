@@ -1,5 +1,5 @@
 # ScoreSaber
-ScoreSaber-related stuff
+ScoreSaber-related stuff: https://scoresaber.balibalo.xyz
 
 ### Setup
 - Clone the repo
