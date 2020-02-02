@@ -11,5 +11,5 @@ module.exports = async function removePartial() {
 	let message = 'REMOVING ' + toRemove.length + ' PARTIAL MAPS:\n';
 	message += toRemove.map(song => '  - ' + [song.mapper, song.name, song.diff].join(' - ') + ' (' + song.uid + ')').join('\n');
 	console.log(timetag(), message);
-	// return ranked.remove({ _id: { $in: toRemove.map(e => e._id) } }, { multi: true });
+	return ranked.remove({ _id: { $in: toRemove.map(e => e._id) } }, { multi: true });
 };
