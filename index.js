@@ -9,6 +9,7 @@ const rankedUpdate = require('./utils/ranked/update');
 const checkNew = require('./utils/ranked/check-new');
 const removeUnranks = require('./utils/ranked/remove-unranks');
 const removeDupes = require('./utils/ranked/remove-dupes');
+const removePartial = require('./utils/ranked/remove-partial');
 const top200 = require('./utils/top200');
 const app = express();
 const port = 2148;
@@ -81,6 +82,7 @@ app.all('/admin/check-new', auth.check, execTask(checkNew, true));
 app.all('/admin/check-new/full', auth.check, execTask(checkNew.full, true));
 app.all('/admin/remove-unranks', auth.check, execTask(removeUnranks));
 app.all('/admin/remove-dupes', auth.check, execTask(removeDupes));
+app.all('/admin/remove-partial', auth.check, execTask(removePartial));
 
 if (!process.argv.includes('--dev')) {
 	new CronJob('0 */5 * * * *', checkNew, null, true);
