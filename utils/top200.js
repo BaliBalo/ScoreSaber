@@ -25,7 +25,7 @@ async function update() {
 
 const setup = once(async () => {
 	try {
-		let scoresaber200Image = await fs.promises.readFile(path.resolve(__dirname, 'client/scoresaber200.png'), { encoding: 'base64' });
+		let scoresaber200Image = await fs.promises.readFile(path.resolve(__dirname, '../client/scoresaber200.png'), { encoding: 'base64' });
 		data.image = 'data:image/png;base64,' + scoresaber200Image;
 	} catch(e) {}
 	await update();
