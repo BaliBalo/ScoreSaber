@@ -1,7 +1,7 @@
 /* eslint-disable require-atomic-updates */
 const request = require('request-promise-native');
 
-module.exports = async function addBeatSaverData(item) {
+async function addData(item) {
 	if (!item || !item.id) {
 		return;
 	}
@@ -35,4 +35,8 @@ module.exports = async function addBeatSaverData(item) {
 		// item.bombsCount = characteristics.bombs;
 		item.njs = characteristics.njs;
 	}
+}
+
+module.exports = {
+	addData: addData
 };

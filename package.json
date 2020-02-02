@@ -4,6 +4,7 @@
   "description": "ScoreSaber-related stuff",
   "main": "index.js",
   "scripts": {
+    "dev": "node index.js --dev",
     "sass": "npx node-sass sass/ -o client/ --output-style compressed",
     "sass-watch": "npx node-sass sass/ -o client/ --output-style compressed && npx node-sass -w sass/ -o client/ --output-style compressed",
     "compress": "node compress.js",

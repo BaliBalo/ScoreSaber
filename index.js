@@ -1,62 +1,50 @@
-const fs = require('fs');
 const path = require('path');
 const express = require('express');
 const request = require('request');
 const CronJob = require('cron').CronJob;
-// const cors = require('cors');
-const {
-	timetag,
-	addUpdateListener,
-	getLastUpdate,
-	ranked,
-	removeDupes
-} = require('./utils');
-const checkNew = require('./scraper/checkNew');
-const removeUnranks = require('./scraper/removeUnranks');
-let auth = {};
-try {
-	auth = require('./data/auth');
-} catch(e) {}
+const { timetag } = require('./utils');
+const auth = require('./utils/auth');
+const ranked = require('./utils/ranked');
+const rankedUpdate = require('./utils/ranked/update');
+const checkNew = require('./utils/ranked/check-new');
+const removeUnranks = require('./utils/ranked/remove-unranks');
+const removeDupes = require('./utils/ranked/remove-dupes');
+const top200 = require('./utils/top200');
 const app = express();
 const port = 2148;
 
-function checkAuth(req, res, next) {
-	let key = req.query.key;
-	if (!key) {
-		return res.status(401).end('Unauthorized');
-	}
-	let user = auth && auth.keys && auth.keys[key];
-	if (!user) {
-		return res.status(401).end('Unauthorized');
-	}
-	res.locals.user = user;
-	next();
-}
-
-const paths = {
-	index: 'client/index.html',
-	peepee: 'client/peepee.html',
-	overlay: 'client/overlay.html',
-	playlistMaker: 'client/playlist-maker.html',
-};
-Object.keys(paths).forEach(key => paths[key] = path.resolve(paths[key]));
-
 app.set('etag', 'strong');
 
+// Enable only on specific endpoints for which we want cross-origin requests allowed (none for now)
+// const cors = require('cors');
 // app.use(cors());
 
 let serveStaticFiles = express.static('client', { extensions: ['html'] });
 app.use(['/client'], serveStaticFiles);
 app.get(['/favicon.ico', '/robots.txt'], serveStaticFiles);
-app.get('/', (req, res) => res.sendFile(paths.index));
-app.get('/peepee', (req, res) => res.sendFile(paths.peepee));
-app.get('/overlay', (req, res) => res.sendFile(paths.overlay));
-app.get('/playlist-maker', (req, res) => res.sendFile(paths.playlistMaker));
+// Proxy requests (to avoid front-end cross-origin requests issues)
 app.use('/proxy', (req, res) => req.pipe(request('https://scoresaber.com' + req.url)).pipe(res));
+
+// Custom urls - if string, makes a client file available at root
+//   e.g. 'thing' makes `client/thing.html` available at `/thing`
+[
+	{ url: '/', file: 'client/index.html' },
+	'peepee',
+	'overlay',
+	'playlist-maker',
+].forEach(data => {
+	if (typeof data === 'string') {
+		data = { url: '/' + data, file: 'client/' + data + '.html' };
+	}
+	if (!data.url || !data.file) {
+		return;
+	}
+	app.get(data.url, (req, res) => res.sendFile(path.resolve(__dirname, data.file)));
+});
 
 app.get('/ranked', async (req, res) => {
 	// caching already handled by nginx
-	let timestamp = await getLastUpdate();
+	let timestamp = await rankedUpdate.getTime();
 	let after = req.get('If-Modified-Since');
 	if (after && timestamp <= +new Date(after)) {
 		return res.status(304).end();
@@ -66,34 +54,12 @@ app.get('/ranked', async (req, res) => {
 	res.send({ list, timestamp });
 });
 
-let top200 = {
-	playlistTitle: 'Top 200 Ranked',
-	playlistAuthor: 'ScoreSaber',
-	image: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
-	songs: []
-};
-try {
-	let scoresaber200Image = fs.readFileSync(path.resolve('client/scoresaber200.png'));
-	top200.image = 'data:image/png;base64,' + Buffer.from(scoresaber200Image).toString('base64');
-} catch(e) {}
-let top200Update = new Date().toUTCString();
-async function updateTop200() {
-	try {
-		// let query = ranked.find({}).sort({ stars: -1 }).limit(200);
-		// let list = await promisify(query.exec.bind(query))();
-		let list = await ranked.find({});
-		list = list.sort((a, b) => b.stars - a.stars).filter((song, i, self) => self.findIndex(t => t.id === song.id) === i);
-		top200.songs = list.slice(0, 200).map(e => ({ hash: e.id, songName: e.name }));
-		top200Update = new Date().toUTCString();
-	} catch(e) {}
-}
-addUpdateListener(updateTop200);
-// fs.watch(lastUpdateFile, updateTop200);
-
-app.get(/^\/top-?200(\.bplist)?/, (req, res) => {
-	res.append('Last-Modified', top200Update);
+top200.autoUpdate();
+app.get(/^\/top-?200(\.bplist)?/, async (req, res) => {
+	let { at, data } = await top200.get();
+	res.append('Last-Modified', at);
 	res.append('Content-Disposition', 'attachment; filename="top200.bplist"');
-	res.send(top200);
+	res.send(data);
 });
 
 const execTask = (fn, ...args) => async (req, res) => {
@@ -111,17 +77,14 @@ const execTask = (fn, ...args) => async (req, res) => {
 		res.status(500).send('Error');
 	}
 };
-app.all('/admin/check-new', checkAuth, execTask(checkNew, true));
-app.all('/admin/check-new/full', checkAuth, execTask(checkNew.full, true));
-app.all('/admin/remove-unranks', checkAuth, execTask(removeUnranks));
-app.all('/admin/remove-dupes', checkAuth, execTask(removeDupes));
+app.all('/admin/check-new', auth.check, execTask(checkNew, true));
+app.all('/admin/check-new/full', auth.check, execTask(checkNew.full, true));
+app.all('/admin/remove-unranks', auth.check, execTask(removeUnranks));
+app.all('/admin/remove-dupes', auth.check, execTask(removeDupes));
 
 if (!process.argv.includes('--dev')) {
 	new CronJob('0 */5 * * * *', checkNew, null, true);
 	new CronJob('0 0 * * * *', removeUnranks, null, true);
 }
 
-(async function() {
-	await updateTop200();
-	app.listen(port, () => console.log(timetag(), 'Scoresaber server listening (port '+port+')'));
-})();
+app.listen(port, () => console.log(timetag(), 'Scoresaber server listening (port ' + port + ')'));

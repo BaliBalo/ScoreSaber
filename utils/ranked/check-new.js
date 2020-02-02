@@ -1,6 +1,6 @@
-const { promiseSequence, timetag, setLastUpdate, ranked } = require('../utils');
-const addBeatSaverData = require('./addBeatSaverData');
-const scoresaber = require('./scoresaber');
+const { promiseSequence, timetag, setLastUpdate, ranked } = require('../../utils');
+const beatsaver = require('../beatsaver');
+const scoresaber = require('../scoresaber');
 
 // Approximation (shoud rather take a bunch of scores for each song and deduce it from that)
 const PP_PER_STAR = 42.114296;
@@ -35,7 +35,7 @@ async function addNew(songsRaw) {
 			pp: song.stars * PP_PER_STAR
 		};
 	}).filter(e => e);
-	await promiseSequence(songs, addBeatSaverData);
+	await promiseSequence(songs, beatsaver.addData);
 	if (songs.length) {
 		await ranked.insert(songs);
 		await setLastUpdate();

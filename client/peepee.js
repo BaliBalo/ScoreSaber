@@ -615,6 +615,7 @@ function getImageSrc(el) {
 					rankScoreCheckCount++;
 					usePause = true;
 				}
+				// eslint-disable-next-line require-atomic-updates
 				element[key] = score;
 			}
 			if (isCanceled()) {
@@ -1014,6 +1015,7 @@ function getImageSrc(el) {
 			console.log(err);
 			triggerAnimation(userForm, 'invalid');
 		}
+		// eslint-disable-next-line require-atomic-updates
 		profileInput.disabled = false;
 		userForm.classList.remove('loading');
 	}

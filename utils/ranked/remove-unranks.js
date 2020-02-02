@@ -1,5 +1,5 @@
-const { timetag, setLastUpdate, ranked } = require('../utils');
-const scoresaber = require('./scoresaber');
+const { timetag, setLastUpdate, ranked } = require('../../utils');
+const scoresaber = require('../scoresaber');
 
 async function getIdsFromPage(page, list = []) {
 	// console.log(timetag(), 'Getting page ' + page);
