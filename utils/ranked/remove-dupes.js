@@ -1,5 +1,5 @@
 const { timetag } = require('../../utils');
-const ranked = require('../ranked');
+const ranked = require('../../utils/ranked');
 
 module.exports = async function removeDupes() {
 	let all = await ranked.find({});

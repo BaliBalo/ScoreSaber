@@ -1,6 +1,8 @@
-const { promiseSequence, timetag, setLastUpdate, ranked } = require('../../utils');
-const beatsaver = require('../beatsaver');
-const scoresaber = require('../scoresaber');
+const { promiseSequence, timetag } = require('../../utils');
+const ranked = require('../../utils/ranked');
+const rankedUpdate = require('../../utils/ranked/update');
+const beatsaver = require('../../utils/beatsaver');
+const scoresaber = require('../../utils/scoresaber');
 
 // Approximation (shoud rather take a bunch of scores for each song and deduce it from that)
 const PP_PER_STAR = 42.114296;
@@ -34,11 +36,12 @@ async function addNew(songsRaw) {
 			stars: song.stars,
 			pp: song.stars * PP_PER_STAR
 		};
-	}).filter(e => e);
+	});
 	await promiseSequence(songs, beatsaver.addData);
+	songs = songs.filter(e => e && e.beatSaverKey);
 	if (songs.length) {
 		await ranked.insert(songs);
-		await setLastUpdate();
+		await rankedUpdate.setTime();
 		let desc = songs.map(song => '  + ' + [song.mapper, song.name, song.diff].join(' - ') + ' (' + song.uid + ')');
 		console.log(timetag(), songs.length + ' new ranked map' + (songs.length > 1 ? 's' : '') + ':\n' + desc.join('\n'));
 	}

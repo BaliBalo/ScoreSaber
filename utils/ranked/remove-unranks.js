@@ -1,5 +1,7 @@
-const { timetag, setLastUpdate, ranked } = require('../../utils');
-const scoresaber = require('../scoresaber');
+const { timetag } = require('../../utils');
+const ranked = require('../../utils/ranked');
+const rankedUpdate = require('../../utils/ranked/update');
+const scoresaber = require('../../utils/scoresaber');
 
 async function getIdsFromPage(page, list = []) {
 	// console.log(timetag(), 'Getting page ' + page);
@@ -27,7 +29,7 @@ async function run() {
 	let toRemove = await ranked.find(condition);
 	if (toRemove.length) {
 		await ranked.remove(condition, { multi: true });
-		await setLastUpdate();
+		await rankedUpdate.setTime();
 
 		let desc = toRemove.map(song => '  - ' + [song.mapper, song.name, song.diff].join(' - ') + ' (' + song.uid + ')');
 		console.log(timetag(), 'Removed ' + toRemove.length + ' map' + (toRemove.length > 1 ? 's' : '') + ' from ranked list:\n' + desc.join('\n'));

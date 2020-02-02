@@ -27,7 +27,8 @@ async function addData(item) {
 	item.download = 'https://beatsaver.com' + song.downloadURL;
 	let allCharacteristics = song.metadata && song.metadata.characteristics;
 	let stdCharacteristics = allCharacteristics && allCharacteristics.find(e => e.name === 'Standard');
-	let characteristics = stdCharacteristics && stdCharacteristics.difficulties && stdCharacteristics.difficulties[item.diff[0].toLowerCase() + item.diff.slice(1)];
+	let diffCamelCase = item.diff[0].toLowerCase() + item.diff.slice(1);
+	let characteristics = stdCharacteristics && stdCharacteristics.difficulties && stdCharacteristics.difficulties[diffCamelCase];
 	if (characteristics) {
 		item.duration = characteristics.duration;
 		item.noteCount = characteristics.notes;
