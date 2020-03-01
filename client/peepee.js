@@ -1,6 +1,6 @@
 /* global WebFont */
 
-const scoresaberRLDelay = 300;
+const scoresaberRLDelay = 200;
 
 function triggerAnimation(el, name) {
 	if (!el) {
@@ -208,7 +208,7 @@ function getImageSrc(el) {
 	function refreshHistory() {
 		$history.innerHTML = '';
 		history.slice(0, 5).forEach(user => {
-			if (!user || !user.avatar || !user.rank || !user.name) {
+			if (!user || !user.avatar || user.rank == null || !user.name) {
 				return;
 			}
 			let line = div('line');
@@ -566,7 +566,7 @@ function getImageSrc(el) {
 		constructor(list) {
 			super(list);
 			this.async = true;
-			this.name = 'Rank';
+			this.name = 'Score at rank';
 			this.id = 'rank';
 		}
 
@@ -622,12 +622,48 @@ function getImageSrc(el) {
 				return;
 			}
 			updateEstimate(element, element[key] || 0);
-			if (rankScoreCheckCount >= 20) {
+			if (rankScoreCheckCount >= 100) {
 				return PAUSE_UPDATE;
 			}
 			if (usePause) {
 				await pause(scoresaberRLDelay);
 			}
+		}
+	}
+
+	class SortWorstRank extends SortMethod {
+		constructor(list) {
+			super(list);
+			this.name = 'Worst rank';
+			this.id = 'worstrank';
+		}
+
+		run(element) {
+			updateEstimate(element, getScoreEstimate(element.stars));
+		}
+
+		sort(elements) {
+			return elements.sort((a, b) => {
+				return (b.rank || 0) - (a.rank || 0) || b.pp - a.pp;
+			});
+		}
+	}
+
+	class SortBestRank extends SortMethod {
+		constructor(list) {
+			super(list);
+			this.name = 'Best rank';
+			this.id = 'bestrank';
+		}
+
+		run(element) {
+			updateEstimate(element, getScoreEstimate(element.stars));
+		}
+
+		sort(elements) {
+			return elements.sort((a, b) => {
+				return (a.rank || 0) - (b.rank || 0) || b.pp - a.pp;
+			});
 		}
 	}
 
@@ -701,12 +737,14 @@ function getImageSrc(el) {
 		}
 	}
 
-	let methods = [
+	let baseMethods = [
 		SortScoreEst,
 		SortRank,
 		// SortCompare,
 		SortRaw
 	];
+	let playedMethods = baseMethods.concat(SortWorstRank, SortBestRank);
+
 	class List {
 		constructor(elem, title, methods, elements = []) {
 			this.elem = elem;
@@ -829,7 +867,7 @@ function getImageSrc(el) {
 			let diff = difficulties[srcDiff] || {};
 			let difficultyAndScore = div('difficulty-and-score');
 			difficultyAndScore.appendChild(create('span', 'difficulty ' + (diff.className || srcDiff.toLowerCase()), diff.display || srcDiff));
-			if (element.score) {
+			if (element.score || element.score === 0) {
 				let scoreAndRank = create('span', 'score-and-rank');
 				scoreAndRank.appendChild(create('span', 'score', round(element.score, 2)));
 				scoreAndRank.appendChild(create('span', 'sep'));
@@ -951,13 +989,18 @@ function getImageSrc(el) {
 			this.updating = false;
 		}
 
+		defaultSort(elements) {
+			return elements.sort((a, b) => {
+				return (b.estimateFull || 0) - (a.estimateFull || 0) || b.pp - a.pp;
+			});
+		}
+
 		refresh() {
 			while (this.content.firstChild) {
 				this.content.removeChild(this.content.firstChild);
 			}
-			this.elements.sort((a, b) => {
-				return (b.estimateFull || 0) - (a.estimateFull || 0) || b.pp - a.pp;
-			});
+			let sort = this.method.sort || this.defaultSort;
+			this.elements = sort(this.elements);
 			this.elements.slice(0, this.displayed).forEach(el => {
 				if (!el.markup) {
 					this.createMarkup(el);
@@ -973,8 +1016,8 @@ function getImageSrc(el) {
 		}
 	}
 
-	let unplayed = new List(document.querySelector('.list.unplayed'), 'Not played', methods);
-	let played = new List(document.querySelector('.list.played'), 'To improve', methods);
+	let unplayed = new List(document.querySelector('.list.unplayed'), 'Not played', baseMethods);
+	let played = new List(document.querySelector('.list.played'), 'To improve', playedMethods);
 
 	let lastUpdateElement = document.getElementById('last-update');
 	async function onSubmit(e) {
@@ -1005,6 +1048,7 @@ function getImageSrc(el) {
 			lastUpdateElement.textContent = new Date(rankedMapsUpdate).toString();
 			playerSongs = {};
 			await getPages(id);
+			console.log(playerSongs);
 			fullPP = getFullPPWithUpdate(0, 0);
 			updatePlayerProfile();
 			updateLists(rankedMapsData, playerSongs);
