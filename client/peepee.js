@@ -1054,7 +1054,6 @@ function getImageSrc(el) {
 			lastUpdateElement.textContent = new Date(rankedMapsUpdate).toString();
 			playerSongs = {};
 			await getPages(id);
-			console.log(playerSongs);
 			fullPP = getFullPPWithUpdate(0, 0);
 			updatePlayerProfile();
 			updateLists(rankedMapsData, playerSongs);
