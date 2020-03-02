@@ -1,198 +1,198 @@
 /* global WebFont */
-
-const scoresaberRLDelay = 200;
-
-function triggerAnimation(el, name) {
-	if (!el) {
-		return;
-	}
-	el.classList.remove(name);
-	el.offsetWidth;
-	el.classList.add(name);
-}
-
-function round(n, p = 0) {
-	return n.toFixed(p).replace(/\.?0*$/, '');
-}
-
-function create(tag, className, text, title) {
-	let elem = document.createElement(tag);
-	if (className != undefined) {
-		elem.className = className;
-	}
-	if (text != undefined) {
-		elem.textContent = text;
-	}
-	if (title != undefined) {
-		elem.title = title;
-	}
-	return elem;
-}
-let div = create.bind(null, 'div');
-let selectOption = (text, value) => {
-	let elem = create('option');
-	elem.textContent = text;
-	elem.value = value;
-	return elem;
-};
-let link = (href, className, text, title, target) => {
-	let elem = create('a', className, text, title);
-	elem.href = href;
-	if (target) {
-		elem.target = target;
-	}
-	return elem;
-};
-
-function download(data, filename) {
-	let link = document.createElement('a');
-	link.download = filename;
-	link.href = data;
-	link.style.display = 'none';
-	document.body.appendChild(link);
-	link.click();
-	document.body.removeChild(link);
-}
-
-function copyToClipboard(str) {
-	const el = document.createElement('textarea');
-	el.value = str;
-	document.body.appendChild(el);
-	el.select();
-	document.execCommand('copy');
-	document.body.removeChild(el);
-}
-
-async function pause(duration) {
-	await new Promise(res => setTimeout(res, duration));
-}
-
-function fetchJSON(...args) {
-	return fetch(...args).then(r => r.json());
-}
-async function fetchHTML(...args) {
-	return fetch(...args).then(r => r.ok ? r.text() : Promise.reject()).then(text => {
-		if (text.indexOf('<html') === -1) {
-			throw new Error('not an HTML page: ' + text);
-		}
-		let parser = new DOMParser();
-		return parser.parseFromString(text, 'text/html');
-	});
-}
-async function fetchScoreSaber(id, page, sort = 1, retries = 2) {
-	return fetchHTML('/proxy/u/'+id+'?sort='+sort+'&page='+(page || 1)).catch(async e => {
-		if (retries-- > 0) {
-			await pause(1000);
-			return fetchScoreSaber(id, page, sort, retries);
-		}
-		throw e;
-	});
-}
-let MODS = {
-	GN: .04,
-	DA: .02,
-	FS: .08,
-	NF: -.5,
-	NO: -.05,
-	NB: -.1,
-	SS: -.3,
-	NA: -.3
-};
-function getMultFromMods(modString) {
-	return modString ? modString.split(',').reduce((mult, mod) => mult + (MODS[mod.trim()] || 0), 1) : 1;
-}
-
-let LEADERBOARD_SCORES_PER_PAGE = 12;
-async function getScoreAtRank(leaderboard, rank, retries = 2) {
-	if (!leaderboard || !rank) {
-		console.log('Invalid score at rank request', leaderboard, rank);
-		return 0;
-	}
-	let page = Math.ceil(rank / LEADERBOARD_SCORES_PER_PAGE);
-	let indexOnPage = rank - (page - 1) * LEADERBOARD_SCORES_PER_PAGE;
-	try {
-		let doc = await fetchHTML('/proxy/leaderboard/'+leaderboard+'?page='+(page || 1));
-		if (!doc) {
-			return 0;
-		}
-		let row = doc.querySelector('.ranking tbody tr:nth-child('+indexOnPage+')');
-		if (!row) {
-			return 0;
-		}
-		let cell = row.querySelector('.percentage');
-		let match = (cell && cell.textContent || '').match(/[\d.]+/);
-		if (!match) {
-			return 0;
-		}
-		let mods = row.querySelector('.mods');
-		let mult = getMultFromMods(mods && mods.textContent);
-		let isOldPercentage = cell && cell.querySelector('span[style*=tomato]');
-		return match[0] * mult * (isOldPercentage ? (110 / 115) : 1);
-	} catch(e) {
-		if (retries-- > 0) {
-			await pause(1000);
-			return getScoreAtRank(leaderboard, rank, retries);
-		}
-		console.log('Error getting score at rank', e);
-		return 0;
-	}
-}
-function getDuration(song) {
-	let minutesFloat = song.duration / song.bpm;
-	let minutes = Math.floor(minutesFloat);
-	let seconds = Math.round((minutesFloat - minutes) * 60);
-	return minutes + ':' + ('0' + seconds).slice(-2);
-}
-
-const PER_PAGE = 8;
-const PP_DECAY = .965;
-
-const ppCurve = [
-	{ at: 0, value: 0 },
-	{ at: 40, value: .08 },
-	{ at: 50, value: .15 },
-	{ at: 69, value: .31 },
-	{ at: 75, value: .37 },
-	{ at: 82, value: .47 },
-	{ at: 86, value: .565 },
-	{ at: 88, value: .69 },
-	{ at: 90, value: .77 },
-	{ at: 91, value: .815 },
-	{ at: 92, value: .865 },
-	{ at: 93, value: .92 },
-	{ at: 94, value: .977 },
-	{ at: 95, value: 1.036 },
-	{ at: 100, value: 1.1 },
-	{ at: 110, value: 1.15 },
-	{ at: 114, value: 1.2 },
-	{ at: Infinity, value: 1.2 }
-];
-function ppFromScore(score) {
-	if (!score || score <= 0) {
-		return 0;
-	}
-	let index = ppCurve.findIndex(o => o.at >= score);
-	let from = ppCurve[index - 1];
-	let to = ppCurve[index];
-	let progress = (score - from.at) / (to.at - from.at);
-	return from.value + (to.value - from.value) * progress;
-}
-
-function getImageSrc(el) {
-	if (!el) {
-		return null;
-	}
-	// Not .src cause it automatically expends the path
-	let src = el.getAttribute('src');
-	if (!src.match(/^https?:\/\//)) {
-		src = 'https://scoresaber.com' + (src[0] === '/' ? '' : '/') + src;
-	}
-	return src;
-}
-
-// document.body.classList.add('step-results');
-
 (async function() {
+	const scoresaberRLDelay = 200;
+	const USER_SCORES_PER_PAGE = 8;
+	const LEADERBOARD_SCORES_PER_PAGE = 12;
+	const PP_DECAY = .965;
+	const PAUSE_UPDATE = 'PAUSE_UPDATE';
+	const MODS = {
+		GN: .04,
+		DA: .02,
+		FS: .08,
+		NF: -.5,
+		NO: -.05,
+		NB: -.1,
+		SS: -.3,
+		NA: -.3
+	};
+	const ppCurve = [
+		{ at: 0, value: 0 },
+		{ at: 40, value: .08 },
+		{ at: 50, value: .15 },
+		{ at: 69, value: .31 },
+		{ at: 75, value: .37 },
+		{ at: 82, value: .47 },
+		{ at: 86, value: .565 },
+		{ at: 88, value: .69 },
+		{ at: 90, value: .77 },
+		{ at: 91, value: .815 },
+		{ at: 92, value: .865 },
+		{ at: 93, value: .92 },
+		{ at: 94, value: .977 },
+		{ at: 95, value: 1.036 },
+		{ at: 100, value: 1.1 },
+		{ at: 110, value: 1.15 },
+		{ at: 114, value: 1.2 },
+		{ at: Infinity, value: 1.2 }
+	];
+	const difficulties = {
+		ExpertPlus: { className: 'expert-plus', display: 'Expert+' },
+	};
+
+	function triggerAnimation(el, name) {
+		if (!el) {
+			return;
+		}
+		el.classList.remove(name);
+		el.offsetWidth;
+		el.classList.add(name);
+	}
+
+	function round(n, p = 0) {
+		return n.toFixed(p).replace(/\.?0*$/, '');
+	}
+
+	function create(tag, className, text, title) {
+		let elem = document.createElement(tag);
+		if (className != undefined) {
+			elem.className = className;
+		}
+		if (text != undefined) {
+			elem.textContent = text;
+		}
+		if (title != undefined) {
+			elem.title = title;
+		}
+		return elem;
+	}
+	let div = create.bind(null, 'div');
+	let selectOption = (text, value) => {
+		let elem = create('option');
+		elem.textContent = text;
+		elem.value = value;
+		return elem;
+	};
+	let link = (href, className, text, title, target) => {
+		let elem = create('a', className, text, title);
+		elem.href = href;
+		if (target) {
+			elem.target = target;
+		}
+		return elem;
+	};
+
+	function download(data, filename) {
+		let link = document.createElement('a');
+		link.download = filename;
+		link.href = data;
+		link.style.display = 'none';
+		document.body.appendChild(link);
+		link.click();
+		document.body.removeChild(link);
+	}
+
+	function copyToClipboard(str) {
+		const el = document.createElement('textarea');
+		el.value = str;
+		document.body.appendChild(el);
+		el.select();
+		document.execCommand('copy');
+		document.body.removeChild(el);
+	}
+
+	async function pause(duration) {
+		await new Promise(res => setTimeout(res, duration));
+	}
+
+	function fetchJSON(...args) {
+		return fetch(...args).then(r => r.json());
+	}
+	async function fetchHTML(...args) {
+		return fetch(...args).then(r => r.ok ? r.text() : Promise.reject()).then(text => {
+			if (text.indexOf('<html') === -1) {
+				throw new Error('not an HTML page: ' + text);
+			}
+			let parser = new DOMParser();
+			return parser.parseFromString(text, 'text/html');
+		});
+	}
+	async function fetchScoreSaber(id, page, sort = 1, retries = 2) {
+		return fetchHTML('/proxy/u/'+id+'?sort='+sort+'&page='+(page || 1)).catch(async e => {
+			if (retries-- > 0) {
+				await pause(1000);
+				return fetchScoreSaber(id, page, sort, retries);
+			}
+			throw e;
+		});
+	}
+	function getMultFromMods(modString) {
+		return modString ? modString.split(',').reduce((mult, mod) => mult + (MODS[mod.trim()] || 0), 1) : 1;
+	}
+
+	async function getScoreAtRank(leaderboard, rank, retries = 2) {
+		if (!leaderboard || !rank) {
+			console.log('Invalid score at rank request', leaderboard, rank);
+			return 0;
+		}
+		let page = Math.ceil(rank / LEADERBOARD_SCORES_PER_PAGE);
+		let indexOnPage = rank - (page - 1) * LEADERBOARD_SCORES_PER_PAGE;
+		try {
+			let doc = await fetchHTML('/proxy/leaderboard/'+leaderboard+'?page='+(page || 1));
+			if (!doc) {
+				return 0;
+			}
+			let row = doc.querySelector('.ranking tbody tr:nth-child('+indexOnPage+')');
+			if (!row) {
+				return 0;
+			}
+			let cell = row.querySelector('.percentage');
+			let match = (cell && cell.textContent || '').match(/[\d.]+/);
+			if (!match) {
+				return 0;
+			}
+			let mods = row.querySelector('.mods');
+			let mult = getMultFromMods(mods && mods.textContent);
+			let isOldPercentage = cell && cell.querySelector('span[style*=tomato]');
+			return match[0] * mult * (isOldPercentage ? (110 / 115) : 1);
+		} catch(e) {
+			if (retries-- > 0) {
+				await pause(1000);
+				return getScoreAtRank(leaderboard, rank, retries);
+			}
+			console.log('Error getting score at rank', e);
+			return 0;
+		}
+	}
+	function getDuration(song) {
+		let minutesFloat = song.duration / song.bpm;
+		let minutes = Math.floor(minutesFloat);
+		let seconds = Math.round((minutesFloat - minutes) * 60);
+		return minutes + ':' + ('0' + seconds).slice(-2);
+	}
+
+	function ppFromScore(score) {
+		if (!score || score <= 0) {
+			return 0;
+		}
+		let index = ppCurve.findIndex(o => o.at >= score);
+		let from = ppCurve[index - 1];
+		let to = ppCurve[index];
+		let progress = (score - from.at) / (to.at - from.at);
+		return from.value + (to.value - from.value) * progress;
+	}
+
+	function getImageSrc(el) {
+		if (!el) {
+			return null;
+		}
+		// Not .src cause it automatically expends the path
+		let src = el.getAttribute('src');
+		if (!src.match(/^https?:\/\//)) {
+			src = 'https://scoresaber.com' + (src[0] === '/' ? '' : '/') + src;
+		}
+		return src;
+	}
+
 	WebFont.load({
 		custom: {
 			families: ['NeonTubes']
@@ -333,7 +333,7 @@ function getImageSrc(el) {
 				return Object.assign({}, base, song);
 			}).filter(e => e);
 			parsed.forEach(e => playerSongs[e.uid] = e);
-			if (len === PER_PAGE) {
+			if (len === USER_SCORES_PER_PAGE) {
 				await pause(scoresaberRLDelay);
 				// There is (probably) more
 				return getPages(id, from + 1);
@@ -534,11 +534,7 @@ function getImageSrc(el) {
 		$profile.median.textContent = med.toLocaleString();
 	}
 
-	let difficulties = {
-		ExpertPlus: { className: 'expert-plus', display: 'Expert+' },
-	};
 	let rankScoreCheckCount = 0;
-	const PAUSE_UPDATE = 'PAUSE_UPDATE';
 	class SortMethod {
 		constructor(list) {
 			this.list = list;

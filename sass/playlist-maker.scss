@@ -53,6 +53,7 @@ legend {
 .difficulties {
 	label {
 		display: inline-block;
+		position: relative;
 		margin-right: 16px;
 		margin-bottom: 8px;
 		cursor: pointer;
@@ -71,8 +72,12 @@ legend {
 		opacity: 0;
 		position: absolute;
 		pointer-events: none;
-		top: -9999px;
-		left: -9999px;
+		top: 0;
+		left: 0;
+		width: 0;
+		height: 0;
+		margin: 0;
+		padding: 0;
 		&:checked ~ span {
 			color: #89d1a7;
 			&::before {
@@ -198,8 +203,12 @@ legend {
 		opacity: 0;
 		position: absolute;
 		pointer-events: none;
-		top: -9999px;
-		left: -9999px;
+		top: 0;
+		left: 0;
+		width: 0;
+		height: 0;
+		margin: 0;
+		padding: 0;
 		&:checked ~ img {
 			color: rgba(137, 209, 167, 1);
 		}

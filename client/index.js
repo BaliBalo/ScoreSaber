@@ -1,6 +1,7 @@
-let improvements = [
-	{
-		css: `
+(() => {
+	let improvements = [
+		{
+			css: `
 html, body { height: 100%; }
 body {
 	background: #1e1f26;
@@ -34,11 +35,11 @@ main {
 	overflow: auto;
 }
 `,
-		intro: 'Here is a list of what you can find on this website:',
-		button: 'improve!'
-	},
-	{
-		css: `
+			intro: 'Here is a list of what you can find on this website:',
+			button: 'improve!'
+		},
+		{
+			css: `
 @keyframes gradient {
 	from { background-position: 0 0; }
 	to { background-position: -150px 0; }
@@ -83,11 +84,11 @@ li::before {
 	animation: rotate 8s infinite, appear .3s;
 }
 `,
-		intro: 'Comprehensive listing of the endpoints allowing access to the main utilities and pages available on this domain, granted it is accessed through a standard-compliant web browser:',
-		button: 'IMPROVE'
-	},
-	{
-		css: `
+			intro: 'Comprehensive listing of the endpoints allowing access to the main utilities and pages available on this domain, granted it is accessed through a standard-compliant web browser:',
+			button: 'IMPROVE'
+		},
+		{
+			css: `
 @font-face {
 	font-family: "Comic Sans MS";
 	src: url("/client/comicsans.woff2") format("woff2"),
@@ -97,45 +98,45 @@ body { font-family: "Comic Sans MS", "Comic Sans", cursive; font-size: 20px; fon
 .intro { font-size: 2em; }
 .trail { position: fixed; top: 0; left: 0; font-size: 30px; transform: translate(-5px, -50%); pointer-events: none; }
 `,
-		intro: 'wow cool site',
-		action: (e) => {
-			let initX = e.pageX || 0;
-			let initY = e.pageY || 0;
-			let trail = ['👌','👀','✔','💯','🔥','🍆','💦','👁','👅','👁'].map((e, i) => {
-				let dom = document.createElement('div');
-				dom.className = 'trail';
-				dom.textContent = e;
-				let x = initX + 22 * i;
-				dom.style.left = x + 'px';
-				dom.style.top = initY + 'px';
-				document.body.appendChild(dom);
-				return {
-					x, y: initY,
-					dom
-				};
-			});
-			let mouse = { x: initX, y: initY };
-			document.body.addEventListener('mousemove', e => {
-				mouse.x = e.pageX;
-				mouse.y = e.pageY;
-			});
-			function loop() {
-				for (let i = 0, l = trail.length; i < l; i++) {
-					let elem = trail[i];
-					let prev = trail[i - 1] || mouse;
-					elem.x += ((prev.x + (i ? 22 : 0)) - elem.x) / 8;
-					elem.y += (prev.y - elem.y) / 8;
-					elem.dom.style.left = elem.x + 'px';
-					elem.dom.style.top = elem.y + 'px';
+			intro: 'wow cool site',
+			action: (e) => {
+				let initX = e.pageX || 0;
+				let initY = e.pageY || 0;
+				let trail = ['👌','👀','✔','💯','🔥','🍆','💦','👁','👅','👁'].map((e, i) => {
+					let dom = document.createElement('div');
+					dom.className = 'trail';
+					dom.textContent = e;
+					let x = initX + 22 * i;
+					dom.style.left = x + 'px';
+					dom.style.top = initY + 'px';
+					document.body.appendChild(dom);
+					return {
+						x, y: initY,
+						dom
+					};
+				});
+				let mouse = { x: initX, y: initY };
+				document.body.addEventListener('mousemove', e => {
+					mouse.x = e.pageX;
+					mouse.y = e.pageY;
+				});
+				function loop() {
+					for (let i = 0, l = trail.length; i < l; i++) {
+						let elem = trail[i];
+						let prev = trail[i - 1] || mouse;
+						elem.x += ((prev.x + (i ? 22 : 0)) - elem.x) / 8;
+						elem.y += (prev.y - elem.y) / 8;
+						elem.dom.style.left = elem.x + 'px';
+						elem.dom.style.top = elem.y + 'px';
+					}
+					requestAnimationFrame(loop);
 				}
 				requestAnimationFrame(loop);
-			}
-			requestAnimationFrame(loop);
+			},
+			button: '!͉͔̺͙͖̟̈̈̍̆̍!̪͈͎͎̺͓̞́̅ͭͮ̍̐͗!̞̿̀͗ͫ̐͒͌Í͈ͨ̆m͇̰̗̳̗̈́̐̐͐ͪ̊͐P̖̪̫̟̙ͬ̂͛O̭͚̹͕̲͙͕͂̍̒̎R̆̿̌V͒ͮe͙̺͖͈̞̫ͭͨ͊ͅ!̦̰̞̦̪̺ͥ̐!̞̯͔̗͛̈̔ͫ͌ͤ!̹̱̻'
 		},
-		button: '!͉͔̺͙͖̟̈̈̍̆̍!̪͈͎͎̺͓̞́̅ͭͮ̍̐͗!̞̿̀͗ͫ̐͒͌Í͈ͨ̆m͇̰̗̳̗̈́̐̐͐ͪ̊͐P̖̪̫̟̙ͬ̂͛O̭͚̹͕̲͙͕͂̍̒̎R̆̿̌V͒ͮe͙̺͖͈̞̫ͭͨ͊ͅ!̦̰̞̦̪̺ͥ̐!̞̯͔̗͛̈̔ͫ͌ͤ!̹̱̻'
-	},
-	{
-		css: `
+		{
+			css: `
 @keyframes perspective {
 	from { perspective: 10000vmax; }
 	to { perspective: 100vmax; }
@@ -196,50 +197,51 @@ main { font-size: 1rem; background: none; }
 }
 aside { display: none }
 `,
-		action: () => {
-			let scaler = document.createElement('div');
-			scaler.className = 'scaler';
-			let cube = document.createElement('div');
-			cube.className = 'cube';
-			for (let i = 0; i < 6; i++) {
-				let face = document.createElement('div');
-				face.className = 'face';
-				cube.appendChild(face);
-			}
-			scaler.appendChild(cube);
-			document.body.appendChild(scaler);
-			cube.children[0].appendChild(document.querySelector('main'));
-			let vid = document.createElement('video');
-			vid.className = 'background';
-			vid.autoplay = true;
-			vid.loop = true;
-			vid.src = '/client/gnomed.mp4';
-			document.body.appendChild(vid);
-		},
-		button: 'ye'
+			action: () => {
+				let scaler = document.createElement('div');
+				scaler.className = 'scaler';
+				let cube = document.createElement('div');
+				cube.className = 'cube';
+				for (let i = 0; i < 6; i++) {
+					let face = document.createElement('div');
+					face.className = 'face';
+					cube.appendChild(face);
+				}
+				scaler.appendChild(cube);
+				document.body.appendChild(scaler);
+				cube.children[0].appendChild(document.querySelector('main'));
+				let vid = document.createElement('video');
+				vid.className = 'background';
+				vid.autoplay = true;
+				vid.loop = true;
+				vid.src = '/client/gnomed.mp4';
+				document.body.appendChild(vid);
+			},
+			button: 'ye'
+		}
+	];
+	let currentImprovement = 0;
+	let intro = document.querySelector('.intro');
+	let improveButton = document.querySelector('aside button');
+	function improve(e) {
+		let improvement = improvements[currentImprovement++];
+		if (!improvement) {
+			return;
+		}
+		if (improvement.css) {
+			let css = document.createElement('style');
+			css.appendChild(document.createTextNode(improvement.css));
+			document.head.appendChild(css);
+		}
+		if (improvement.button) {
+			improveButton.textContent = improvement.button;
+		}
+		if (improvement.intro) {
+			intro.textContent = improvement.intro;
+		}
+		if (typeof improvement.action === 'function') {
+			improvement.action(e);
+		}
 	}
-];
-let currentImprovement = 0;
-let intro = document.querySelector('.intro');
-let improveButton = document.querySelector('aside button');
-function improve(e) {
-	let improvement = improvements[currentImprovement++];
-	if (!improvement) {
-		return;
-	}
-	if (improvement.css) {
-		let css = document.createElement('style');
-		css.appendChild(document.createTextNode(improvement.css));
-		document.head.appendChild(css);
-	}
-	if (improvement.button) {
-		improveButton.textContent = improvement.button;
-	}
-	if (improvement.intro) {
-		intro.textContent = improvement.intro;
-	}
-	if (typeof improvement.action === 'function') {
-		improvement.action(e);
-	}
-}
-improveButton.addEventListener('click', improve);
+	improveButton.addEventListener('click', improve);
+})();

@@ -1,17 +1,17 @@
-document.body.addEventListener('mousedown', () => {
-	document.body.classList.add('mouse');
-});
-document.body.addEventListener('keydown', () => {
-	document.body.classList.remove('mouse');
-});
-
-const images = {
-	transparent: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
-	scoresaber: '/client/scoresaber.png',
-	peepoUK: '/client/icon.png',
-};
-
 (async () => {
+	document.body.addEventListener('mousedown', () => {
+		document.body.classList.add('mouse');
+	});
+	document.body.addEventListener('keydown', () => {
+		document.body.classList.remove('mouse');
+	});
+
+	const images = {
+		transparent: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
+		scoresaber: '/client/scoresaber.png',
+		peepoUK: '/client/icon.png',
+	};
+
 	let data = await fetch('/ranked').then(r => r.json());
 	let ranked = data.list;
 	let difficulties = [
