@@ -149,17 +149,23 @@ const PP_DECAY = .965;
 
 const ppCurve = [
 	{ at: 0, value: 0 },
-	{ at: 15, value: .04 },
-	{ at: 28, value: .15 },
-	{ at: 40, value: .31 },
-	{ at: 58, value: .41 },
-	{ at: 68, value: .49 },
-	{ at: 82, value: .81 },
-	{ at: 93.5, value: .99 },
-	{ at: 96, value: 1.02 },
-	{ at: 100, value: 1.04 },
-	{ at: 112, value: 1.06 },
-	{ at: Infinity, value: 1.06 }
+	{ at: 40, value: .08 },
+	{ at: 50, value: .15 },
+	{ at: 69, value: .31 },
+	{ at: 75, value: .37 },
+	{ at: 82, value: .47 },
+	{ at: 86, value: .565 },
+	{ at: 88, value: .69 },
+	{ at: 90, value: .77 },
+	{ at: 91, value: .815 },
+	{ at: 92, value: .865 },
+	{ at: 93, value: .92 },
+	{ at: 94, value: .977 },
+	{ at: 95, value: 1.036 },
+	{ at: 100, value: 1.1 },
+	{ at: 110, value: 1.15 },
+	{ at: 114, value: 1.2 },
+	{ at: Infinity, value: 1.2 }
 ];
 function ppFromScore(score) {
 	if (!score || score <= 0) {
