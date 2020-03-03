@@ -22,6 +22,7 @@
 		{ at: 69, value: .25 },
 		{ at: 75, value: .425 },
 		{ at: 82, value: .56 },
+		{ at: 84.5, value: .63 },
 		{ at: 86, value: .72 },
 		{ at: 88, value: .766 },
 		{ at: 90, value: .815 },
@@ -33,7 +34,6 @@
 		{ at: 100, value: 1.1 },
 		{ at: 110, value: 1.15 },
 		{ at: 114, value: 1.2 },
-		{ at: Infinity, value: 1.2 }
 	];
 	const difficulties = {
 		ExpertPlus: { className: 'expert-plus', display: 'Expert+' },
@@ -175,6 +175,12 @@
 			return 0;
 		}
 		let index = ppCurve.findIndex(o => o.at >= score);
+		if (index === -1) {
+			return ppCurve[ppCurve.length - 1].value;
+		}
+		if (!index) {
+			return ppCurve[0].value;
+		}
 		let from = ppCurve[index - 1];
 		let to = ppCurve[index];
 		let progress = (score - from.at) / (to.at - from.at);
