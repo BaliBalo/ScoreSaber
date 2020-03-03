@@ -675,6 +675,24 @@
 		}
 	}
 
+	class SortWorstScore extends SortMethod {
+		constructor(list) {
+			super(list);
+			this.name = 'Worst score';
+			this.id = 'worstscore';
+		}
+
+		run(element) {
+			updateEstimate(element, getScoreEstimate(element.stars));
+		}
+
+		sort(elements) {
+			return elements.sort((a, b) => {
+				return (a.score || 0) - (b.score || 0) || a.pp - b.pp;
+			});
+		}
+	}
+
 	// class SortCompare extends SortMethod {
 	// 	constructor(list) {
 	// 		super(list);
@@ -751,7 +769,7 @@
 		// SortCompare,
 		SortRaw
 	];
-	let playedMethods = baseMethods.concat(SortWorstRank, SortBestRank);
+	let playedMethods = baseMethods.concat(SortWorstRank, SortBestRank, SortWorstScore);
 
 	class List {
 		constructor(elem, title, methods, elements = []) {
