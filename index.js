@@ -20,7 +20,7 @@ app.set('etag', 'strong');
 // const cors = require('cors');
 // app.use(cors());
 
-let serveStaticFiles = express.static('client', { extensions: ['html'] });
+let serveStaticFiles = express.static('client', { extensions: ['html'], cacheControl: false });
 app.use(['/client'], serveStaticFiles);
 app.get(['/favicon.ico', '/robots.txt'], serveStaticFiles);
 // Proxy requests (to avoid front-end cross-origin requests issues)
