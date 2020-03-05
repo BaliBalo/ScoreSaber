@@ -1,6 +1,7 @@
 const path = require('path');
 const express = require('express');
 const rateLimit = require('express-rate-limit');
+const cookieParser = require('cookie-parser');
 const request = require('request');
 const CronJob = require('cron').CronJob;
 const { timetag } = require('./utils');
@@ -16,6 +17,7 @@ const top200 = require('./utils/top200');
 const app = express();
 const port = 2148;
 
+app.use(cookieParser());
 app.set('etag', 'strong');
 
 // Enable only on specific endpoints for which we want cross-origin requests allowed (none for now)

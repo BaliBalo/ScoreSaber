@@ -21,6 +21,7 @@
   },
   "homepage": "https://github.com/BaliBalo/ScoreSaber#readme",
   "dependencies": {
+    "cookie-parser": "^1.4.4",
     "cors": "^2.8.5",
     "cron": "^1.8.2",
     "express": "^4.17.1",
