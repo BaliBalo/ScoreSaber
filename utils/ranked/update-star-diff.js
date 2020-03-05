@@ -21,14 +21,17 @@ async function getDataFromPage(page, list = []) {
 
 async function updateStarDiff() {
 	console.log(timetag(), 'Started update of all star diff and PP values');
-	
+
 	let allData = await getDataFromPage(1);
 	if (!allData) {
 		return console.log(timetag(), '(update-star-diff) Error getting list of maps data');
 	}
 
-	promiseSequence(allData, ({ uid, ...update }) => {
-		return ranked.update({ uid }, { $set: update }, { multi: true });
+	await promiseSequence(allData, async ({ uid, ...update }) => {
+		const result = await ranked.update({ uid }, { $set: update });
+		if (result !== 1) {
+			console.log('Star diff update result ' + result + ' for ' + uid);
+		}
 	});
 	await rankedUpdate.setTime();
 
