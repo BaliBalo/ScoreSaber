@@ -4,9 +4,6 @@ const rankedUpdate = require('../../utils/ranked/update');
 const beatsaver = require('../../utils/beatsaver');
 const scoresaber = require('../../utils/scoresaber');
 
-// Approximation (shoud rather take a bunch of scores for each song and deduce it from that)
-const PP_PER_STAR = 42.114296;
-
 async function addNew(songsRaw) {
 	const existing = (await ranked.find({ uid: { $in: songsRaw.map(e => e.uid) } })).map(e => e.uid);
 	let newRanked = songsRaw.filter(e => !existing.includes(e.uid));
@@ -34,7 +31,7 @@ async function addNew(songsRaw) {
 			scores: scores,
 			recentScores: song['24hr'],
 			stars: song.stars,
-			pp: song.stars * PP_PER_STAR
+			pp: song.stars * ranked.PP_PER_STAR
 		};
 	});
 	await promiseSequence(songs, beatsaver.addData);

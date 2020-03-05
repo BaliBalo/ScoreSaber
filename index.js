@@ -1,5 +1,6 @@
 const path = require('path');
 const express = require('express');
+const rateLimit = require('express-rate-limit');
 const request = require('request');
 const CronJob = require('cron').CronJob;
 const { timetag } = require('./utils');
@@ -10,6 +11,7 @@ const checkNew = require('./utils/ranked/check-new');
 const removeUnranks = require('./utils/ranked/remove-unranks');
 const removeDupes = require('./utils/ranked/remove-dupes');
 const removePartial = require('./utils/ranked/remove-partial');
+const updateStarDiff = require('./utils/ranked/update-star-diff');
 const top200 = require('./utils/top200');
 const app = express();
 const port = 2148;
@@ -78,11 +80,16 @@ const execTask = (fn, ...args) => async (req, res) => {
 		res.status(500).send('Error');
 	}
 };
-app.all('/admin/check-new', auth.check, execTask(checkNew, true));
-app.all('/admin/check-new/full', auth.check, execTask(checkNew.full, true));
-app.all('/admin/remove-unranks', auth.check, execTask(removeUnranks));
-app.all('/admin/remove-dupes', auth.check, execTask(removeDupes));
-app.all('/admin/remove-partial', auth.check, execTask(removePartial));
+const limiter = rateLimit({
+	windowMs: 5 * 60 * 1000,
+	max: 100
+});
+app.all('/admin/check-new', limiter, auth.check, execTask(checkNew, true));
+app.all('/admin/check-new/full', limiter, auth.check, execTask(checkNew.full, true));
+app.all('/admin/remove-unranks', limiter, auth.check, execTask(removeUnranks));
+app.all('/admin/remove-dupes', limiter, auth.check, execTask(removeDupes));
+app.all('/admin/remove-partial', limiter, auth.check, execTask(removePartial));
+app.all('/admin/update-star-diff', limiter, auth.check, execTask(updateStarDiff));
 
 if (!process.argv.includes('--dev')) {
 	new CronJob('0 */5 * * * *', checkNew, null, true);

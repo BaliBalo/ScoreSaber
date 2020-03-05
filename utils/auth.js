@@ -5,7 +5,7 @@ try {
 
 module.exports = {
 	check: (req, res, next) => {
-		let key = req.query.key;
+		let key = req.query.key || req.cookies.key;
 		if (!key) {
 			return res.status(401).end('Unauthorized');
 		}
