@@ -34,7 +34,9 @@ async function addNew(songsRaw) {
 			pp: song.stars * ranked.PP_PER_STAR
 		};
 	});
-	await promiseSequence(songs, beatsaver.addData);
+	try {
+		await promiseSequence(songs, beatsaver.addData);
+	} catch(e) {}
 	songs = songs.filter(e => e && e.beatSaverKey);
 	if (songs.length) {
 		await ranked.insert(songs);

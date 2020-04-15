@@ -6,6 +6,7 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
 
 async function beatsaverData(hash, retries = 2) {
 	try {
+		await wait(1000);
 		return await request({
 			uri: 'https://beatsaver.com/api/maps/by-hash/' + hash,
 			json: true
