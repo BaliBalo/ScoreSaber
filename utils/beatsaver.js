@@ -13,7 +13,7 @@ async function beatsaverData(hash, retries = 2) {
 			headers: { 'User-Agent': 'Peepee/1.0.0' }
 		});
 	} catch(err) {
-		if (retries && retries > 0) {
+		if (err.statusCode !== 404 && retries && retries > 0) {
 			await wait(3000);
 			return beatsaverData(hash, retries - 1);
 		}
