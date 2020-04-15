@@ -26,7 +26,7 @@ async function updateStats(log) {
 			console.log(timetag(), 'Stats update result ' + result + ' for ' + item);
 		}
 		return ++i;
-	});
+	}, 0);
 	await rankedUpdate.setTime();
 
 	if (log === true) {
