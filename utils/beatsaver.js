@@ -6,7 +6,7 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
 
 async function beatsaverData(hash, retries = 2) {
 	try {
-		await wait(1000);
+		await wait(100);
 		return await request({
 			uri: 'https://beatsaver.com/api/maps/by-hash/' + hash,
 			json: true
@@ -26,7 +26,7 @@ async function addData(item) {
 	}
 	let song;
 	try {
-		song = beatsaverData(item.id.toLowerCase());
+		song = await beatsaverData(item.id.toLowerCase());
 	} catch(e) {
 		console.log('(beatsaver error)', e);
 	}
