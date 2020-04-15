@@ -1,3 +1,4 @@
+const fs = require('fs');
 const path = require('path');
 const express = require('express');
 const rateLimit = require('express-rate-limit');
@@ -13,9 +14,12 @@ const removeUnranks = require('./utils/ranked/remove-unranks');
 const removeDupes = require('./utils/ranked/remove-dupes');
 const removePartial = require('./utils/ranked/remove-partial');
 const updateStarDiff = require('./utils/ranked/update-star-diff');
+const updateStats = require('./utils/ranked/update-stats');
 const top200 = require('./utils/top200');
 const app = express();
 const port = 2148;
+
+fs.mkdirSync(path.resolve(__dirname, 'data'), { recursive: true });
 
 app.use(cookieParser());
 app.set('etag', 'strong');
@@ -82,6 +86,11 @@ const execTask = (fn, ...args) => async (req, res) => {
 		res.status(500).send('Error');
 	}
 };
+const execLongTask = (fn, ...args) => execTask(() => {
+	// do not await the long task
+	fn(...args);
+});
+
 const limiter = rateLimit({
 	windowMs: 5 * 60 * 1000,
 	max: 100
@@ -92,10 +101,12 @@ app.all('/admin/remove-unranks', limiter, auth.check, execTask(removeUnranks));
 app.all('/admin/remove-dupes', limiter, auth.check, execTask(removeDupes));
 app.all('/admin/remove-partial', limiter, auth.check, execTask(removePartial));
 app.all('/admin/update-star-diff', limiter, auth.check, execTask(updateStarDiff));
+app.all('/admin/update-stats', limiter, auth.check, execLongTask(updateStats, true));
 
 if (!process.argv.includes('--dev')) {
 	new CronJob('0 */5 * * * *', checkNew, null, true);
-	new CronJob('0 0 * * * *', removeUnranks, null, true);
+	new CronJob('0 1 * * * *', removeUnranks, null, true);
+	new CronJob('0 7 0 * * *', updateStats, null, true);
 }
 
 app.listen(port, () => console.log(timetag(), 'Scoresaber server listening (port ' + port + ')'));
