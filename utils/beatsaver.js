@@ -28,6 +28,7 @@ async function addData(item) {
 	try {
 		song = await beatsaverData(item.id.toLowerCase());
 	} catch(e) {
+		delete e.response;
 		console.log('(beatsaver error)', e);
 	}
 	if (!song) {
