@@ -9,7 +9,8 @@ async function beatsaverData(hash, retries = 2) {
 		await wait(100);
 		return await request({
 			uri: 'https://beatsaver.com/api/maps/by-hash/' + hash,
-			json: true
+			json: true,
+			headers: { 'User-Agent': 'Peepee/1.0.0' }
 		});
 	} catch(err) {
 		if (retries && retries > 0) {
