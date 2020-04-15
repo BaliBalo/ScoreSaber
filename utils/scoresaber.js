@@ -6,7 +6,7 @@ const request = require('request-promise-native');
 
 const wait = ms => new Promise(r => setTimeout(r, ms));
 
-async function _scoreSaberRequest(path, retries = 0) {
+async function _scoreSaberRequest(path, retries = 2) {
 	try {
 		return request({
 			url: path,
@@ -14,15 +14,14 @@ async function _scoreSaberRequest(path, retries = 0) {
 			json: true
 		});
 	} catch(e) {
-		if (3 > retries) {
+		if (retries && retries > 0) {
 			await wait(3000);
-			return _scoreSaberRequest(path, retries + 1);
-		} else {
-			throw e;
+			return _scoreSaberRequest(path, retries - 1);
 		}
+		throw e;
 	}
 }
-async function scoreSaberRequest(path) { return _scoreSaberRequest(path, 0); }
+const scoreSaberRequest = async (path) => _scoreSaberRequest(path);
 
 module.exports = {
 	request: scoreSaberRequest,

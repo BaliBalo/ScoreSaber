@@ -1,5 +1,23 @@
 /* eslint-disable require-atomic-updates */
 const request = require('request-promise-native');
+const { timetag } = require('../utils');
+
+const wait = ms => new Promise(r => setTimeout(r, ms));
+
+async function beatsaverData(hash, retries = 2) {
+	try {
+		return await request({
+			uri: 'https://beatsaver.com/api/maps/by-hash/' + hash,
+			json: true
+		});
+	} catch(err) {
+		if (retries && retries > 0) {
+			await wait(3000);
+			return beatsaverData(hash, retries - 1);
+		}
+		throw err;
+	}
+}
 
 async function addData(item) {
 	if (!item || !item.id) {
@@ -7,15 +25,12 @@ async function addData(item) {
 	}
 	let song;
 	try {
-		// Save request in data folder ?
-		// A specific hash shouldn't have its metadata changed too much
-		song = await request({
-			uri: 'https://beatsaver.com/api/maps/by-hash/' + item.id.toLowerCase(),
-			json: true
-		});
-	} catch(e) { }
+		song = beatsaverData(item.id.toLowerCase());
+	} catch(e) {
+		console.log('(beatsaver error)', e);
+	}
 	if (!song) {
-		console.log('No beatsaver data found for ' + item.name + ' by ' + item.mapper + ' (' + item.uid + ')');
+		console.log(timetag(), 'No beatsaver data found for ' + item.name + ' by ' + item.mapper + ' (' + item.uid + ' - ' + item.id.toLowerCase() + ')');
 		return;
 	}
 	item.beatSaverKey = song.key;
