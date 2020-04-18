@@ -37,13 +37,13 @@ app.use('/proxy', (req, res) => req.pipe(request('https://scoresaber.com' + req.
 // Custom urls - if string, makes a client file available at root
 //   e.g. 'thing' makes `client/thing.html` available at `/thing`
 [
-	{ url: '/', file: 'client/index.html' },
+	{ url: '/', file: 'pages/index.html' },
 	'peepee',
 	'overlay',
 	'playlist-maker',
 ].forEach(data => {
 	if (typeof data === 'string') {
-		data = { url: '/' + data, file: 'client/' + data + '.html' };
+		data = { url: '/' + data, file: 'pages/' + data + '.html' };
 	}
 	if (!data.url || !data.file) {
 		return;

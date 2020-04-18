@@ -4,11 +4,13 @@
   "description": "ScoreSaber-related stuff",
   "main": "index.js",
   "scripts": {
-    "dev": "node index.js --dev",
-    "sass": "npx node-sass sass/ -o client/ --output-style compressed",
-    "sass-watch": "npx node-sass sass/ -o client/ --output-style compressed && npx node-sass -w sass/ -o client/ --output-style compressed",
+    "dev": "npm run sass-watch & npm run compress-watch & npm run serve-dev ; fg ; fg",
+    "serve-dev": "node index.js --dev",
+    "sass": "npx node-sass pages/ -o client/ --output-style compressed",
+    "sass-watch": "npx node-sass pages/ -o client/ --output-style compressed && npx node-sass -w pages/ -o client/ --output-style compressed",
     "compress": "node compress.js",
-    "compress-peepee": "npx terser client/peepee.js --compress --mangle -o client/peepee.min.js"
+    "compress-watch": "node compress.js --watch",
+    "compress-peepee": "npx terser pages/peepee.js --compress --mangle -o client/peepee.min.js"
   },
   "repository": {
     "type": "git",
@@ -32,6 +34,7 @@
   },
   "devDependencies": {
     "babel-eslint": "^10.1.0",
+    "chokidar": "^3.3.1",
     "eslint": "^6.8.0",
     "node-sass": "^4.13.1",
     "terser": "^4.6.11"
