@@ -134,19 +134,32 @@ legend {
 }
 
 .preview .list {
+	display: inline-block;
 	background: #fff;
 	color: #000;
 	height: 200px;
 	box-sizing: border-box;
-	width: calc(100vw - 42px);
-	max-width: 600px;
+	// width: calc(100vw - 42px);
+	min-width: 300px;
+	max-width: calc(100vw - 42px);
 	overflow: auto;
 	margin-top: 4px;
 	border-radius: 4px;
-	padding: 8px;
+	// padding: 8px;
 	white-space: nowrap;
 	font-size: 14px;
 	line-height: 20px;
+	.item {
+		padding: 4px 8px;
+		cursor: default;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		border-bottom: 1px solid #f9f9f9;
+		&:hover {
+			background: #f9f9f9;
+		}
+	}
 }
 
 .details {

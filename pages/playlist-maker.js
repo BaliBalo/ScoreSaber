@@ -21,6 +21,13 @@
 		{ name: 'Expert' },
 		{ name: 'ExpertPlus', label: 'Expert+' },
 	];
+	let diffShort = {
+		Easy: 'Ez',
+		Normal: 'N',
+		Hard: 'H',
+		Expert: 'Ex',
+		ExpertPlus: 'Ex+',
+	};
 	let $ = document.querySelector.bind(document);
 	let fields = {
 		difficulty: {},
@@ -149,10 +156,16 @@
 		activeSongs = [...perSong.values()].map((list, i) => {
 			let data = list[0];
 			let previewElem = document.createElement('div');
+			previewElem.className = 'item';
+			previewElem.title = [
+				'downloads: ' + data.downloads,
+				'upvotes: ' + data.upvotes,
+				'downvotes: ' + data.downvotes,
+			].join('\n');
 			let content = (i + 1) + '. ' + data.artist + ' - ' + data.name + ' | ' + data.mapper;
 			let details = [
 				data.rating && ('👍 ' + data.rating.toFixed(2) + '%'),
-				list.map(e => e.diff.replace('ExpertPlus', 'Expert+')).join(', ')
+				list.map(e => diffShort[e.diff] || e.diff).join(', ')
 			].filter(e => e).join(' - ');
 			if (details) {
 				content += ' (' + details + ')';
