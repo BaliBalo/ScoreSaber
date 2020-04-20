@@ -105,7 +105,8 @@ app.all('/admin/update-stats', limiter, auth.check, execLongTask(updateStats, tr
 
 if (!process.argv.includes('--dev')) {
 	new CronJob('0 */5 * * * *', checkNew, null, true);
-	new CronJob('0 1 * * * *', removeUnranks, null, true);
+	new CronJob('0 6 23 * * *', checkNew.full, null, true);
+	new CronJob('0 1 */6 * * *', removeUnranks, null, true);
 	new CronJob('0 7 0 * * *', updateStats, null, true);
 }
 
