@@ -940,32 +940,33 @@
 			}
 			if (element.download) {
 				let dl = link(element.download, 'download', null, 'Download map', '_blank');
-				dl.addEventListener('click', e => {
-					if (e.button !== 0) {
-						return;
-					}
-					e.preventDefault();
-					let iframe = document.createElement('iframe');
-					iframe.style.display = 'none';
-					document.body.appendChild(iframe);
-					let done = () => {
-						window.removeEventListener('blur', onBlur);
-						document.body.removeChild(iframe);
-					};
-					let timeout = setTimeout(function () {
-						done();
-						location.href = element.download;
-					}, 500);
-					let onBlur = () => {
-						clearTimeout(timeout);
-						done();
-					};
-					window.addEventListener('blur', onBlur);
-					iframe.contentWindow.location.href = 'beatsaver://' + element.beatSaverKey;
-				});
+				// dl.addEventListener('click', e => {
+				// 	if (e.button !== 0) {
+				// 		return;
+				// 	}
+				// 	e.preventDefault();
+				// 	let iframe = document.createElement('iframe');
+				// 	iframe.style.display = 'none';
+				// 	document.body.appendChild(iframe);
+				// 	let done = () => {
+				// 		window.removeEventListener('blur', onBlur);
+				// 		document.body.removeChild(iframe);
+				// 	};
+				// 	let timeout = setTimeout(function () {
+				// 		done();
+				// 		location.href = element.download;
+				// 	}, 500);
+				// 	let onBlur = () => {
+				// 		clearTimeout(timeout);
+				// 		done();
+				// 	};
+				// 	window.addEventListener('blur', onBlur);
+				// 	iframe.contentWindow.location.href = 'beatsaver://' + element.beatSaverKey;
+				// });
 				links.appendChild(dl);
 			}
 			if (element.beatSaverKey) {
+				links.appendChild(link('beatsaver://' + element.beatSaverKey, 'oneclick', null, 'OneClick install'));
 				links.appendChild(link('https://beatsaver.com/beatmap/' + element.beatSaverKey, 'beatsaver', null, 'Open on BeatSaver', '_blank'));
 			}
 			links.appendChild(link('https://scoresaber.com/leaderboard/' + element.uid, 'leaderboards', null, 'ScoreSaber leaderboard', '_blank'));
