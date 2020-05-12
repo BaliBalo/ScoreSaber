@@ -754,17 +754,17 @@ body {
 			color: #aaa;
 		}
 	}
-	.score {
-		&::after {
-			content: '%';
-			color: #aaa;
-		}
+	.score::after {
+		content: '% ';
+		color: #aaa;
 	}
-	.rank {
-		&::before {
-			content: '#';
-			color: #aaa;
-		}
+	.at {
+		color: #aaa;
+		font-size: .75em;
+	}
+	.rank::before {
+		content: '#';
+		color: #aaa;
 	}
 	.sep {
 		color: #666;

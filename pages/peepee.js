@@ -50,6 +50,56 @@
 		return n.toFixed(p).replace(/\.?0*$/, '');
 	}
 
+	function pad2(n) {
+		return ('0' + n).slice(-2);
+	}
+	function standardDate(date) {
+		let datePart = date.getFullYear() + '-' + pad2(date.getMonth() + 1) + '-' + pad2(date.getDate());
+		let timePart = pad2(date.getHours()) + ':' + pad2(date.getMinutes());
+		return datePart + ' ' + timePart;
+	}
+	const dateDistance = (function() {
+		const SECOND = 1000;
+		const MINUTE = 60 * SECOND;
+		const HOUR = 60 * MINUTE;
+		const DAY = 24 * HOUR;
+		const MONTH = 30 * DAY;
+
+		let convert = (ms, unit) => ~~(ms / unit);
+		let plural = (count, word) => count + ' ' + word + (count !== 1 && count !== -1 ? 's' : '');
+
+		function getDateDistanceString(date, fromDate) {
+			let diff = fromDate - date;
+			let dist = Math.abs(diff);
+			if (dist < MINUTE) {
+				return plural(convert(diff, SECOND), 'second');
+			}
+			if (dist < HOUR) {
+				return plural(convert(diff, MINUTE), 'minute');
+			}
+			if (dist < DAY) {
+				return plural(convert(diff, HOUR), 'hour');
+			}
+			if (dist < MONTH) {
+				return plural(convert(diff, DAY), 'day');
+			}
+			let months = dateDiffInMonths(date, fromDate);
+			if (Math.abs(months) < 12) {
+				return plural(months, 'month');
+			}
+			let years = ~~(months / 12);
+			return plural(years, 'year');
+		}
+		function dateDiffInMonths(date, fromDate) {
+			let years = fromDate.getFullYear() - date.getFullYear();
+			let months = fromDate.getMonth() - date.getMonth();
+			return months + 12 * years;
+		}
+
+		return date => getDateDistanceString(date, new Date()) + ' ago';
+	})();
+
+
 	function create(tag, className, text, title) {
 		let elem = document.createElement(tag);
 		if (className != undefined) {
@@ -761,13 +811,31 @@
 		}
 	}
 
+	class SortOldestScore extends SortMethod {
+		constructor(list) {
+			super(list);
+			this.name = 'Oldest score';
+			this.id = 'oldestscore';
+		}
+
+		run(element) {
+			updateEstimate(element, getScoreEstimate(element.stars));
+		}
+
+		sort(elements) {
+			return elements.sort((a, b) => {
+				return (a.at || 0) - (b.at || 0) || a.pp - b.pp;
+			});
+		}
+	}
+
 	let baseMethods = [
 		SortScoreEst,
 		SortRank,
 		// SortCompare,
 		SortRaw
 	];
-	let playedMethods = baseMethods.concat(SortWorstRank, SortBestRank, SortWorstScore);
+	let playedMethods = baseMethods.concat(SortWorstRank, SortBestRank, SortWorstScore, SortOldestScore);
 
 	class List {
 		constructor(elem, title, methods, elements = []) {
@@ -894,6 +962,10 @@
 			if (element.score || element.score === 0) {
 				let scoreAndRank = create('span', 'score-and-rank');
 				scoreAndRank.appendChild(create('span', 'score', round(element.score, 2)));
+				if (element.at) {
+					let at = new Date(element.at);
+					scoreAndRank.appendChild(create('span', 'at', dateDistance(at), standardDate(at)));
+				}
 				scoreAndRank.appendChild(create('span', 'sep'));
 				scoreAndRank.appendChild(create('span', 'rank', element.rank.toLocaleString()));
 				difficultyAndScore.appendChild(scoreAndRank);
@@ -939,31 +1011,7 @@
 				links.appendChild(bsr);
 			}
 			if (element.download) {
-				let dl = link(element.download, 'download', null, 'Download map', '_blank');
-				// dl.addEventListener('click', e => {
-				// 	if (e.button !== 0) {
-				// 		return;
-				// 	}
-				// 	e.preventDefault();
-				// 	let iframe = document.createElement('iframe');
-				// 	iframe.style.display = 'none';
-				// 	document.body.appendChild(iframe);
-				// 	let done = () => {
-				// 		window.removeEventListener('blur', onBlur);
-				// 		document.body.removeChild(iframe);
-				// 	};
-				// 	let timeout = setTimeout(function () {
-				// 		done();
-				// 		location.href = element.download;
-				// 	}, 500);
-				// 	let onBlur = () => {
-				// 		clearTimeout(timeout);
-				// 		done();
-				// 	};
-				// 	window.addEventListener('blur', onBlur);
-				// 	iframe.contentWindow.location.href = 'beatsaver://' + element.beatSaverKey;
-				// });
-				links.appendChild(dl);
+				links.appendChild(link(element.download, 'download', null, 'Download map', '_blank'));
 			}
 			if (element.beatSaverKey) {
 				links.appendChild(link('beatsaver://' + element.beatSaverKey, 'oneclick', null, 'OneClick install'));
