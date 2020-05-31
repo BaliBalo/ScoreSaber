@@ -13,7 +13,7 @@ const checkNew = require('./utils/ranked/check-new');
 const removeUnranks = require('./utils/ranked/remove-unranks');
 const removeDupes = require('./utils/ranked/remove-dupes');
 const removePartial = require('./utils/ranked/remove-partial');
-const updateStarDiff = require('./utils/ranked/update-star-diff');
+const updateScoresaberValues = require('./utils/ranked/update-scoresaber-values');
 const updateStats = require('./utils/ranked/update-stats');
 const top200 = require('./utils/top200');
 const app = express();
@@ -100,7 +100,7 @@ app.all('/admin/check-new/full', limiter, auth.check, execTask(checkNew.full, tr
 app.all('/admin/remove-unranks', limiter, auth.check, execTask(removeUnranks));
 app.all('/admin/remove-dupes', limiter, auth.check, execTask(removeDupes));
 app.all('/admin/remove-partial', limiter, auth.check, execTask(removePartial));
-app.all('/admin/update-star-diff', limiter, auth.check, execTask(updateStarDiff));
+app.all('/admin/update-scoresaber-values', limiter, auth.check, execTask(updateScoresaberValues));
 app.all('/admin/update-stats', limiter, auth.check, execLongTask(updateStats, true));
 
 if (!process.argv.includes('--dev')) {
@@ -108,6 +108,7 @@ if (!process.argv.includes('--dev')) {
 	new CronJob('0 6 23 * * *', checkNew.full, null, true);
 	new CronJob('0 1 */6 * * *', removeUnranks, null, true);
 	new CronJob('0 7 0 * * *', updateStats, null, true);
+	new CronJob('0 12 0 * * *', updateScoresaberValues, null, true);
 }
 
 app.listen(port, () => console.log(timetag(), 'Scoresaber server listening (port ' + port + ')'));

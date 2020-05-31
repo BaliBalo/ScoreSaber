@@ -39,5 +39,5 @@ Some admin endpoints are available. These all need to be accessed using a `key` 
 - `/admin/check-new/full`: like above but do not stop once we encounter a known ranked maps. Checks all the scoresaber API pages.
 - `/admin/remove-unranks`: Remove maps that have been unranked from the saved list. Goes through all the pages of the scoresaber API and compare against the saved list to know what to remove (automatically ran every hour in production mode)
 - `/admin/remove-dupes`: While this should not happen (anymore), if something unexpected occurs, a single map could end up being multiple times in the saved list (no hard unique key check with the DB system used). This script checks that and removes these duplicates.
-- `/admin/update-star-diff`: Performs a global check on the scoresaber data and update the star difficulty and raw pp value of maps currently in the DB. Useful if there has been some known manual tweak on scoresaber's side.
+- `/admin/update-scoresaber-values`: Performs a global check on the scoresaber data and update values like the star difficulty, raw pp value, number of scores set, etc. of maps currently in the DB
 - `/admin/update-stats`: Triggers an update of the scoresaber data (votes etc.) on the existing maps

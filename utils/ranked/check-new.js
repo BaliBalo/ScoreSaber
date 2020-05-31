@@ -4,6 +4,13 @@ const rankedUpdate = require('../../utils/ranked/update');
 const beatsaver = require('../../utils/beatsaver');
 const scoresaber = require('../../utils/scoresaber');
 
+function parseNumber(v) {
+	if (typeof v === 'string') {
+		return +v.replace(/,/g, '') || v;
+	}
+	return v;
+}
+
 async function addNew(songsRaw) {
 	const existing = (await ranked.find({ uid: { $in: songsRaw.map(e => e.uid) } })).map(e => e.uid);
 	let newRanked = songsRaw.filter(e => !existing.includes(e.uid));
@@ -16,10 +23,6 @@ async function addNew(songsRaw) {
 		if (!diffMatch || !song.stars) {
 			return;
 		}
-		let scores = song.scores;
-		if (typeof scores === 'string') {
-			scores = +scores.replace(/,/g, '') || scores;
-		}
 		return {
 			uid: song.uid,
 			id: song.id,
@@ -28,8 +31,8 @@ async function addNew(songsRaw) {
 			mapper: song.levelAuthorName,
 			bpm: song.bpm,
 			diff: diffMatch[1],
-			scores: scores,
-			recentScores: song['24hr'],
+			scores: parseNumber(song.scores),
+			recentScores: parseNumber(song['24hr']),
 			stars: song.stars,
 			pp: song.stars * ranked.PP_PER_STAR
 		};
