@@ -26,7 +26,17 @@ function promiseSequence(array, fn, data) {
 	if (typeof fn !== 'function') {
 		return Promise.all(array);
 	}
-	return array.reduce((promise, el) => promise.then(d => fn(el, d)), Promise.resolve(data));
+	return array.reduce((promise, el, i) => promise.then(d => fn(el, d, i)), Promise.resolve(data));
+}
+
+function promiseMapSequence(array, fn) {
+	if (typeof fn !== 'function') {
+		return Promise.all(array);
+	}
+	return promiseSequence(array, async (el, arr, i) => {
+		arr.push(await fn(el, i));
+		return arr;
+	}, []);
 }
 
 module.exports = {
@@ -34,4 +44,5 @@ module.exports = {
 	timetag,
 	once,
 	promiseSequence,
+	promiseMapSequence
 };
