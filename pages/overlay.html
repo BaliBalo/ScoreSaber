@@ -208,6 +208,7 @@
 		<div class="combo">
 			<div class="description">combo</div>
 			<div class="value">0</div>
+			<div class="details multiplier">x1</div>
 		</div>
 		<div class="percentage">
 			<div class="description">score</div>
@@ -268,6 +269,7 @@
 			songDiff: document.querySelector('.songMapper .difficulty'),
 			misses: document.querySelector('.misses .value'),
 			combo: document.querySelector('.combo .value'),
+			multiplier: document.querySelector('.combo .multiplier'),
 			percentage: document.querySelector('.percentage .value'),
 			score: document.querySelector('.percentage .score'),
 			rank: document.querySelector('.rank .value'),
@@ -283,9 +285,7 @@
 			}
 			refreshingUser = true;
 			try {
-				// https://cors-anywhere.herokuapp.com/https://scoresaber.com/u/
-				let urlprefix = location.host === 'scoresaber.balibalo.xyz' ? '/proxy/u/' : 'https://cors-anywhere.herokuapp.com/https://scoresaber.com/u/';
-				let doc = await fetchHTML(urlprefix + playerID);
+				let doc = await fetchHTML('/proxy/u/' + playerID);
 				let data = doc.querySelector('.columns ul');
 				let countryData = data.children[0].querySelector('a[href*=country]');
 				dom.pp.textContent = getNumber(data.children[1].textContent).toLocaleString() + 'pp';
@@ -302,7 +302,52 @@
 		}
 		refreshUser();
 
-		let maxScore = 0;
+		const ppCurve = [
+			{ at: 0, value: 0 },
+			{ at: .45, value: 0.015 },
+			{ at: .50, value: 0.03 },
+			{ at: .55, value: 0.06 },
+			{ at: .60, value: 0.105 },
+			{ at: .65, value: 0.16 },
+			{ at: .68, value: 0.24 },
+			{ at: .70, value: 0.285 },
+			{ at: .80, value: 0.563 },
+			{ at: .84, value: 0.695 },
+			{ at: .88, value: 0.826 },
+			{ at: .945, value: 1.015 },
+			{ at: .95, value: 1.046 },
+			{ at: 1.00, value: 1.12 },
+			{ at: 1.10, value: 1.18 },
+			{ at: 1.14, value: 1.25 },
+		];
+		function ppFromScore(percentage) {
+			if (!percentage || percentage <= 0) {
+				return 0;
+			}
+			let index = ppCurve.findIndex(o => o.at >= percentage);
+			if (index === -1) {
+				return ppCurve[ppCurve.length - 1].value;
+			}
+			if (!index) {
+				return ppCurve[0].value;
+			}
+			let from = ppCurve[index - 1];
+			let to = ppCurve[index];
+			let progress = (percentage - from.at) / (to.at - from.at);
+			return from.value + (to.value - from.value) * progress;
+		}
+
+		let ppFromHash = {};
+		fetch('/ranked').then(r => r.ok ? r.json() : Promise.reject()).then(data => {
+			ppFromHash = data.list.reduce((ppFromHash, leaderboard) => {
+				if (leaderboard.id && leaderboard.diff) {
+					ppFromHash[leaderboard.id + '-' + leaderboard.diff] = leaderboard.pp;
+				}
+				return ppFromHash;
+			}, {});
+		}).catch(() => {});
+		let rawMaxScore = 0;
+		let songPP = 0;
 		let songDuration = 0;
 		let songStart = 0;
 		let songPaused = null;
@@ -332,8 +377,20 @@
 		function updateCombo(perf) {
 			dom.combo.textContent = perf.combo.toLocaleString();
 		}
+		function updateMultiplier(perf) {
+			dom.multiplier.textContent = 'x' + perf.multiplier;
+		}
 		function updateMisses(perf) {
 			dom.misses.textContent = perf.missedNotes.toLocaleString();
+		}
+		function updateScore(perf) {
+			if (songPP) {
+				let currentPercentage = perf.score / rawMaxScore;
+				let currentPP = songPP * ppFromScore(currentPercentage);
+				dom.score.textContent = currentPP.toLocaleString() + 'pp';
+			} else {
+				dom.score.textContent = perf.score.toLocaleString();
+			}
 		}
 		function updatePercentage(perf) {
 			dom.percentage.textContent = (perf.currentMaxScore ? 100 * perf.score / perf.currentMaxScore : 0).toFixed(2) + '%';
@@ -357,12 +414,14 @@
 				dom.songDiff.textContent = beatmap.difficulty;
 				dom.songDiff.className = 'difficulty ' + beatmap.difficulty.replace('+', 'Plus');
 				dom.songImage.src = 'data:image/png;base64,' + beatmap.songCover;
-				maxScore = beatmap.maxScore;
+				rawMaxScore = beatmap.maxScore / status.mod.multiplier;
+				songPP = (beatmap.songHash && ppFromHash[beatmap.songHash + '-' + beatmap.difficulty]) || 0;
 				songDuration = beatmap.length;
 				songStart = beatmap.start;
 				songPaused = beatmap.paused;
 				dom.length.textContent = formatTime(songDuration);
 				updateCombo(status.performance);
+				updateMultiplier(status.performance);
 				updateMisses(status.performance);
 				events.scoreChanged(status);
 				timeUpdater.start();
@@ -381,17 +440,21 @@
 			obstacleEnter: (status) => {
 				document.body.classList.remove('fc');
 				updateCombo(status.performance);
+				updateMultiplier(status.performance);
 			},
 			bombCut: (status) => {
 				document.body.classList.remove('fc');
 				updateCombo(status.performance);
+				updateMultiplier(status.performance);
 			},
 			noteCut: (status) => {
 				updateCombo(status.performance);
+				updateMultiplier(status.performance);
 			},
 			noteMissed: (status) => {
 				document.body.classList.remove('fc');
 				updateCombo(status.performance);
+				updateMultiplier(status.performance);
 				updateMisses(status.performance);
 				updatePercentage(status.performance);
 			},
@@ -405,7 +468,7 @@
 			scoreChanged: (status) => {
 				let perf = status.performance;
 				dom.rank.textContent = perf.rank;
-				dom.score.textContent = perf.score.toLocaleString();
+				updateScore(perf);
 				updatePercentage(perf);
 			},
 		};
