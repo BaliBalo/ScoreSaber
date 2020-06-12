@@ -387,7 +387,7 @@
 			if (songPP) {
 				let currentPercentage = perf.score / rawMaxScore;
 				let currentPP = songPP * ppFromScore(currentPercentage);
-				dom.score.textContent = currentPP.toLocaleString() + 'pp';
+				dom.score.textContent = Math.floor(currentPP).toLocaleString() + 'pp';
 			} else {
 				dom.score.textContent = perf.score.toLocaleString();
 			}
