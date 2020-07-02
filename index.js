@@ -103,7 +103,9 @@ app.all('/admin/remove-partial', limiter, auth.check, execTask(removePartial));
 app.all('/admin/update-scoresaber-values', limiter, auth.check, execTask(updateScoresaberValues));
 app.all('/admin/update-stats', limiter, auth.check, execLongTask(updateStats, true));
 
-if (!process.argv.includes('--dev')) {
+if (process.argv.includes('--dev')) {
+	app.use(['/dev/pages'], express.static('pages', { cacheControl: false }));
+} else {
 	new CronJob('0 */5 * * * *', checkNew, null, true);
 	new CronJob('0 6 23 * * *', checkNew.full, null, true);
 	new CronJob('0 1 */6 * * *', removeUnranks, null, true);
