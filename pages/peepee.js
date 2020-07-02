@@ -666,7 +666,7 @@
 				if (typeof scores === 'string') {
 					scores = +scores.replace(/,/g, '') || Infinity;
 				}
-				if (rank <= scores && rank < (+element.rank || Infinity)) {
+				if (rank <= (scores + 100) && rank < (+element.rank || Infinity)) {
 					score = await getScoreAtRank(element.uid, rank);
 					rankScoreCheckCount++;
 					usePause = true;
