@@ -36,7 +36,7 @@ async function setTime(time) {
 async function getTime() {
 	try {
 		let data = await fs.promises.stat(lastUpdateFile);
-		return data.mtimeMs;
+		return +data.mtime;
 	} catch(e) {}
 	// If the time can't be read from the file, assume the last update is now
 	return Date.now();
