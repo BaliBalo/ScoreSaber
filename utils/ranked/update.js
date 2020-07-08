@@ -28,7 +28,12 @@ function callListeners() {
 
 async function setTime(time) {
 	try {
-		time = time || Date.now();
+		time = time || new Date();
+		// If a number, needs to be the epoch time in seconds, wheras native JS Date conversion gives ms
+		// https://nodejs.org/api/fs.html#fs_fs_utimes_path_atime_mtime_callback
+		if (typeof time === 'number') {
+			time /= 1000;
+		}
 		await fs.promises.utimes(lastUpdateFile, time, time);
 	} catch(e) {}
 	callListeners();
@@ -36,7 +41,7 @@ async function setTime(time) {
 async function getTime() {
 	try {
 		let data = await fs.promises.stat(lastUpdateFile);
-		return +data.mtime;
+		return data.mtimeMs;
 	} catch(e) {}
 	// If the time can't be read from the file, assume the last update is now
 	return Date.now();
