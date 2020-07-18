@@ -32,7 +32,13 @@ let serveStaticFiles = express.static('client', { extensions: ['html'], cacheCon
 app.use(['/client'], serveStaticFiles);
 app.get(['/favicon.ico', '/robots.txt'], serveStaticFiles);
 // Proxy requests (to avoid front-end cross-origin requests issues)
-app.use('/proxy', (req, res) => req.pipe(request('https://scoresaber.com' + req.url)).pipe(res));
+app.use('/proxy', (req, res) => {
+	let srcStream = req.pipe(request('https://scoresaber.com' + req.url));
+	srcStream.on('error', error => {
+		res.status(502).send(error.message);
+	});
+	return srcStream.pipe(res);
+});
 
 // Custom urls - if string, makes a client file available at root
 //   e.g. 'thing' makes `client/thing.html` available at `/thing`
