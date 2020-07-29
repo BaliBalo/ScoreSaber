@@ -372,6 +372,14 @@
 		}).filter(e => e);
 	}
 	async function getPages(id, from = 1) {
+		if (from === 1 && location.search.includes('debug')) {
+			try {
+				let stored = JSON.parse(localStorage.getItem('cached-' + id));
+				user = stored.user;
+				playerSongs = stored.playerSongs;
+				return;
+			} catch(e) { }
+		}
 		userFetchInfo.textContent = 'Getting scores page '+from+'...';
 		let doc = await fetchScoreSaber(id, from);
 		if (from === 1) {
@@ -392,6 +400,11 @@
 				// There is (probably) more
 				return getPages(id, from + 1);
 			}
+		}
+		if (location.search.includes('debug')) {
+			try {
+				localStorage.setItem('cached-' + id, JSON.stringify({ user, playerSongs }));
+			} catch(e) { }
 		}
 	}
 	async function getRecentScores(id, since, page = 1) {
@@ -648,6 +661,7 @@
 			// elements.forEach(el => updateEstimate(el, getScoreEstimate(el.stars)));
 			// elements.sort((a, b) => b.pp - a.pp);
 			elements.sort((a, b) => b.stars - a.stars);
+			elements.forEach(el => updateEstimate(el, 0));
 			this.rankInput.placeholder = (user.rank || 1).toLocaleString() + ' (desired rank)';
 			this.rank = ~~(+this.rankInput.value.replace(/,/g, ''));
 			if (!this.rank || this.rank <= 0) {
@@ -658,7 +672,7 @@
 
 		async run(element, isCanceled) {
 			let rank = this.rank;
-			let key = 'scoreAtRank'+rank;
+			let key = 'scoreAtRank' + rank;
 			let usePause = false;
 			if (!Object.prototype.hasOwnProperty.call(element, key)) {
 				let score = 0;
