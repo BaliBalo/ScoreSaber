@@ -54,7 +54,15 @@ app.use('/proxy', (req, res) => {
 	if (!data.url || !data.file) {
 		return;
 	}
-	app.get(data.url, (req, res) => res.sendFile(path.resolve(__dirname, data.file)));
+	if (process.argv.includes('--dev')) {
+		let pageContent = fs.promises.readFile(path.resolve(__dirname, data.file), 'utf8').then(content => {
+			content = content.replace(/\/client\/([^"' /]+)\.min\.js/g, '/dev/pages/$1.js');
+			return content;
+		}).catch(() => '');
+		app.get(data.url, (req, res) => pageContent.then(c => res.send(c)));
+	} else {
+		app.get(data.url, (req, res) => res.sendFile(path.resolve(__dirname, data.file)));
+	}
 });
 
 app.get('/ranked', async (req, res) => {
