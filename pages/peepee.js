@@ -3,6 +3,7 @@
 	const scoresaberRLDelay = 200;
 	const USER_SCORES_PER_PAGE = 8;
 	const LEADERBOARD_SCORES_PER_PAGE = 12;
+	const PLAYERS_PER_PAGE = 50;
 	const PP_DECAY = .965;
 	const PAUSE_UPDATE = 'PAUSE_UPDATE';
 	const SORT_TOP = 1;
@@ -211,6 +212,37 @@
 			}
 			console.log('Error getting score at rank', e);
 			return 0;
+		}
+	}
+	async function getPlayerAtRank(rank, retries = 2) {
+		if (!rank) {
+			console.log('Invalid player at rank request', rank);
+			return null;
+		}
+		let page = Math.ceil(rank / PLAYERS_PER_PAGE);
+		let indexOnPage = rank - (page - 1) * PLAYERS_PER_PAGE;
+		try {
+			let doc = await fetchHTML('/proxy/global/'+(page || 1));
+			if (!doc) {
+				return null;
+			}
+			let row = doc.querySelector('.ranking tbody tr:nth-child('+indexOnPage+')');
+			if (!row) {
+				return null;
+			}
+			let link = row.querySelector('.player a');
+			let match = (link && link.href || '').match(/\/u\/(\d+)/);
+			if (!match) {
+				return null;
+			}
+			return match[1];
+		} catch(e) {
+			if (retries-- > 0) {
+				await pause(1000);
+				return getPlayerAtRank(rank, retries);
+			}
+			console.log('Error getting player at rank', e);
+			return null;
 		}
 	}
 	function getDuration(song) {
@@ -809,6 +841,17 @@
 			this.compareInput.addEventListener('paste', () => setTimeout(onChange, 0));
 			this.compareInput.addEventListener('focus', () => this.compareInput.select());
 			compareForm.appendChild(this.compareInput);
+			let auto = create('button', 'compare-auto', 'auto');
+			auto.type = 'button';
+			auto.addEventListener('click', async () => {
+				auto.disabled = true;
+				let goalRank = user.rank === 1 ? 2 : Math.floor(user.rank * .9);
+				let playerId = await getPlayerAtRank(goalRank);
+				this.compareInput.value = playerId || '';
+				auto.disabled = false;
+				onChange();
+			});
+			compareForm.appendChild(auto);
 			let submit = create('button', 'compare-submit');
 			submit.type = 'submit';
 			compareForm.appendChild(submit);
