@@ -626,6 +626,9 @@ body {
 	font-family: inherit;
 	vertical-align: middle;
 }
+.compare-form.invalid .compare-input {
+	animation: invalid 3s;
+}
 .compare-submit, .rank-submit, .fixed-submit {
 	background: none;
 	border: none;

@@ -5,6 +5,8 @@
 	const LEADERBOARD_SCORES_PER_PAGE = 12;
 	const PP_DECAY = .965;
 	const PAUSE_UPDATE = 'PAUSE_UPDATE';
+	const SORT_TOP = 1;
+	const SORT_RECENT = 2;
 	const MODS = {
 		GN: .04,
 		DA: .02,
@@ -164,7 +166,7 @@
 			return parser.parseFromString(text, 'text/html');
 		});
 	}
-	async function fetchScoreSaber(id, page, sort = 1, retries = 2) {
+	async function fetchScoreSaber(id, page, sort = SORT_TOP, retries = 2) {
 		return fetchHTML('/proxy/u/'+id+'?sort='+sort+'&page='+(page || 1)).catch(async e => {
 			if (retries-- > 0) {
 				await pause(1000);
@@ -218,20 +220,20 @@
 		return minutes + ':' + ('0' + seconds).slice(-2);
 	}
 
-	function ppFromScore(score) {
-		if (!score || score <= 0) {
+	function applyCurve(value, points) {
+		if (!value || value <= 0) {
 			return 0;
 		}
-		let index = ppCurve.findIndex(o => o.at >= score);
+		let index = points.findIndex(o => o.at >= value);
 		if (index === -1) {
-			return ppCurve[ppCurve.length - 1].value;
+			return points[points.length - 1].value;
 		}
 		if (!index) {
-			return ppCurve[0].value;
+			return points[0].value;
 		}
-		let from = ppCurve[index - 1];
-		let to = ppCurve[index];
-		let progress = (score - from.at) / (to.at - from.at);
+		let from = points[index - 1];
+		let to = points[index];
+		let progress = (value - from.at) / (to.at - from.at);
 		return from.value + (to.value - from.value) * progress;
 	}
 
@@ -247,11 +249,7 @@
 		return src;
 	}
 
-	WebFont.load({
-		custom: {
-			families: ['NeonTubes']
-		}
-	});
+	WebFont.load({ custom: { families: ['NeonTubes'] } });
 
 	let userForm = document.getElementById('user');
 	let profileInput = document.getElementById('profile');
@@ -287,6 +285,15 @@
 			$history.appendChild(line);
 		});
 	}
+	function pushToHistory(user) {
+		history = history.filter(u => u && u.id !== user.id);
+		history.unshift(user);
+		history = history.slice(0, 5);
+		try {
+			localStorage.setItem('history', JSON.stringify(history));
+		} catch(e) { /* Nothing */ }
+		refreshHistory();
+	}
 	refreshHistory();
 
 	let user = {};
@@ -316,13 +323,6 @@
 			rank: rankMatch ? +rankMatch[1].replace(/\D/g, '') : 0,
 			pp: ppMatch ? +ppMatch[1].replace(/[^\d.]/g, '') : 0
 		};
-		history = history.filter(u => u && u.id !== user.id);
-		history.unshift(user);
-		history = history.slice(0, 5);
-		try {
-			localStorage.setItem('history', JSON.stringify(history));
-		} catch(e) { /* Nothing */ }
-		refreshHistory();
 		return user;
 	}
 	function parsePage(doc) {
@@ -371,60 +371,81 @@
 			};
 		}).filter(e => e);
 	}
-	async function getPages(id, from = 1) {
-		if (from === 1 && location.search.includes('debug')) {
+	async function getProfileAndScores(id, options) {
+		if (!id) {
+			// return { user: {}, scores: {} };
+			throw new Error('No user ID specified');
+		}
+		options = options || {};
+		if (options.useCache) {
 			try {
-				let stored = JSON.parse(localStorage.getItem('cached-' + id));
-				user = stored.user;
-				playerSongs = stored.playerSongs;
-				return;
+				let data = JSON.parse(localStorage.getItem('cached-' + id));
+				if (data) {
+					return data;
+				}
 			} catch(e) { }
 		}
-		userFetchInfo.textContent = 'Getting scores page '+from+'...';
-		let doc = await fetchScoreSaber(id, from);
-		if (from === 1) {
-			user = parseUser(id, doc);
-		}
-		let parsed = parsePage(doc);
-		if (parsed) {
+		let currentPage = 1;
+		let user;
+		let scores = {};
+		for (let hasMore = true; hasMore; currentPage++) {
+			if (typeof options.onProgress === 'function') {
+				options.onProgress(currentPage);
+			}
+			let doc = await fetchScoreSaber(id, currentPage);
+			if (currentPage === 1) {
+				user = parseUser(id, doc);
+			}
+			let parsed = parsePage(doc);
+			if (!parsed) {
+				break;
+			}
 			parsed = parsed.filter(song => song.userPP);
 			let len = parsed.length;
 			parsed = parsed.map(song => {
 				let base = rankedMaps[song.uid];
-				if (!base) return;
-				return Object.assign({}, base, song);
+				return base && Object.assign({}, base, song);
 			}).filter(e => e);
-			parsed.forEach(e => playerSongs[e.uid] = e);
+			parsed.forEach(e => scores[e.uid] = e);
 			if (len === USER_SCORES_PER_PAGE) {
 				await pause(scoresaberRLDelay);
-				// There is (probably) more
-				return getPages(id, from + 1);
+			} else {
+				hasMore = false;
 			}
 		}
-		if (location.search.includes('debug')) {
+		if (options.useCache) {
 			try {
-				localStorage.setItem('cached-' + id, JSON.stringify({ user, playerSongs }));
+				localStorage.setItem('cached-' + id, JSON.stringify({ user, scores }));
 			} catch(e) { }
 		}
+		return { user, scores };
 	}
-	async function getRecentScores(id, since, page = 1) {
-		let doc = await fetchScoreSaber(id, page, 2);
-		if (page === 1) {
-			user = parseUser(id, doc);
-		}
-		let parsed = parsePage(doc);
-		if (parsed) {
+	async function getRecentScores(id, since) {
+		let currentPage = 1;
+		let user;
+		let scores = {};
+		for (let hasMore = true; hasMore; currentPage++) {
+			let doc = await fetchScoreSaber(id, currentPage, SORT_RECENT);
+			if (currentPage === 1) {
+				user = parseUser(id, doc);
+			}
+			let parsed = parsePage(doc);
+			if (!parsed) {
+				break;
+			}
 			let oldest = Math.min(...parsed.map(song => song.at));
 			parsed = parsed.map(song => {
 				let base = rankedMaps[song.uid];
-				if (!base) return;
-				return Object.assign({}, base, song);
+				return base && Object.assign({}, base, song);
 			}).filter(e => e);
-			parsed.forEach(e => playerSongs[e.uid] = e);
+			parsed.forEach(e => scores[e.uid] = e);
 			if (oldest >= since) {
-				return getRecentScores(id, since, page + 1);
+				await pause(scoresaberRLDelay);
+			} else {
+				hasMore = false;
 			}
 		}
+		return { user, scores };
 	}
 	async function refresh() {
 		if (!user || !user.id) {
@@ -434,10 +455,13 @@
 		try {
 			let since = lastUpdate;
 			lastUpdate = Date.now();
-			await getRecentScores(user.id, since);
+			let result = await getRecentScores(user.id, since);
+			user = result.user;
+			Object.assign(playerSongs, result.scores);
+			pushToHistory(user);
+			fullPP = getFullPPWithUpdate(0, 0);
+			updatePlayerProfile();
 		} catch(e) { /* Nothing */ }
-		fullPP = getFullPPWithUpdate(0, 0);
-		updatePlayerProfile();
 		// Also update the list of ranked maps
 		let newRankedRequest = fetchJSON('/ranked', { headers: { 'If-Modified-Since': new Date(rankedMapsUpdate).toUTCString() } });
 		try {
@@ -479,7 +503,7 @@
 			return;
 		}
 		song.estimateScore = score;
-		song.estimatePP = song.pp * ppFromScore(score);
+		song.estimatePP = song.pp * applyCurve(score, ppCurve);
 		song.estimateFull = getFullPPWithUpdate(song.uid, song.estimatePP);
 	}
 
@@ -519,7 +543,7 @@
 		}
 		ctx.strokeStyle = 'white';
 		let numPoints = options.numPoints || 100;
-		let maxStars = options.maxStars || 12;
+		let maxStars = options.maxStars || 15;
 		let maxPercentage = options.maxPercentage || 1.12;
 		let marginX = options.marginX || 34;
 		let marginY = options.marginY || 20;
@@ -755,36 +779,64 @@
 		}
 	}
 
-	// class SortCompare extends SortMethod {
-	// 	constructor(list) {
-	// 		super(list);
-	// 		this.name = 'Compare';
-	// 		this.async = true;
-	// 		this.id = 'unknown';
-	// 	}
-	//
-	// 	createOptionsMarkup() {
-	// 		let compareForm = create('form', 'compare-form');
-	// 		let compareInput = create('input', 'compare-input');
-	// 		compareInput.type = 'text';
-	// 		compareInput.placeholder = 'compared profile url';
-	// 		compareForm.appendChild(compareInput);
-	// 		let submit = create('button', 'compare-submit');
-	// 		submit.type = 'submit';
-	// 		compareForm.appendChild(submit);
-	// 		return compareForm;
-	// 	}
-	//
-	// 	init(elements) {
-	// 		elements.forEach(el => updateEstimate(el, 0));
-	// 		elements.sort((a, b) => b.pp - a.pp);
-	//
-	// 	}
-	//
-	// 	async run(element, isCanceled) {
-	//
-	// 	}
-	// }
+	let compareCache = {};
+	class SortCompare extends SortMethod {
+		constructor(list) {
+			super(list);
+			this.name = 'Compare';
+			this.async = true;
+			this.id = 'compare';
+		}
+
+		createOptionsMarkup() {
+			let compareForm = create('form', 'compare-form');
+			compareForm.addEventListener('submit', e => e.preventDefault());
+			this.compareInput = create('input', 'compare-input');
+			this.compareInput.type = 'text';
+			this.compareInput.placeholder = 'compared profile url';
+			let onChange = () => {
+				let idMatch = this.compareInput.value.match(/\d{5,}/);
+				if (!idMatch) {
+					triggerAnimation(compareForm, 'invalid');
+					return;
+				}
+				this.compareInput.value = idMatch[0];
+				if (this.list.method === this) {
+					this.list.update();
+				}
+			};
+			this.compareInput.addEventListener('change', onChange);
+			this.compareInput.addEventListener('paste', () => setTimeout(onChange, 0));
+			compareForm.appendChild(this.compareInput);
+			let submit = create('button', 'compare-submit');
+			submit.type = 'submit';
+			compareForm.appendChild(submit);
+			return compareForm;
+		}
+
+		async init(elements) {
+			elements.sort((a, b) => b.pp - a.pp);
+			elements.forEach(el => updateEstimate(el, 0));
+			this.userId = this.compareInput.value;
+			if (!compareCache[this.userId]) {
+				compareCache[this.userId] = getProfileAndScores(this.userId);
+			}
+			try {
+				let result = await compareCache[this.userId];
+				this.user = result.user;
+				this.scores = result.scores;
+			} catch(e) {
+				console.error(e);
+				this.user = {};
+				this.scores = {};
+			}
+		}
+
+		run(element) {
+			let comparedElem = this.scores[element.uid] || {};
+			updateEstimate(element, comparedElem.score || 0);
+		}
+	}
 
 	class SortRaw extends SortMethod {
 		constructor(list) {
@@ -846,9 +898,10 @@
 	let baseMethods = [
 		SortScoreEst,
 		SortRank,
-		// SortCompare,
-		SortRaw
+		SortRaw,
+		SortCompare,
 	];
+	let unplayedMethods = baseMethods;
 	let playedMethods = baseMethods.concat(SortWorstRank, SortBestRank, SortWorstScore, SortOldestScore);
 
 	class List {
@@ -1103,7 +1156,7 @@
 		}
 	}
 
-	let unplayed = new List(document.querySelector('.list.unplayed'), 'Not played', baseMethods);
+	let unplayed = new List(document.querySelector('.list.unplayed'), 'Not played', unplayedMethods);
 	let played = new List(document.querySelector('.list.played'), 'To improve', playedMethods);
 
 	let lastUpdateElement = document.getElementById('last-update');
@@ -1133,16 +1186,21 @@
 			}, {});
 			rankedMapsUpdate = rankedMapsData.timestamp;
 			lastUpdateElement.textContent = new Date(rankedMapsUpdate).toString();
-			playerSongs = {};
-			await getPages(id);
+			let results = await getProfileAndScores(id, {
+				useCache: location.search.includes('debug'),
+				onProgress: page => (userFetchInfo.textContent = 'Getting scores page ' + page + '...')
+			});
+			user = results.user;
+			playerSongs = results.scores;
 			fullPP = getFullPPWithUpdate(0, 0);
+			pushToHistory(user);
 			updatePlayerProfile();
 			updateLists(rankedMapsData, playerSongs);
 			// Debugging
 			window.playerSongs = playerSongs;
 			document.body.classList.add('step-results', 'user-' + id);
 		} catch(err) {
-			console.log(err);
+			console.error(err);
 			triggerAnimation(userForm, 'invalid');
 		}
 		// eslint-disable-next-line require-atomic-updates
