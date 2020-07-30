@@ -117,6 +117,7 @@
 		return elem;
 	}
 	let div = create.bind(null, 'div');
+	let span = create.bind(null, 'span');
 	let selectOption = (text, value) => {
 		let elem = create('option');
 		elem.textContent = text;
@@ -515,16 +516,17 @@
 		updateEstCurve();
 	}
 
-	function getFullPPWithUpdate(uid, pp) {
-		let scores = Object.values(playerSongs).filter(song => song.uid !== uid).map(song => song.userPP);
-		if (pp) {
-			scores.push(pp);
-		}
-		scores.sort((a, b) => b - a);
+	function getFullPPWithUpdates(updates) {
+		let uids = updates.map(e => e.uid);
+		let ppList = Object.values(playerSongs).filter(song => !uids.includes(song.uid)).map(song => song.userPP).concat(updates.map(e => e.pp));
+		ppList.sort((a, b) => b - a);
 		let mult = 1;
-		let result = scores.reduce((total, score, i) => total + score * (mult *= (i ? PP_DECAY : 1)), 0);
+		let result = ppList.reduce((total, score, i) => total + score * (mult *= (i ? PP_DECAY : 1)), 0);
 		// return Math.max(result, fullPP);
 		return result;
+	}
+	function getFullPPWithUpdate(uid, pp) {
+		return getFullPPWithUpdates([{ uid, pp }]);
 	}
 
 	function updateEstimate(song, score) {
@@ -560,6 +562,21 @@
 			result /= (1 + d * d);
 		}
 		return result;
+	}
+
+	function downloadPlaylist(elements, title) {
+		let today = new Date();
+		let date = today.getFullYear() + '-' + pad2(today.getMonth() + 1) + '-' + pad2(today.getDate());
+		let songs = elements.map(e => ({ hash: e.id, songName: e.name }));
+		let data = {
+			playlistTitle: title + ' (' + date + ')',
+			playlistAuthor: 'Peepee',
+			image: 'data:image/png;base64,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',
+			songs: songs
+		};
+		let nameSlug = title.replace(/[\W-]+/g, '-').replace(/^-|-$/g, '').toLowerCase();
+		let content = 'data:application/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(data));
+		download(content, nameSlug + '-' + date + '.bplist');
 	}
 
 	let estCurve = document.getElementById('score-est-curve');
@@ -951,14 +968,27 @@
 		constructor(elem, title, methods, elements = []) {
 			this.elem = elem;
 			this.title = title;
+			this.selection = [];
 			// Copy object to ensure new context
 			this.methods = methods.map(Method => new Method(this));
 			this.method = this.methods[0];
 			this.elements = elements;
 			this.displayed = 20;
-			this.onScroll = this.onScroll.bind(this);
 			elem.innerHTML = '';
 			let header = div('list-header');
+			this.selectionTooltip = div('list-selection-tooltip');
+			let selectionTooltipFirstLine = div('first-line');
+			this.mapCount = span('selection-map-count', '0 maps');
+			let selectionTooltipClear = create('button', 'selection-clear', 'clear');
+			selectionTooltipClear.onclick = this.clearSelection.bind(this);
+			selectionTooltipFirstLine.append('Selection: ', this.mapCount, ' (',  selectionTooltipClear,')');
+			this.selectionTooltip.appendChild(selectionTooltipFirstLine);
+			this.selectionTooltipPP = div('line', '+0.00pp');
+			this.selectionTooltip.appendChild(this.selectionTooltipPP);
+			let selectionTooltipPlaylist = create('button', 'selection-playlist', 'Make a playlist');
+			selectionTooltipPlaylist.onclick = this.createSelectionPlaylist.bind(this);
+			this.selectionTooltip.appendChild(selectionTooltipPlaylist);
+			header.appendChild(this.selectionTooltip);
 			let titleEl = div('list-title', title);
 			this.titleEl = titleEl;
 			let playlist = create('button', 'playlist', '', 'Create a playlist');
@@ -994,8 +1024,10 @@
 			header.appendChild(methodWrapper);
 			elem.appendChild(header);
 			this.content = div('list-content');
-			this.content.addEventListener('scroll', this.onScroll);
+			this.content.addEventListener('click', this.onContentClick.bind(this));
+			this.content.addEventListener('scroll', this.onScroll.bind(this));
 			elem.appendChild(this.content);
+			this.updateSelectionTooltip();
 			this.update();
 			this.onScroll();
 		}
@@ -1006,17 +1038,16 @@
 			if (!count) {
 				return;
 			}
-			let date = (new Date()).toISOString().slice(0, 10);
-			let songs = this.elements.filter(e => e.id).slice(0, count).map(e => ({ hash: e.id, songName: e.name }));
-			let data = {
-				playlistTitle: this.title + ' (' + date + ')',
-				playlistAuthor: 'Peepee',
-				image: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAYAAADDPmHLAAAF7klEQVR4Ae2dT4hbVRTGz315SToztjh1dJKM/6hFRLoQdakuuihF0O5F6KoIIm50IbhSBHEjbnUjCi61UCnajVCo4kIpFjcK/qFY3igt7YxJk5nJy5WALWTMnHdefTdz7z3fQGlfzvdOzvm+3/QlaZox5OBreXn5QJIkvzhorbnlC1mWfVC1AUnVDdEvLAcAQFh5VT4tAKjc0rAaAoCw8qp8WgBQuaVhNQQAYeVV+bQAoHJLw2oIAMLKq/JpAUDllobV0EjHbbVarxpjnpXo7+mk5o3X7nhCooVG5sDJ091fPz/Ty2VqWs+y7HGJNpWIxhpjzINE9KRE32wka0cPL0ik0Agd+O78xiIRjX8Vfhlj1gpF/wpwCZA6FanODQCGRpH6tWtr1Wr2uos7dwOAi0mV9zSGrAsLAIALVwPqCQACCsvFqADAhasB9QQAAYXlYlQA4MLVgHoCgIDCcjFqurS01JY0vreV76kldn2bdupTk4Mrpp8PulNftTImoaRe39YGh0UOtO6q1Q/cJ/atnufLh4p6juum3W5PDXH7yW+eWKNjT8lei0ibdVpcuXN7Cxz/HwcWWkTpnKjD5qal+x/9TaTFJUBkU7wiABBvtqLNAIDIpnhFACDebEWbAQCRTfGKAEC82Yo2AwAim+IVAYB4sxVtBgBENsUrAgDxZivaTPyuYFG3GYo251+iUW1lhvcou6tm7z0yoz9lYg9UwQIwbB6mvPawBxZOjtDofxgUALgETOan7ggAqIt8cmEAMOmHuiMAoC7yyYUBwKQf6o68exZgzd7xG5UKg7ACTWETCMg7ALr7zxGZZmE09cFnNH/teKFupgJTp97iF6K7rG+comb3LZHWpcg7AOTLbpH5z3tU5We7UTbImn2i1pbmRTrXIjwGcO2w5/0BgOcBuR4PALh22PP+AMDzgFyPBwBcO+x5/2CfBYwfbY/S8edWFXzZASX5xQIRX7ZmgWyyxIvGVSP+r1vFvWak8A6AhatPE1HxX0z92z+iXvNUoU3J8CdauHasUMcJho0jNNj7Nie5WasPPqV04/TN453+kIz+2qk009u9AyAZXRIa4OfnUCWji5RufSPcYfdlxd9quz8jJnDoAABwaG4IrQFACCk5nBEAODQ3hNYAIISUHM4IAByaG0Jr754G+mnakAwNZKPZTZnOE1WwAMytv0iWGoU22vQh6i0WvzDDNTL2b7rt8iOcJNhasAAkw59Fpg9rHRrVHhBpdxIZK/74/Z1aeHs7HgN4G81sBgMAs/HZ23sBAN5GM5vBAMBsfPb2XgCAt9HMZrBgnwWI7Rl1Kcl/F8unCf17+/m0KW/ttugBGP/bfHr16K25o+AsXAIUhMytCAA4dxTUAICCkLkVAQDnjoIaAFAQMrciAODcUVADAApC5lYEAJw7CmoAQEHI3IoAgHNHQQ0AKAiZWxEAcO4oqAEABSFzKwIAzh0FNQCgIGRuRQDAuaOgBgAUhMytCAA4dxTUAICCkLkVAQDnjoIaAFAQMrciAODcUVADAApC5lYEAJw7CmoAQEHI3IoAgHNHQQ0AKAiZWxEAcO4oqAEABSFzKwIAzh0FNQCgIGRuRQDAuaOgBgAUhMytCAA4dxTUAICCkLkVAQDnjoIaAFAQMrciAODcUVADAApC5lYEAJw7CmoAQEHI3IrjTwp9hRPcqJ08O/fcV983H7txzP1+6OCIXn5+nZOgVsKBWqNJFy5coS+/nROdlec2J6J3JOI0y7J3JUKi9goRiQC4srZFJ56J96dsyPyqUtWlr88N6P1P9kmb9rMse10ixiVA4lLEGgAQcbiS1QCAxKWINQAg4nAlqwEAiUsRawBAxOFKVgMAEpci1gCAiMOVrFbmZwZdIqIfJE17fdp/9vyeuyVaaGQOZJfTP4joR5margt1ZKTCMrpOp3PEWnumzDnQ8g5Ya4+vrq5+zKvKV3EJKO9ZVGcAgKjiLL8MACjvWVRnAICo4iy/DAAo71lUZwCAqOIsvwwAKO9ZVGcAgKjiLL/MP1IivdJqKho+AAAAAElFTkSuQmCC',
-				songs: songs
-			};
-			let nameSlug = this.title.replace(/[\W-]+/g, '-').replace(/^-|-$/g, '').toLowerCase();
-			let content = 'data:application/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(data));
-			download(content, nameSlug + '-' + date + '.bplist');
+			let songs = this.elements.filter((song, i, self) => song.id && self.findIndex(t => t.id === song.id) === i).slice(0, count);
+			return downloadPlaylist(songs, this.title);
+		}
+
+		createSelectionPlaylist() {
+			let selection = this.selection.map(sel => this.elements.find(el => sel === el.uid)).filter(e => e);
+			if (!selection.length) {
+				return;
+			}
+			return downloadPlaylist(selection, this.title);
 		}
 
 		changeMethod(method) {
@@ -1036,6 +1067,46 @@
 			this.onScroll();
 		}
 
+		clearSelection() {
+			this.selection = [];
+			this.updateSelectionTooltip();
+			[...this.content.querySelectorAll('.element.selected')].forEach(el => el.classList.remove('selected'));
+		}
+
+		updateSelectionTooltip() {
+			let selectionElems = this.selection.map(sel => this.elements.find(el => sel === el.uid)).filter(e => e);
+			this.selection = selectionElems.map(el => el.uid);
+			let count = selectionElems.length;
+			this.mapCount.textContent = count + ' map' + (count === 1 ? '' : 's');
+
+			let estimate = getFullPPWithUpdates(selectionElems.map(e => ({ uid: e.uid, pp: e.estimatePP })));
+			this.selectionTooltipPP.textContent = '+' + round(Math.max(estimate - fullPP, 0), 2) + 'pp';
+			this.selectionTooltip.classList[count ? 'add' : 'remove']('show');
+		}
+
+		onContentClick(e) {
+			let usingCtrl = e.ctrlKey || e.metaKey;
+			if (usingCtrl && !e.target.matches('a, button')) {
+				let el = e.target;
+				while (el && !el.classList.contains('element') && this.content.contains(el)) {
+					el = el.parentElement;
+				}
+				if (el && el.classList.contains('element')) {
+					let uid = +el.getAttribute('data-uid');
+					if (uid) {
+						if (this.selection.includes(uid)) {
+							this.selection = this.selection.filter(e => e !== uid);
+							el.classList.remove('selected');
+						} else {
+							this.selection.push(uid);
+							el.classList.add('selected');
+						}
+						this.updateSelectionTooltip();
+					}
+				}
+			}
+		}
+
 		onScroll() {
 			if (this.content.scrollTop + this.content.clientHeight > this.content.scrollHeight - 50) {
 				this.displayMore();
@@ -1052,6 +1123,7 @@
 
 		createMarkup(element) {
 			let el = div('element');
+			el.setAttribute('data-uid', element.uid);
 
 			let left = div('left');
 			let pic = div('pic');
@@ -1060,24 +1132,24 @@
 			let nameGroup = div('name-group');
 			let nameAndArtist = div('name-and-artist');
 			nameAndArtist.title = element.name + ' - ' + element.artist;
-			nameAndArtist.appendChild(create('span', 'name', element.name));
-			nameAndArtist.appendChild(create('span', 'sep'));
-			nameAndArtist.appendChild(create('span', 'artist', element.artist));
+			nameAndArtist.appendChild(span('name', element.name));
+			nameAndArtist.appendChild(span('sep'));
+			nameAndArtist.appendChild(span('artist', element.artist));
 			nameGroup.appendChild(nameAndArtist);
 			nameGroup.appendChild(div('mapper', element.mapper));
 			let srcDiff = element.diff || 'Easy';
 			let diff = difficulties[srcDiff] || {};
 			let difficultyAndScore = div('difficulty-and-score');
-			difficultyAndScore.appendChild(create('span', 'difficulty ' + (diff.className || srcDiff.toLowerCase()), diff.display || srcDiff));
+			difficultyAndScore.appendChild(span('difficulty ' + (diff.className || srcDiff.toLowerCase()), diff.display || srcDiff));
 			if (element.score || element.score === 0) {
-				let scoreAndRank = create('span', 'score-and-rank');
-				scoreAndRank.appendChild(create('span', 'score', round(element.score, 2)));
+				let scoreAndRank = span('score-and-rank');
+				scoreAndRank.appendChild(span('score', round(element.score, 2)));
 				if (element.at) {
 					let at = new Date(element.at);
-					scoreAndRank.appendChild(create('span', 'at', dateDistance(at), standardDate(at)));
+					scoreAndRank.appendChild(span('at', dateDistance(at), standardDate(at)));
 				}
-				scoreAndRank.appendChild(create('span', 'sep'));
-				scoreAndRank.appendChild(create('span', 'rank', element.rank.toLocaleString()));
+				scoreAndRank.appendChild(span('sep'));
+				scoreAndRank.appendChild(span('rank', element.rank.toLocaleString()));
 				difficultyAndScore.appendChild(scoreAndRank);
 			}
 			nameGroup.appendChild(difficultyAndScore);
@@ -1089,9 +1161,9 @@
 			element._potScore = div('pot-score');
 			middle.appendChild(element._potScore);
 			let potPP = div('pot-pp');
-			element._potPP = create('span');
+			element._potPP = span();
 			potPP.appendChild(element._potPP);
-			element._potInc = create('span', 'increase', null, 'Total (weighted) pp change');
+			element._potInc = span('increase', null, 'Total (weighted) pp change');
 			potPP.appendChild(element._potInc);
 			middle.appendChild(potPP);
 			el.appendChild(middle);
