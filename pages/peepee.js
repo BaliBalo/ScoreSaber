@@ -807,6 +807,7 @@
 			};
 			this.compareInput.addEventListener('change', onChange);
 			this.compareInput.addEventListener('paste', () => setTimeout(onChange, 0));
+			this.compareInput.addEventListener('focus', () => this.compareInput.select());
 			compareForm.appendChild(this.compareInput);
 			let submit = create('button', 'compare-submit');
 			submit.type = 'submit';
@@ -826,7 +827,6 @@
 				this.user = result.user;
 				this.scores = result.scores;
 			} catch(e) {
-				console.error(e);
 				this.user = {};
 				this.scores = {};
 			}
