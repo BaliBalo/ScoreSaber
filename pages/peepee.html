@@ -7,7 +7,7 @@
 	<link rel="icon" type="image/png" href="/client/icon.png" />
 	<title>Yeehaw gamer 🤠</title>
 	<meta name="description" content="PP farming tool - Improve your rank by checking which maps could potentially give you the most Performance Points on ScoreSaber according to estimates based on your existing scores">
-	<link rel="stylesheet" href="/client/peepee.css?v=1596137416965">
+	<link rel="stylesheet" href="/client/peepee.css?v=1596686400969">
 </head>
 <body>
 	<input type="checkbox" id="show-help" autocomplete="off">
@@ -28,8 +28,8 @@
 		<div class="top-left-buttons">
 			<button id="back">Back</button>
 			<button id="refresh">Refresh</button>
+			<button id="show-filters">Filters</button>
 		</div>
-		<label for="show-help" class="help-btn">Help</label>
 		<div class="player">
 			<div class="avatar"></div>
 			<div class="infos-list">
@@ -50,27 +50,34 @@
 			<div class="list played"></div>
 		</div>
 	</div>
+	<label for="show-help" class="help-btn">Help</label>
 	<div id="help">
 		<label for="show-help" class="backdrop"></label>
 		<div class="modal">
+			<h2>HELP</h2>
+			<div class="question">How do I start?</div>
+			<div class="answer">
+				Juste paste your profile url in the box. To find your profile URL, navigate to your profile on <a href="https://scoresaber.com/global" target="_blank">scoresaber.com</a>. Once that's done, the url of the page in your browser navigation bar is the URL that you need to copy.
+			</div>
 			<div class="question">How often is the list of ranked songs updated?</div>
 			<div class="answer">
 				The ranked songs list is gathered using the APIs from ScoreSaber and BeatSaver and is updated frequently. New ranked songs should appear within 15 minutes, while unranks can take up to a few hours to be updated.<br><br>
-				The last update was <span id="last-update">???</span>
+				The last update was <span id="last-update" class="unknown">(...processing)</span>
 			</div>
-			<div class="question">What are the sorting options?</div>
+			<div class="question">What are these weird sorting options?</div>
 			<div class="answer">
 				<div class="sort-name">Score est.</div>
 				<div class="sort-desc">
-					The algorithm looks at your current scores and tries to figure out what score (percentage) you would get for each difficulty level. Recent scores affect the curve more than older ones.<br>
+					The algorithm looks at your current scores and tries to figure out what score (as a percentage) you would get, based on the "star difficulty" (difficulty estimate from scoresaber). Recent scores affect the curve more than older ones.<br>
 					<div class="curve-wrapper">
 						<button id="export-curve">export</button>
-						<canvas id="score-est-curve"></canvas>
+						<canvas id="score-est-curve" width="500" height="200"></canvas>
 					</div>
 				</div>
 				<div class="sort-name">Score at rank</div>
 				<div class="sort-desc">
-					For each song, the score of the person ranked on this song at your global rank (or the rank specified) is used if better than your current score (works mostly for high-ranked players).
+					For each song, the score of the person ranked on this song at your global rank (or the rank specified) is used if better than your current score (works mostly for high-ranked players).<br>
+					For example, if the desired rank is 100, your potential score on a map will be the 100th score on that map, if it is better than your current score.
 				</div>
 				<div class="sort-name">Fixed score</div>
 				<div class="sort-desc">
@@ -78,30 +85,35 @@
 				</div>
 				<div class="sort-name">Compare</div>
 				<div class="sort-desc">
-					Use the scores of another given user. If the other player has a better score than you on a map, their score will be used as the potential score. The "auto" button automatically uses a player slightly above you for comparison (10% above you, so if you are #100, it will use player #90).
+					Uses the scores of another given user. If the other player has a better score than you on a map, their score will be used as the potential score. The "auto" button automatically uses a player slightly above you for comparison (10% above you in the rankings, so if you are #100, it will use player #90).
 				</div>
 				<div class="sort-name">Worst/Best Rank</div>
 				<div class="sort-desc">
-					Sort songs by your rank on them, without taking into account the potential PP gain.
+					Sorts maps depending on your rank on them, without taking into account the potential PP gain.
 				</div>
 				<div class="sort-name">Worst Score</div>
 				<div class="sort-desc">
-					Put maps on which you have the lowest score (as a percentage) at the top.
+					Puts maps on which you have the lowest score (in terms of percentage) at the top.
 				</div>
 				<div class="sort-name">Oldest Score</div>
 				<div class="sort-desc">
-					Put maps you've done the longest ago at the top.
+					Puts maps you've done the longest ago at the top.
 				</div>
 			</div>
 			<div class="question">Gimme some tips and tricks</div>
-			<div class="answer">You can hold ctrl and click on maps to select them, then make a playlist containing them and even see how much PP passing all of them (at their potential score) would give you. That's it for now.</div>
+			<div class="answer">
+				You can hold ctrl and click on maps to select them, then make a playlist containing this specific set of maps and even see how much total PP passing all of them (at their current potential score) would give you.<br>
+				Right clicking on maps will give you option to add them to the selection or hide them from the list (soon). If you want the real right click menu, just hold ctrl while doing it. If you are on mobile (lol wtf), just long press.<br>
+				That's it for now.
+			</div>
 			<div class="question">Things are inaccurate</div>
 			<div class="answer">Due to ScoreSaber rounding some values and keeping some information private, the results of this tool are not 100% accurate. It's as close as possible though.</div>
 			<div class="question">Something is broken / I have an idea</div>
-			<div class="answer">Send me an email or something I dunno (disc Bali Balo#5436)</div>
+			<div class="answer">You can find me on some Beat Saber-related discord servers, my username is Bali Balo#5436. You can also submit issues and pull requests on <a href="https://github.com/BaliBalo/ScoreSaber/issues" target="_blank">GitHub at BaliBalo/ScoreSaber</a></div>
 		</div>
 	</div>
 	<script src="https://ajax.googleapis.com/ajax/libs/webfont/1.5.10/webfont.js"></script>
-	<script src="/client/peepee.min.js?v=1596137416965"></script>
+	<script src="/client/context-menu.min.js"></script>
+	<script src="/client/peepee.min.js?v=1596686400969"></script>
 </body>
 </html>

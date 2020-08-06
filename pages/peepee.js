@@ -1,5 +1,7 @@
 /* global WebFont */
 (async function() {
+	document.body.classList.add('js-loaded');
+
 	const scoresaberRLDelay = 200;
 	const USER_SCORES_PER_PAGE = 8;
 	const LEADERBOARD_SCORES_PER_PAGE = 12;
@@ -56,9 +58,12 @@
 	function pad2(n) {
 		return ('0' + n).slice(-2);
 	}
-	function standardDate(date) {
+	function standardDate(date, withSeconds) {
 		let datePart = date.getFullYear() + '-' + pad2(date.getMonth() + 1) + '-' + pad2(date.getDate());
 		let timePart = pad2(date.getHours()) + ':' + pad2(date.getMinutes());
+		if (withSeconds) {
+			timePart += ':' + pad2(date.getSeconds());
+		}
 		return datePart + ' ' + timePart;
 	}
 	const dateDistance = (function() {
@@ -102,14 +107,13 @@
 		return date => getDateDistanceString(date, new Date()) + ' ago';
 	})();
 
-
 	function create(tag, className, text, title) {
 		let elem = document.createElement(tag);
 		if (className != undefined) {
 			elem.className = className;
 		}
 		if (text != undefined) {
-			elem.textContent = text;
+			elem.append(...(Array.isArray(text) ? text : [text]));
 		}
 		if (title != undefined) {
 			elem.title = title;
@@ -118,6 +122,16 @@
 	}
 	let div = create.bind(null, 'div');
 	let span = create.bind(null, 'span');
+	let textInput = (className, value, placeholder) => {
+		let elem = create('input', className);
+		if (value) {
+			elem.value = value;
+		}
+		if (placeholder) {
+			elem.placeholder = placeholder;
+		}
+		return elem;
+	};
 	let selectOption = (text, value) => {
 		let elem = create('option');
 		elem.textContent = text;
@@ -177,10 +191,20 @@
 			throw e;
 		});
 	}
+	function fetchRanked(modifiedSince) {
+		let options;
+		if (modifiedSince) {
+			options = { headers: { 'If-Modified-Since': modifiedSince.toUTCString() } };
+		}
+		return fetchJSON('/ranked', options).then(rankedMapsData => {
+			updateLastUpdate(rankedMapsData);
+			return rankedMapsData;
+		});
+	}
+
 	function getMultFromMods(modString) {
 		return modString ? modString.split(',').reduce((mult, mod) => mult + (MODS[mod.trim()] || 0), 1) : 1;
 	}
-
 	async function getScoreAtRank(leaderboard, rank, retries = 2) {
 		if (!leaderboard || !rank) {
 			console.log('Invalid score at rank request', leaderboard, rank);
@@ -329,12 +353,182 @@
 	}
 	refreshHistory();
 
+	let filters = {};
+	function sanitizeFilters() {
+		filters.scoreFrom = +filters.scoreFrom || 0;
+		filters.scoreTo = isNaN(+filters.scoreTo) ? Infinity : +filters.scoreTo;
+		filters.starsFrom = +filters.starsFrom || 0;
+		filters.starsTo = isNaN(+filters.starsTo) ? Infinity : +filters.starsTo;
+		if (!Array.isArray(filters.hiddenMaps)) {
+			filters.hiddenMaps = [];
+		}
+	}
+	function loadFilters() {
+		filters = {
+			scoreFrom: 0,
+			scoreTo: Infinity,
+			starsFrom: 0,
+			starsTo: Infinity,
+			hiddenMaps: []
+		};
+		try {
+			let saved = JSON.parse(localStorage.getItem('peepee-filters'), (key, value) => value === 'Infinity' || value === '-Infinity' ? +value : value);
+			Object.assign(filters, saved);
+			sanitizeFilters();
+		} catch(e) {}
+	}
+	loadFilters();
+	async function updateFilters(newFilters) {
+		filters = newFilters;
+		try {
+			let str = JSON.stringify(newFilters, (key, val) => Math.abs(val) === Infinity ? val + '' : val);
+			localStorage.setItem('peepee-filters', str);
+		} catch(e) {}
+		// updateLists(await rankedMapsPromise, playerSongs);
+		played.refresh();
+		unplayed.refresh();
+	}
+	async function hideMap(uid) {
+		let hiddenMaps = filters.hiddenMaps || [];
+		hiddenMaps.push(uid);
+		updateFilters(Object.assign(filters, { hiddenMaps }));
+	}
+	function autosizeInput(input) {
+		let ghost = span();
+		let inputStyle = getComputedStyle(input);
+		Object.assign(ghost.style, {
+			position: 'absolute',
+			top: '-99px',
+			left: '-99px',
+			height: '0',
+			whiteSpace: 'pre',
+			overflow: 'hidden',
+			visibility: 'hidden',
+			font: inputStyle.font,
+			letterSpacing: inputStyle.letterSpacing,
+			padding: inputStyle.padding,
+		});
+		let checkSize = () => {
+			ghost.textContent = input.value || ' ';
+			input.style.width = (ghost.clientWidth + 1) + 'px';
+		};
+		document.body.appendChild(ghost);
+		input.addEventListener('input', checkSize);
+		checkSize();
+		return { check: checkSize, stop: () => document.body.removeChild(ghost) };
+	}
+	async function editFiltersModal(filters = {}) {
+		let resolve;
+		let reject;
+		let promise = new Promise((_resolve, _reject) => {
+			resolve = _resolve;
+			reject = _reject;
+		});
+		let autosizeInputs = [];
+		let cleared = false;
+		let clear = () => {
+			if (cleared) {
+				return;
+			}
+			cleared = true;
+			autosizeInputs.forEach(asi => asi.stop());
+			document.body.removeChild(container);
+		};
+		let cancel = () => {
+			clear();
+			resolve(null);
+		};
+		let submit = data => {
+			clear();
+			resolve(data);
+		};
+		let container = div('filters-modal');
+		let content = div('content');
+		let title = create('h2', null, 'FILTERS');
+		let buttons = div('buttons');
+		let buttonCancel = create('button', 'cancel', 'Cancel');
+		let buttonOk = create('button', 'ok', 'OK');
+		let scroller = div('scroller');
+
+		let scoreFrom = textInput(null, filters.scoreFrom);
+		let scoreTo = textInput(null, filters.scoreTo);
+		let scoreFilter = div('filter score', ['Only show maps if the potential score is between ', scoreFrom, '% and ', scoreTo, '%']);
+
+		let starsFrom = textInput(null, filters.starsFrom);
+		let starsTo = textInput(null, filters.starsTo);
+		let starsFilter = div('filter stars', ['Only show maps if their ★ difficulty is between ', starsFrom, ' and ', starsTo]);
+
+		let hiddenMapsSelect = create('select');
+		hiddenMapsSelect.size = 6;
+		hiddenMapsSelect.multiple = true;
+		(filters.hiddenMaps || []).forEach(hiddenMap => {
+			let map = rankedMaps[hiddenMap];
+			if (!map) {
+				return;
+			}
+			let optionText = map.name + ' - ' + map.artist + ' (' + map.mapper + ') | ' + map.diff;
+			hiddenMapsSelect.append(selectOption(optionText, hiddenMap));
+		});
+		let hiddenMapsRemoveButton = create('button', null, 'Unhide selected');
+		hiddenMapsRemoveButton.disabled = true;
+		let hiddenMapsFilter = div('filter hidden-maps', ['Hide these specific maps (right click on a map to add it to this list):', hiddenMapsSelect, hiddenMapsRemoveButton]);
+
+		let validateData = () => {
+			scoreFrom.value = +scoreFrom.value || 0;
+			scoreTo.value = !scoreTo.value || isNaN(+scoreTo.value) ? 'Infinity' : +scoreTo.value;
+			starsFrom.value = +starsFrom.value || 0;
+			starsTo.value = !starsTo.value || isNaN(+starsTo.value) ? 'Infinity' : +starsTo.value;
+			autosizeInputs.forEach(asi => asi.check());
+		};
+		[
+			scoreFrom, scoreTo,
+			starsFrom, starsTo,
+		].forEach(input => input.addEventListener('change', validateData));
+		validateData();
+		autosizeInputs.push(...[
+			scoreFrom, scoreTo,
+			starsFrom, starsTo,
+		].map(autosizeInput));
+		hiddenMapsSelect.addEventListener('change', () => {
+			hiddenMapsRemoveButton.disabled = !hiddenMapsSelect.selectedOptions.length;
+		});
+		hiddenMapsRemoveButton.addEventListener('click', () => {
+			let index = hiddenMapsSelect.selectedIndex;
+			[...hiddenMapsSelect.selectedOptions].forEach(option => hiddenMapsSelect.removeChild(option));
+			hiddenMapsSelect.selectedIndex = Math.min(index, hiddenMapsSelect.length - 1);
+			// hiddenMapsSelect.focus();
+		});
+		buttonOk.addEventListener('click', () => {
+			validateData();
+			let data = {
+				scoreFrom: +scoreFrom.value,
+				scoreTo: +scoreTo.value,
+				starsFrom: +starsFrom.value,
+				starsTo: +starsTo.value,
+				hiddenMaps: [...hiddenMapsSelect.options].map(opt => +opt.value)
+			};
+			submit(data);
+		});
+		buttonCancel.addEventListener('click', cancel);
+		container.addEventListener('click', e => {
+			if (!content.contains(e.target)) {
+				cancel();
+			}
+		});
+		scroller.append(scoreFilter, starsFilter, hiddenMapsFilter);
+		buttons.append(buttonCancel, buttonOk);
+		content.append(title, scroller, buttons);
+		container.append(content);
+		document.body.append(container);
+		return promise;
+	}
+
 	let user = {};
 	let playerSongs = {};
 	let rankedMaps = {};
 	let lastUpdate = Date.now();
 	let rankedMapsUpdate = 0;
-	let rankedMapsPromise = fetchJSON('/ranked');
+	let rankedMapsPromise = fetchRanked();
 	let fullPP = 0;
 	function parseUser(id, doc) {
 		let nameEl = doc.querySelector('h5.title');
@@ -496,8 +690,9 @@
 			updatePlayerProfile();
 		} catch(e) { /* Nothing */ }
 		// Also update the list of ranked maps
-		let newRankedRequest = fetchJSON('/ranked', { headers: { 'If-Modified-Since': new Date(rankedMapsUpdate).toUTCString() } });
+		let newRankedRequest = fetchRanked(new Date(rankedMapsUpdate));
 		try {
+			// If the request fails, just keep the previous data
 			await newRankedRequest;
 			rankedMapsPromise = newRankedRequest;
 		} catch(e) {}
@@ -514,6 +709,7 @@
 		played.update();
 		unplayed.update();
 		updateEstCurve();
+		estCurve.parentElement.classList.add('show');
 	}
 
 	function getFullPPWithUpdates(updates) {
@@ -644,6 +840,16 @@
 			ctx.lineTo(x, y);
 		}
 		ctx.stroke();
+	}
+
+	let lastUpdateElement = document.getElementById('last-update');
+	function updateLastUpdate(rankedMapsData) {
+		rankedMapsUpdate = rankedMapsData.timestamp;
+		// lastUpdateElement.textContent = new Date(rankedMapsUpdate).toString();
+		let updateDate = new Date(rankedMapsUpdate);
+		lastUpdateElement.textContent = dateDistance(updateDate) + ' (' + standardDate(updateDate, true) + ')';
+		lastUpdateElement.title = updateDate.toString();
+		lastUpdateElement.classList.remove('unknown');
 	}
 
 	let $profile = {
@@ -1025,6 +1231,7 @@
 			elem.appendChild(header);
 			this.content = div('list-content');
 			this.content.addEventListener('click', this.onContentClick.bind(this));
+			this.content.addEventListener('contextmenu', this.onContextMenu.bind(this));
 			this.content.addEventListener('scroll', this.onScroll.bind(this));
 			elem.appendChild(this.content);
 			this.updateSelectionTooltip();
@@ -1038,7 +1245,7 @@
 			if (!count) {
 				return;
 			}
-			let songs = this.elements.filter((song, i, self) => song.id && self.findIndex(t => t.id === song.id) === i).slice(0, count);
+			let songs = this.elements.filter(this.filter).filter((song, i, self) => song.id && self.findIndex(t => t.id === song.id) === i).slice(0, count);
 			return downloadPlaylist(songs, this.title);
 		}
 
@@ -1084,27 +1291,71 @@
 			this.selectionTooltip.classList[count ? 'add' : 'remove']('show');
 		}
 
+		getClosestElement(el) {
+			while (el && !el.classList.contains('element') && this.content.contains(el)) {
+				el = el.parentElement;
+			}
+			if (!el || !el.classList.contains('element')) {
+				return null;
+			}
+			return el;
+		}
+
+		toggleSelection(uid, selected) {
+			if (!uid) {
+				return;
+			}
+			let currentlySelected = this.selection.includes(uid);
+			if (typeof selected !== 'boolean') {
+				selected = !currentlySelected;
+			}
+			if (selected === currentlySelected) {
+				return;
+			}
+			if (selected) {
+				this.selection.push(uid);
+			} else {
+				this.selection = this.selection.filter(e => e !== uid);
+			}
+			let el = this.content.querySelector('[data-uid="' + uid + '"]');
+			if (el) {
+				el.classList[selected ? 'add' : 'remove']('selected');
+			}
+			this.updateSelectionTooltip();
+		}
+
 		onContentClick(e) {
 			let usingCtrl = e.ctrlKey || e.metaKey;
 			if (usingCtrl && !e.target.matches('a, button')) {
-				let el = e.target;
-				while (el && !el.classList.contains('element') && this.content.contains(el)) {
-					el = el.parentElement;
-				}
-				if (el && el.classList.contains('element')) {
-					let uid = +el.getAttribute('data-uid');
-					if (uid) {
-						if (this.selection.includes(uid)) {
-							this.selection = this.selection.filter(e => e !== uid);
-							el.classList.remove('selected');
-						} else {
-							this.selection.push(uid);
-							el.classList.add('selected');
-						}
-						this.updateSelectionTooltip();
-					}
-				}
+				let el = this.getClosestElement(e.target);
+				let uid = el && +el.getAttribute('data-uid');
+				this.toggleSelection(uid);
 			}
+		}
+
+		onContextMenu(e) {
+			if (e.ctrlKey || e.metaKey || e.target.matches('a, button') || !window.ContextMenu) {
+				return;
+			}
+			let el = this.getClosestElement(e.target);
+			let uid = el && +el.getAttribute('data-uid');
+			if (!uid) {
+				return;
+			}
+			e.preventDefault();
+			e.stopPropagation();
+			let isSelected = this.selection.includes(uid);
+			window.ContextMenu.show([
+				{
+					text: (isSelected ? 'Deselect' : 'Select') + ' map',
+					shortcut: 'Ctrl+Click',
+					action: () => this.toggleSelection(uid)
+				},
+				{ text: 'Screw this (hide map)', action: () => hideMap(uid) },
+				{ separator: true },
+				{ text: 'Show help', action: toggleHelp },
+				// { text: 'c' },
+			], { x: e.pageX, y: e.pageY });
 		}
 
 		onScroll() {
@@ -1132,7 +1383,7 @@
 			let nameGroup = div('name-group');
 			let nameAndArtist = div('name-and-artist');
 			nameAndArtist.title = element.name + ' - ' + element.artist;
-			nameAndArtist.appendChild(span('name', element.name));
+			nameAndArtist.appendChild(span('name', (element.name || '') + ' '));
 			nameAndArtist.appendChild(span('sep'));
 			nameAndArtist.appendChild(span('artist', element.artist));
 			nameGroup.appendChild(nameAndArtist);
@@ -1140,13 +1391,13 @@
 			let srcDiff = element.diff || 'Easy';
 			let diff = difficulties[srcDiff] || {};
 			let difficultyAndScore = div('difficulty-and-score');
-			difficultyAndScore.appendChild(span('difficulty ' + (diff.className || srcDiff.toLowerCase()), diff.display || srcDiff));
+			difficultyAndScore.appendChild(span('difficulty ' + (diff.className || srcDiff.toLowerCase()), (diff.display || srcDiff) + ' '));
 			if (element.score || element.score === 0) {
 				let scoreAndRank = span('score-and-rank');
-				scoreAndRank.appendChild(span('score', round(element.score, 2)));
+				scoreAndRank.appendChild(span('score', [round(element.score, 2), span('percent-sign', '% ')]));
 				if (element.at) {
 					let at = new Date(element.at);
-					scoreAndRank.appendChild(span('at', dateDistance(at), standardDate(at)));
+					scoreAndRank.appendChild(span('at', dateDistance(at) + ' ', standardDate(at)));
 				}
 				scoreAndRank.appendChild(span('sep'));
 				scoreAndRank.appendChild(span('rank', element.rank.toLocaleString()));
@@ -1161,7 +1412,7 @@
 			element._potScore = div('pot-score');
 			middle.appendChild(element._potScore);
 			let potPP = div('pot-pp');
-			element._potPP = span();
+			element._potPP = span('raw');
 			potPP.appendChild(element._potPP);
 			element._potInc = span('increase', null, 'Total (weighted) pp change');
 			potPP.appendChild(element._potInc);
@@ -1250,21 +1501,34 @@
 			});
 		}
 
+		filter(el) {
+			if (filters.hiddenMaps && filters.hiddenMaps.includes(el.uid)) {
+				return false;
+			}
+			if (el.estimateScore < filters.scoreFrom || el.estimateScore > filters.scoreTo) {
+				return false;
+			}
+			if (el.stars < filters.starsFrom || el.stars > filters.starsTo) {
+				return false;
+			}
+			return true;
+		}
+
 		refresh() {
 			while (this.content.firstChild) {
 				this.content.removeChild(this.content.firstChild);
 			}
 			let sort = this.method.sort || this.defaultSort;
 			this.elements = sort(this.elements);
-			this.elements.slice(0, this.displayed).forEach(el => {
+			this.elements.filter(this.filter).slice(0, this.displayed).forEach(el => {
 				if (!el.markup) {
 					this.createMarkup(el);
 				}
 				if (el.estimateScore === undefined) {
 					updateEstimate(el, 0);
 				}
-				el._potScore.textContent = round(el.estimateScore, 2) + '%';
-				el._potPP.textContent = round(el.estimatePP, 2) + 'pp';
+				el._potScore.textContent = round(el.estimateScore, 2);
+				el._potPP.textContent = round(el.estimatePP, 2);
 				el._potInc.textContent = round(Math.max(el.estimateFull - fullPP, 0), 2);
 				this.content.appendChild(el.markup);
 			});
@@ -1274,7 +1538,6 @@
 	let unplayed = new List(document.querySelector('.list.unplayed'), 'Not played', unplayedMethods);
 	let played = new List(document.querySelector('.list.played'), 'To improve', playedMethods);
 
-	let lastUpdateElement = document.getElementById('last-update');
 	async function onSubmit(e) {
 		if (e && e.preventDefault) {
 			e.preventDefault();
@@ -1299,8 +1562,7 @@
 				rankedMaps[map.uid] = map;
 				return rankedMaps;
 			}, {});
-			rankedMapsUpdate = rankedMapsData.timestamp;
-			lastUpdateElement.textContent = new Date(rankedMapsUpdate).toString();
+
 			let results = await getProfileAndScores(id, {
 				useCache: location.search.includes('debug'),
 				onProgress: page => (userFetchInfo.textContent = 'Getting scores page ' + page + '...')
@@ -1312,7 +1574,7 @@
 			updatePlayerProfile();
 			updateLists(rankedMapsData, playerSongs);
 			// Debugging
-			window.playerSongs = playerSongs;
+			// window.playerSongs = playerSongs;
 			document.body.classList.add('step-results', 'user-' + id);
 		} catch(err) {
 			console.error(err);
@@ -1326,11 +1588,20 @@
 	profileInput.addEventListener('paste', () => setTimeout(onSubmit, 0));
 	profileInput.addEventListener('focus', () => profileInput.select());
 
+	let $helpCheckbox = document.getElementById('show-help');
+	function toggleHelp() { $helpCheckbox.checked = !$helpCheckbox.checked; }
 	document.getElementById('back').addEventListener('click', () => {
 		profileInput.value = '';
 		document.body.classList.remove('step-results');
 	});
 	document.getElementById('refresh').addEventListener('click', refresh);
+	document.getElementById('show-filters').addEventListener('click', async () => {
+		let newFilters = await editFiltersModal(filters);
+		if (!newFilters) {
+			return;
+		}
+		updateFilters(newFilters);
+	});
 	document.getElementById('export-curve').addEventListener('click', () => {
 		let c = document.createElement('canvas');
 		c.width = 800;
