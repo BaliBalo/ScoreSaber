@@ -421,6 +421,10 @@
 		return { check: checkSize, stop: () => document.body.removeChild(ghost) };
 	}
 	async function editFiltersModal(filters = {}) {
+		filters = Object.assign({}, filters);
+		if (filters.hiddenMaps) {
+			filters.hiddenMaps = filters.hiddenMaps.slice();
+		}
 		let resolve;
 		let reject;
 		let promise = new Promise((_resolve, _reject) => {
@@ -439,7 +443,7 @@
 		};
 		let finish = (data) => {
 			clear();
-			resolve(null);
+			resolve(data);
 		};
 		let container = div('filters-modal');
 		let content = div('content');
