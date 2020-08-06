@@ -1586,8 +1586,7 @@
 				{ text: 'Screw this (hide map)', action: () => hideMap(uid) },
 				{ separator: true },
 				{ text: 'Show help', action: toggleHelp },
-				// { text: 'c' },
-			], { x: e.pageX, y: e.pageY });
+			], { x: e.clientX, y: e.clientY });
 		}
 
 		onScroll() {
