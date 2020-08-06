@@ -466,7 +466,7 @@ body {
 	visibility: visible;
 }
 
-.filters-modal {
+.filters-modal, .custom-curve-modal {
 	position: fixed;
 	top: 0;
 	left: 0;
@@ -495,6 +495,39 @@ body {
 		padding: 12px 12px;
 		margin: 0 0 16px;
 	}
+	.scroller {
+		flex: 1 1 auto;
+		overflow: auto;
+		padding: 0 32px;
+	}
+	button {
+		color: currentColor;
+		font: inherit;
+		background: none;
+		border: 1px solid;
+		padding: 4px 16px;
+		border-radius: 4px;
+		cursor: pointer;
+		&[disabled] {
+			color: #999;
+			cursor: default;
+		}
+		&:focus {
+			outline: none;
+			border-color: #8ef;
+		}
+	}
+	.buttons {
+		flex: 0 0 auto;
+		padding: 16px;
+		text-align: right;
+		button + button {
+			margin-left: 8px;
+		}
+	}
+}
+
+.filters-modal {
 	input {
 		width: 50px;
 		font: inherit;
@@ -529,39 +562,50 @@ body {
 	option {
 		padding: 4px 8px;
 	}
-	button {
-		color: currentColor;
-		font: inherit;
-		background: none;
-		border: 1px solid;
-		padding: 4px 16px;
-		border-radius: 4px;
-		cursor: pointer;
-		&[disabled] {
-			color: #999;
-			cursor: default;
-		}
-		&:focus {
-			outline: none;
-			border-color: #8ef;
-		}
-	}
 	.filter {
 		margin: 16px 0;
 		padding-left: 16px;
 		border-left: 1px solid rgba(255, 255, 255, 0.2);
 	}
-	.scroller {
-		flex: 1 1 auto;
-		overflow: auto;
-		padding: 0 32px;
+}
+
+.custom-curve-modal {
+	.content {
+		height: 600px;
 	}
-	.buttons {
+	.scroller {
+		display: flex;
+		flex-flow: column nowrap;
+	}
+	.instructions {
 		flex: 0 0 auto;
-		padding: 16px;
-		text-align: right;
-		button + button {
-			margin-left: 8px;
+		font-size: 14px;
+		color: #aaa;
+		margin-bottom: 8px;
+	}
+	.editor {
+		flex: 1 1 auto;
+		height: 1px;
+		display: flex;
+		flex-flow: row nowrap;
+	}
+	.preview {
+		flex: 1 1 auto;
+		// background: #000;
+	}
+	.points {
+		flex: 0 0 auto;
+		width: 150px;
+		height: 100%;
+		overflow: auto;
+	}
+	.point {
+		padding: 8px;
+		+ .point {
+			border-top: 1px solid rgba(255, 255, 255, .2);
+		}
+		.label {
+			color: #aaa;
 		}
 	}
 }
@@ -760,24 +804,46 @@ body {
 	visibility: visible;
 	transform: translate(0, -50%) translateY(0);
 }
-.compare-form, .rank-form, .fixed-form {
+.compare-form, .rank-form, .fixed-form, .custom-curve-sort-buttons {
 	display: block;
 	vertical-align: middle;
-	background: white;
 	overflow: hidden;
-	border-radius: 999px;
 	margin: 0;
 	max-height: 0;
 	width: 0;
 	white-space: nowrap;
 	transition: margin .2s, max-height .2s, width 0s .2s;
 }
-.method-compare .compare-form, .method-rank .rank-form, .method-raw .fixed-form {
+.compare-form, .rank-form, .fixed-form {
+	background: white;
+	border-radius: 999px;
+}
+.method-compare .compare-form, .method-rank .rank-form, .method-raw .fixed-form, .method-custom-curve .custom-curve-sort-buttons {
 	margin: 4px 0 4px auto;
 	max-height: 24px;
 	width: auto;
 	width: min-content;
 	transition-delay: 0s;
+}
+.custom-curve-edit {
+	color: currentColor;
+	font: inherit;
+	font-size: 14px;
+	box-sizing: border-box;
+	height: 24px;
+	padding: 0 8px;
+	border: 1px solid;
+	border-radius: 4px;
+	background: none;
+	cursor: pointer;
+	&[disabled] {
+		color: #999;
+		cursor: default;
+	}
+	&:focus {
+		outline: none;
+		border-color: #8ef;
+	}
 }
 .compare-input, .rank-input, .fixed-input {
 	height: 24px;

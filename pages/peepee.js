@@ -54,6 +54,9 @@
 	function round(n, p = 0) {
 		return n.toFixed(p).replace(/\.?0*$/, '');
 	}
+	function clamp(n, m, M) { return n < m ? m : n > M ? M : n; }
+	function lerp(p, a, b) { return a + p * (b - a); }
+	function ilerp(v, a, b) { return clamp((v - a) / (b - a), 0, 1); }
 
 	function pad2(n) {
 		return ('0' + n).slice(-2);
@@ -277,11 +280,11 @@
 		return minutes + ':' + ('0' + seconds).slice(-2);
 	}
 
-	function applyCurve(value, points) {
-		if (!value || value <= 0) {
+	function applyCurve(pos, points) {
+		if (!points.length || typeof pos !== 'number' || Number.isNaN(pos)) {
 			return 0;
 		}
-		let index = points.findIndex(o => o.at >= value);
+		let index = points.findIndex(o => o.at >= pos);
 		if (index === -1) {
 			return points[points.length - 1].value;
 		}
@@ -290,7 +293,7 @@
 		}
 		let from = points[index - 1];
 		let to = points[index];
-		let progress = (value - from.at) / (to.at - from.at);
+		let progress = (pos - from.at) / (to.at - from.at);
 		return from.value + (to.value - from.value) * progress;
 	}
 
@@ -434,13 +437,9 @@
 			autosizeInputs.forEach(asi => asi.stop());
 			document.body.removeChild(container);
 		};
-		let cancel = () => {
+		let finish = (data) => {
 			clear();
 			resolve(null);
-		};
-		let submit = data => {
-			clear();
-			resolve(data);
 		};
 		let container = div('filters-modal');
 		let content = div('content');
@@ -500,19 +499,18 @@
 		});
 		buttonOk.addEventListener('click', () => {
 			validateData();
-			let data = {
+			finish({
 				scoreFrom: +scoreFrom.value,
 				scoreTo: +scoreTo.value,
 				starsFrom: +starsFrom.value,
 				starsTo: +starsTo.value,
 				hiddenMaps: [...hiddenMapsSelect.options].map(opt => +opt.value)
-			};
-			submit(data);
+			});
 		});
-		buttonCancel.addEventListener('click', cancel);
+		buttonCancel.addEventListener('click', () => finish(null));
 		container.addEventListener('click', e => {
 			if (!content.contains(e.target)) {
-				cancel();
+				finish(null);
 			}
 		});
 		scroller.append(scoreFilter, starsFilter, hiddenMapsFilter);
@@ -523,6 +521,208 @@
 		return promise;
 	}
 
+	let customCurve = [];
+	function loadCustomCurve() {
+		try {
+			let saved = JSON.parse(localStorage.getItem('peepee-custom-curve'));
+			if (Array.isArray(saved)) {
+				customCurve = saved;
+			}
+		} catch(e) {}
+	}
+	loadCustomCurve();
+	async function updateCustomCurve(curve) {
+		customCurve = curve;
+		try {
+			localStorage.setItem('peepee-custom-curve', JSON.stringify(curve));
+		} catch(e) {}
+		[played, unplayed].forEach(list => {
+			if (list.method instanceof SortCustomCurve) {
+				list.update();
+			}
+		});
+	}
+	async function editCustomCurveModal(curve = []) {
+		curve = JSON.parse(JSON.stringify(curve));
+		let resolve;
+		let reject;
+		let promise = new Promise((_resolve, _reject) => {
+			resolve = _resolve;
+			reject = _reject;
+		});
+		let cleared = false;
+		let clear = () => {
+			if (cleared) {
+				return;
+			}
+			cleared = true;
+			window.removeEventListener('resize', onResize);
+			document.removeEventListener('mousemove', onMouseMove);
+			document.removeEventListener('mouseup', onMouseUp);
+			document.body.removeChild(container);
+		};
+		let finish = (data) => {
+			clear();
+			resolve(data);
+		};
+		let container = div('custom-curve-modal');
+		let content = div('content');
+		let title = create('h2', null, 'CUSTOM CURVE EDITOR');
+		let buttons = div('buttons');
+		let buttonCancel = create('button', 'cancel', 'Cancel');
+		let buttonOk = create('button', 'ok', 'OK');
+		let scroller = div('scroller');
+		let instructions = div('instructions', 'Left click to add or move points, right click to remove points');
+		let editor = div('editor');
+
+		let canvas = create('canvas', 'preview');
+		let ctx = canvas.getContext('2d');
+		let pointsDetails = div('points');
+		let marginX = 34;
+		let marginY = 20;
+		let maxPercentage = 1.12;
+		let maxStars = 15;
+		let selectedPoint = null;
+		let grabbed = false;
+		let pixelFromPoint = point => {
+			return {
+				x: lerp(point.at / maxStars, marginX, canvas.width),
+				y: lerp(point.value / maxPercentage, canvas.height - marginY, 0)
+			};
+		};
+		let pointFromPixel = pixel => {
+			return {
+				at: maxStars * ilerp(pixel.x, marginX, canvas.width),
+				value: maxPercentage * ilerp(pixel.y, canvas.height - marginY, 0)
+			};
+		};
+
+		let draw = () => {
+			updateEstCurve(ctx, {
+				numPoints: 0,
+				marginX, marginY,
+				maxPercentage, maxStars,
+				playerSongsColor: 'rgbs(136, 238, 255, .7)'
+			});
+			if (curve.length) {
+				ctx.strokeStyle = 'rgba(250, 120, 20, 1)';
+				ctx.lineWidth = 2;
+				ctx.beginPath();
+				let firstPos = pixelFromPoint({ at: 0, value: curve[0].value });
+				ctx.moveTo(firstPos.x, firstPos.y);
+				curve.forEach(point => {
+					let pos = pixelFromPoint(point);
+					ctx.lineTo(pos.x, pos.y);
+				});
+				let lastPos = pixelFromPoint({ at: maxStars, value: curve[curve.length - 1].value });
+				ctx.lineTo(lastPos.x, lastPos.y);
+				ctx.stroke();
+				ctx.fillStyle = 'rgba(20, 250, 120, 1)';
+				ctx.strokeStyle = 'rgba(20, 250, 120, 1)';
+				curve.forEach(point => {
+					let pos = pixelFromPoint(point);
+					ctx.fillRect(pos.x - 3, pos.y - 3, 6, 6);
+					if (point === selectedPoint) {
+						ctx.beginPath();
+						ctx.arc(pos.x, pos.y, 8, 0, 2 * Math.PI);
+						ctx.stroke();
+					}
+				});
+				ctx.lineWidth = 1;
+			}
+		};
+
+		let updatePoints = () => {
+			curve.sort((a, b) => a.at - b.at);
+			pointsDetails.innerHTML = '';
+			curve.forEach(point => {
+				let elem = div('point');
+				let at = div('at', [span('label', 'At: '), span('value', round(point.at, 2) + '★')]);
+				let score = div('score', [span('label', 'Score: '), span('value', round(100 * point.value, 2) + '%')]);
+				elem.append(at, score);
+				pointsDetails.append(elem);
+			});
+		};
+
+		let onMouseMove = e => {
+			if (!curve.length) {
+				return;
+			}
+			let rect = canvas.getBoundingClientRect();
+			let x = e.clientX - rect.left;
+			let y = e.clientY - rect.top;
+			if (grabbed) {
+				e.preventDefault();
+				let edit = pointFromPixel({ x, y });
+				Object.assign(selectedPoint, edit);
+				updatePoints();
+				draw();
+				return;
+			}
+			let distances = curve.map(point => {
+				let px = pixelFromPoint(point);
+				let dx = x - px.x;
+				let dy = y - px.y;
+				return { point, d: dx * dx + dy * dy };
+			});
+			distances.sort((a, b) => a.d - b.d);
+			let newSelection = distances[0].d < 81 ? distances[0].point : null;
+			if (selectedPoint !== newSelection) {
+				selectedPoint = newSelection;
+				draw();
+			}
+		};
+		document.addEventListener('mousemove', onMouseMove);
+
+		canvas.addEventListener('mousedown', e => {
+			e.preventDefault();
+			if (e.button === 2) {
+				curve = curve.filter(p => p !== selectedPoint);
+				selectedPoint = null;
+				updatePoints();
+				draw();
+				return;
+			}
+			if (!selectedPoint) {
+				let newPoint = pointFromPixel({ x: e.offsetX, y: e.offsetY });
+				curve.push(newPoint);
+				selectedPoint = newPoint;
+				updatePoints();
+				draw();
+			}
+			grabbed = true;
+		});
+		canvas.addEventListener('contextmenu', e => e.preventDefault());
+		let onMouseUp = () => {
+			grabbed = false;
+		};
+		document.addEventListener('mouseup', onMouseUp);
+
+		let onResize = () => {
+			canvas.width = canvas.clientWidth;
+			canvas.height = canvas.clientHeight;
+			draw();
+		};
+		window.addEventListener('resize', onResize);
+
+		buttonOk.addEventListener('click', () => finish(curve));
+		buttonCancel.addEventListener('click', () => finish(null));
+		container.addEventListener('click', e => {
+			if (!content.contains(e.target)) {
+				finish(null);
+			}
+		});
+		editor.append(canvas, pointsDetails);
+		scroller.append(instructions, editor);
+		buttons.append(buttonCancel, buttonOk);
+		content.append(title, scroller, buttons);
+		container.append(content);
+		document.body.append(container);
+		updatePoints();
+		onResize();
+		return promise;
+	}
+
 	let user = {};
 	let playerSongs = {};
 	let rankedMaps = {};
@@ -530,6 +730,7 @@
 	let rankedMapsUpdate = 0;
 	let rankedMapsPromise = fetchRanked();
 	let fullPP = 0;
+
 	function parseUser(id, doc) {
 		let nameEl = doc.querySelector('h5.title');
 		let name = nameEl && nameEl.textContent.trim();
@@ -787,7 +988,7 @@
 			ctx.fillRect(0, 0, c.width, c.height);
 		}
 		ctx.strokeStyle = 'white';
-		let numPoints = options.numPoints || 100;
+		let numPoints = typeof options.numPoints === 'number' ? options.numPoints : 100;
 		let maxStars = options.maxStars || 15;
 		let maxPercentage = options.maxPercentage || 1.12;
 		let marginX = options.marginX || 34;
@@ -823,7 +1024,7 @@
 		ctx.lineTo(marginX, c.height - marginY);
 		ctx.lineTo(c.width, c.height - marginY);
 		ctx.stroke();
-		ctx.fillStyle = 'rgba(120, 10, 0, .9)';
+		ctx.fillStyle = options.playerSongsColor || 'rgba(120, 10, 0, .9)';
 		ctx.globalCompositeOperation = 'lighter';
 		Object.values(playerSongs).forEach(song => {
 			let x = marginX + (song.stars / maxStars) * (c.width - marginX);
@@ -1143,6 +1344,32 @@
 		}
 	}
 
+	class SortCustomCurve extends SortMethod {
+		constructor(list) {
+			super(list);
+			this.name = 'Custom curve';
+			this.id = 'custom-curve';
+		}
+
+		createOptionsMarkup() {
+			let container = div('custom-curve-sort-buttons');
+			let editButton = create('button', 'custom-curve-edit', 'edit curve');
+			editButton.addEventListener('click', async () => {
+				let newCurve = await editCustomCurveModal(customCurve);
+				if (!newCurve) {
+					return;
+				}
+				updateCustomCurve(newCurve);
+			});
+			container.append(editButton);
+			return container;
+		}
+
+		run(element) {
+			updateEstimate(element, 100 * applyCurve(element.stars, customCurve));
+		}
+	}
+
 	class SortOldestScore extends SortMethod {
 		constructor(list) {
 			super(list);
@@ -1165,6 +1392,7 @@
 		SortScoreEst,
 		SortRank,
 		SortRaw,
+		SortCustomCurve,
 		SortCompare,
 	];
 	let unplayedMethods = baseMethods;

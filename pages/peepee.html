@@ -7,7 +7,7 @@
 	<link rel="icon" type="image/png" href="/client/icon.png" />
 	<title>Yeehaw gamer 🤠</title>
 	<meta name="description" content="PP farming tool - Improve your rank by checking which maps could potentially give you the most Performance Points on ScoreSaber according to estimates based on your existing scores">
-	<link rel="stylesheet" href="/client/peepee.css?v=1596686400969">
+	<link rel="stylesheet" href="/client/peepee.css?v=1596698106851">
 </head>
 <body>
 	<input type="checkbox" id="show-help" autocomplete="off">
@@ -83,6 +83,11 @@
 				<div class="sort-desc">
 					Uses a specified fixed score percentage value as the potential score (by default 94.33%, which equates to the raw amount of PP for a map).
 				</div>
+				<div class="sort-name">Custom curve</div>
+				<div class="sort-desc">
+					Similar to "score est." but lets you define your own performance for the star difficulties. Use the "edit curve" button to indicate your potential performance per difficulty level (this curve is saved on your device).<br>
+					Sorry, no mobile-friendly version of the curve editor for now.
+				</div>
 				<div class="sort-name">Compare</div>
 				<div class="sort-desc">
 					Uses the scores of another given user. If the other player has a better score than you on a map, their score will be used as the potential score. The "auto" button automatically uses a player slightly above you for comparison (10% above you in the rankings, so if you are #100, it will use player #90).
@@ -100,7 +105,11 @@
 					Puts maps you've done the longest ago at the top.
 				</div>
 			</div>
-			<div class="question">Gimme some tips and tricks</div>
+			<div class="question">I don't like what you think I can do</div>
+			<div class="answer">
+				There are plenty of ways to get different suggestions! Make sure to play with the sort options to match your needs. Also adjust the filters to hide things you don't want displayed.
+			</div>
+			<div class="question">Gimme some more tips and tricks</div>
 			<div class="answer">
 				You can hold ctrl and click on maps to select them, then make a playlist containing this specific set of maps and even see how much total PP passing all of them (at their current potential score) would give you.<br>
 				Right clicking on maps will give you option to add them to the selection or hide them from the list (soon). If you want the real right click menu, just hold ctrl while doing it. If you are on mobile (lol wtf), just long press.<br>
@@ -114,6 +123,6 @@
 	</div>
 	<script src="https://ajax.googleapis.com/ajax/libs/webfont/1.5.10/webfont.js"></script>
 	<script src="/client/context-menu.min.js"></script>
-	<script src="/client/peepee.min.js?v=1596686400969"></script>
+	<script src="/client/peepee.min.js?v=1596698106851"></script>
 </body>
 </html>
