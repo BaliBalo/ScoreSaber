@@ -466,7 +466,7 @@ body {
 	visibility: visible;
 }
 
-.filters-modal, .custom-curve-modal {
+.filters-modal, .custom-curve-modal, .playlist-modal {
 	position: fixed;
 	top: 0;
 	left: 0;
@@ -500,7 +500,7 @@ body {
 		overflow: auto;
 		padding: 0 32px;
 	}
-	button {
+	button, .button {
 		color: currentColor;
 		font: inherit;
 		background: none;
@@ -508,6 +508,7 @@ body {
 		padding: 4px 16px;
 		border-radius: 4px;
 		cursor: pointer;
+		text-decoration: none;
 		&[disabled] {
 			color: #999;
 			cursor: default;
@@ -521,8 +522,10 @@ body {
 		flex: 0 0 auto;
 		padding: 16px;
 		text-align: right;
-		button + button {
-			margin-left: 8px;
+		button, .button {
+			+ button, + .button {
+				margin-left: 8px;
+			}
 		}
 	}
 }
@@ -607,6 +610,30 @@ body {
 		.label {
 			color: #aaa;
 		}
+	}
+}
+
+.playlist-modal {
+	input {
+		width: 50px;
+		font: inherit;
+		color: currentColor;
+		background: none;
+		border: none;
+		border-bottom: 1px solid rgba(255, 255, 255, .5);
+		max-width: 100%;
+		&:focus {
+			outline: none;
+			border-color: #8ef;
+		}
+		&::-webkit-inner-spin-button, &::-webkit-outer-spin-button {
+			-webkit-appearance: none;
+			margin: 0;
+		}
+	}
+	.done {
+		background: #fff;
+		color: #2c3e50;
 	}
 }
 
@@ -736,7 +763,7 @@ body {
 		opacity: 1;
 		visibility: visible;
 	}
-	.selection-clear, .selection-playlist {
+	.selection-clear, .selection-playlist a {
 		background: none;
 		border: none;
 		text-decoration: underline;

@@ -151,13 +151,12 @@
 	};
 
 	function download(data, filename) {
-		let link = document.createElement('a');
-		link.download = filename;
-		link.href = data;
-		link.style.display = 'none';
-		document.body.appendChild(link);
-		link.click();
-		document.body.removeChild(link);
+		let el = link(data);
+		el.download = filename;
+		el.style.display = 'none';
+		document.body.appendChild(el);
+		el.click();
+		document.body.removeChild(el);
 	}
 
 	function copyToClipboard(str) {
@@ -724,6 +723,80 @@
 		document.body.append(container);
 		updatePoints();
 		onResize();
+		return promise;
+	}
+
+	function getPlaylistURL(list, filename, title) {
+		let queryString = [];
+		if (title) {
+			queryString.push('t=' + encodeURIComponent(title));
+		}
+		queryString.push('s=' + encodeURIComponent(list.map(m => m.id).join('.')));
+		return '/custom-playlist/' + (filename || 'playlist.bplist') + '?' + queryString.join('&');
+	}
+	async function playlistDownloadModal(maps, options = {}) {
+		let resolve;
+		let promise = new Promise(_resolve => resolve = _resolve);
+		let cleared = false;
+		let clear = () => {
+			if (cleared) {
+				return;
+			}
+			cleared = true;
+			document.body.removeChild(container);
+		};
+		let finish = (data) => {
+			clear();
+			resolve(data);
+		};
+		let container = div('playlist-modal');
+		let content = div('content');
+		let title = create('h2', null, 'CREATE A PLAYLIST');
+		let buttons = div('buttons');
+		let buttonDone = create('button', 'done', 'Done');
+		let buttonFile = link('#', 'button file', '.bplist');
+		let buttonOneClick = link('#', 'button oneclick', 'OneClick™');
+		let scroller = div('scroller');
+		let defaultCount = 50;
+		let filename = options.filename || 'playlist.bplist';
+
+		buttonFile.download = filename;
+
+		let count = textInput(null, '', defaultCount);
+		count.type = 'number';
+		count.min = 1;
+		count.max = maps.length;
+		let countLine = div('playlist count', ['Number of items from the top to include in the playlist: ', count]);
+		let countRepeat = span(null, 50);
+		let gain = span(null, '0pp');
+		let estimateLine = div('playlist count', ['Estimated PP gain for top ', countRepeat, ' maps: ', gain]);
+
+		let update = () => {
+			let val = count.value.trim();
+			let actualCount = clamp(!val || Number.isNaN(+val) ? defaultCount : ~~val, 1, maps.length);
+			countRepeat.textContent = actualCount;
+
+			let includedMaps = maps.slice(0, actualCount);
+			// Issue: multiple difficulties have been removed (only top one kept) - fine for now
+			let estimate = getFullPPWithUpdates(includedMaps.map(e => ({ uid: e.uid, pp: e.estimatePP || 0 })));
+			gain.textContent = '+' + round(Math.max(estimate - fullPP, 0), 2) + 'pp';
+
+			buttonFile.href = getPlaylistURL(includedMaps, filename, options.title);
+			buttonOneClick.href = 'bsplaylist://playlist/' + encodeURIComponent(buttonFile.href);
+		};
+		count.addEventListener('input', update);
+		update();
+		buttonDone.addEventListener('click', () => finish(null));
+		container.addEventListener('click', e => {
+			if (!content.contains(e.target)) {
+				finish(null);
+			}
+		});
+		buttons.append(buttonFile, buttonOneClick, buttonDone);
+		scroller.append(countLine, estimateLine);
+		content.append(title, scroller, buttons);
+		container.append(content);
+		document.body.append(container);
 		return promise;
 	}
 
@@ -1423,9 +1496,10 @@
 			this.selectionTooltip.appendChild(selectionTooltipFirstLine);
 			this.selectionTooltipPP = div('line', '+0.00pp');
 			this.selectionTooltip.appendChild(this.selectionTooltipPP);
-			let selectionTooltipPlaylist = create('button', 'selection-playlist', 'Make a playlist');
-			selectionTooltipPlaylist.onclick = this.createSelectionPlaylist.bind(this);
-			this.selectionTooltip.appendChild(selectionTooltipPlaylist);
+			this.selectionTooltipBplist = link('#', 'bplist', '.bplist');
+			this.selectionTooltipOneClick = link('#', 'oneclick', 'OneClick');
+			let selectionPlaylistLine = div('selection-playlist', [this.selectionTooltipBplist, ' - ', this.selectionTooltipOneClick]);
+			this.selectionTooltip.appendChild(selectionPlaylistLine);
 			header.appendChild(this.selectionTooltip);
 			let titleEl = div('list-title', title);
 			this.titleEl = titleEl;
@@ -1471,22 +1545,19 @@
 			this.onScroll();
 		}
 
-		createPlaylist() {
-			// eslint-disable-next-line no-alert
-			let count = +prompt('Number of items to include in the playlist', 50);
-			if (!count) {
-				return;
-			}
-			let songs = this.elements.filter(this.filter).filter((song, i, self) => song.id && self.findIndex(t => t.id === song.id) === i).slice(0, count);
-			return downloadPlaylist(songs, this.title);
+		getPlaylistName() {
+			let today = new Date();
+			let date = today.getFullYear() + '-' + pad2(today.getMonth() + 1) + '-' + pad2(today.getDate());
+			let nameSlug = this.title.replace(/[\W-]+/g, '-').replace(/^-|-$/g, '').toLowerCase();
+			return {
+				title: this.title + ' (' + date + ')',
+				filename: nameSlug + '-' + date + '.bplist'
+			};
 		}
 
-		createSelectionPlaylist() {
-			let selection = this.selection.map(sel => this.elements.find(el => sel === el.uid)).filter(e => e);
-			if (!selection.length) {
-				return;
-			}
-			return downloadPlaylist(selection, this.title);
+		createPlaylist() {
+			let maps = this.elements.filter(this.filter).filter((song, i, self) => song.id && self.findIndex(t => t.id === song.id) === i);
+			return playlistDownloadModal(maps, this.getPlaylistName());
 		}
 
 		changeMethod(method) {
@@ -1521,6 +1592,10 @@
 			let estimate = getFullPPWithUpdates(selectionElems.map(e => ({ uid: e.uid, pp: e.estimatePP })));
 			this.selectionTooltipPP.textContent = '+' + round(Math.max(estimate - fullPP, 0), 2) + 'pp';
 			this.selectionTooltip.classList[count ? 'add' : 'remove']('show');
+
+			let playlistData = this.getPlaylistName();
+			this.selectionTooltipBplist.href = getPlaylistURL(selectionElems, playlistData.filename, playlistData.title);
+			this.selectionTooltipOneClick.href = 'bsplaylist://playlist/' + encodeURIComponent(this.selectionTooltipBplist.href);
 		}
 
 		getClosestElement(el) {
@@ -1678,7 +1753,7 @@
 				links.appendChild(link(element.download, 'download', null, 'Download map', '_blank'));
 			}
 			if (element.beatSaverKey) {
-				links.appendChild(link('beatsaver://' + element.beatSaverKey, 'oneclick', null, 'OneClick install'));
+				links.appendChild(link('beatsaver://' + element.beatSaverKey, 'oneclick', null, 'OneClick™ install'));
 				links.appendChild(link('https://beatsaver.com/beatmap/' + element.beatSaverKey, 'beatsaver', null, 'Open on BeatSaver', '_blank'));
 			}
 			links.appendChild(link('https://scoresaber.com/leaderboard/' + element.uid, 'leaderboards', null, 'ScoreSaber leaderboard', '_blank'));
