@@ -15,6 +15,7 @@ const removeDupes = require('./utils/ranked/remove-dupes');
 const removePartial = require('./utils/ranked/remove-partial');
 const updateScoresaberValues = require('./utils/ranked/update-scoresaber-values');
 const updateStats = require('./utils/ranked/update-stats');
+const Playlist = require('./utils/playlist');
 const top200 = require('./utils/top200');
 const app = express();
 const port = 2148;
@@ -88,6 +89,25 @@ app.get(/^\/top-?200(\.bplist)?/, async (req, res) => {
 	res.append('Last-Modified', at);
 	res.append('Content-Disposition', 'attachment; filename="top200.bplist"');
 	res.send(data);
+});
+
+const customPlaylist = new Playlist({ author: 'Peepee' });
+let customPlaylistImage = customPlaylist.setImageFromFile(path.resolve(__dirname, 'client/scoresaber.png'));
+app.get('/custom-playlist/:filename', async (req, res) => {
+	let list = req.query.s && req.query.s.split('.').filter(e => e);
+	if (!list || !list.length) {
+		return res.status(400).end();
+	}
+	await customPlaylistImage;
+	// Make a copy to ensure no weird race conditions
+	let pl = new Playlist(customPlaylist);
+	if (req.query.t) {
+		pl.title = req.query.t;
+	}
+	pl.setSongsFromHashes(list);
+	res.append('Content-Disposition', 'attachment; filename="' + req.params.filename.replace(/"/g, '_') + '"');
+	res.set('Cache-Control', 'no-store');
+	res.send(pl.toJSON());
 });
 
 const execTask = (fn, ...args) => async (req, res) => {
