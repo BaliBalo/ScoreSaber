@@ -100,7 +100,6 @@ app.get('/custom-playlist/:filename', async (req, res) => {
 	} else if (req.query.i) {
 		let uids = req.query.i.split('.').map(e => +e).filter(e => e);
 		let fromDb = await ranked.find({ uid: { $in: uids } });
-		console.log('from db:', fromDb);
 		let maps = fromDb.reduce((o, e) => {
 			o[e.uid] = e.id;
 			return o;
