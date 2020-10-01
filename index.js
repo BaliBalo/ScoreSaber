@@ -94,7 +94,19 @@ app.get(/^\/top-?200(\.bplist)?/, async (req, res) => {
 const customPlaylist = new Playlist({ author: 'Peepee' });
 let customPlaylistImage = customPlaylist.setImageFromFile(path.resolve(__dirname, 'client/scoresaber.png'));
 app.get('/custom-playlist/:filename', async (req, res) => {
-	let list = req.query.s && req.query.s.split('.').filter(e => e);
+	let list = [];
+	if (req.query.s) {
+		list = req.query.s.split('.').filter(e => e);
+	} else if (req.query.i) {
+		let uids = req.query.i.split('.').map(e => +e).filter(e => e);
+		let fromDb = await ranked.find({ uid: { $in: uids } });
+		console.log('from db:', fromDb);
+		let maps = fromDb.reduce((o, e) => {
+			o[e.uid] = e.id;
+			return o;
+		}, {});
+		list = uids.map(e => maps[e]).filter(e => e);
+	}
 	if (!list || !list.length) {
 		return res.status(400).end();
 	}

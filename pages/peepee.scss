@@ -614,6 +614,10 @@ body {
 }
 
 .playlist-modal {
+	.warning {
+		color: #fcc;
+		margin: 8px 0;
+	}
 	input {
 		width: 50px;
 		font: inherit;
