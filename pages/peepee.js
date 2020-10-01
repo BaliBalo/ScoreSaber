@@ -425,11 +425,7 @@
 			filters.hiddenMaps = filters.hiddenMaps.slice();
 		}
 		let resolve;
-		let reject;
-		let promise = new Promise((_resolve, _reject) => {
-			resolve = _resolve;
-			reject = _reject;
-		});
+		let promise = new Promise(_resolve => resolve = _resolve);
 		let autosizeInputs = [];
 		let cleared = false;
 		let clear = () => {
@@ -548,11 +544,7 @@
 	async function editCustomCurveModal(curve = []) {
 		curve = JSON.parse(JSON.stringify(curve));
 		let resolve;
-		let reject;
-		let promise = new Promise((_resolve, _reject) => {
-			resolve = _resolve;
-			reject = _reject;
-		});
+		let promise = new Promise(_resolve => resolve = _resolve);
 		let cleared = false;
 		let clear = () => {
 			if (cleared) {
@@ -807,6 +799,7 @@
 		content.append(title, scroller, buttons);
 		container.append(content);
 		document.body.append(container);
+		count.focus();
 		return promise;
 	}
 
@@ -1002,10 +995,13 @@
 
 	function getFullPPWithUpdate(replaceMaps, newPP) {
 		if (!Array.isArray(replaceMaps)) {
-			replaceMaps = [replaceMaps];
+			replaceMaps = replaceMaps ? [replaceMaps] : [];
 		}
-		let ppList = Object.values(playerSongs).filter(song => !replaceMaps.includes(song.uid)).map(song => song.userPP).concat(newPP);
-		ppList.sort((a, b) => b - a);
+		let songs = Object.values(playerSongs);
+		if (replaceMaps.length) {
+			songs = songs.filter(song => !replaceMaps.includes(song.uid));
+		}
+		let ppList = songs.map(song => song.userPP).concat(newPP).sort((a, b) => b - a);
 		let mult = 1;
 		let result = ppList.reduce((total, score, i) => total + score * (mult *= (i ? PP_DECAY : 1)), 0);
 		// return Math.max(result, fullPP);
@@ -1016,6 +1012,12 @@
 		if (song.score && song.score >= score) {
 			song.estimateScore = song.score;
 			song.estimatePP = song.userPP;
+			song.estimateFull = fullPP;
+			return;
+		}
+		if (!score) {
+			song.estimateScore = 0;
+			song.estimatePP = 0;
 			song.estimateFull = fullPP;
 			return;
 		}
@@ -1175,6 +1177,9 @@
 
 		createOptionsMarkup() {}
 
+		onShow() {}
+		onHide() {}
+
 		init() {}
 
 		run(element) {
@@ -1208,6 +1213,7 @@
 			this.rankInput = create('input', 'rank-input');
 			this.rankInput.type = 'text';
 			this.rankInput.placeholder = (user.rank || 1).toLocaleString() + ' (desired rank)';
+			this.rankInput.tabIndex = -1;
 			this.rankInput.addEventListener('change', () => {
 				if (this.list.method === this) {
 					this.list.update();
@@ -1216,9 +1222,12 @@
 			rankForm.appendChild(this.rankInput);
 			let submit = create('button', 'rank-submit');
 			submit.type = 'submit';
+			submit.tabIndex = -1;
 			rankForm.appendChild(submit);
 			return rankForm;
 		}
+		onShow() { this.rankInput.tabIndex = 0; }
+		onHide() { this.rankInput.tabIndex = -1; }
 
 		init(elements) {
 			// elements.forEach(el => updateEstimate(el, getScoreEstimate(el.stars)));
@@ -1323,7 +1332,7 @@
 		constructor(list) {
 			super(list);
 			this.name = 'Compare';
-			this.async = true;
+			// this.async = true;
 			this.id = 'compare';
 		}
 
@@ -1333,6 +1342,7 @@
 			this.compareInput = create('input', 'compare-input');
 			this.compareInput.type = 'text';
 			this.compareInput.placeholder = 'compared profile url';
+			this.compareInput.tabIndex = -1;
 			let onChange = () => {
 				let idMatch = this.compareInput.value.match(/\d{5,}/);
 				if (!idMatch) {
@@ -1350,6 +1360,7 @@
 			compareForm.appendChild(this.compareInput);
 			let auto = create('button', 'compare-auto', 'auto');
 			auto.type = 'button';
+			auto.tabIndex = -1;
 			auto.addEventListener('click', async () => {
 				auto.disabled = true;
 				let goalRank = user.rank === 1 ? 2 : Math.floor(user.rank * .9);
@@ -1359,11 +1370,15 @@
 				onChange();
 			});
 			compareForm.appendChild(auto);
+			this.autoButton = auto;
 			let submit = create('button', 'compare-submit');
 			submit.type = 'submit';
+			submit.tabIndex = -1;
 			compareForm.appendChild(submit);
 			return compareForm;
 		}
+		onShow() { this.compareInput.tabIndex = this.autoButton.tabIndex = 0; }
+		onHide() { this.compareInput.tabIndex = this.autoButton.tabIndex = -1; }
 
 		async init(elements) {
 			elements.sort((a, b) => b.pp - a.pp);
@@ -1403,6 +1418,7 @@
 			this.fixedInput.type = 'text';
 			this.fixedInput.placeholder = '94.3333%';
 			this.fixedInput.maxLength = 10;
+			this.fixedInput.tabIndex = -1;
 			this.fixedInput.addEventListener('change', () => {
 				if (this.list.method === this) {
 					this.list.update();
@@ -1411,9 +1427,12 @@
 			fixedForm.appendChild(this.fixedInput);
 			let submit = create('button', 'fixed-submit');
 			submit.type = 'submit';
+			submit.tabIndex = -1;
 			fixedForm.appendChild(submit);
 			return fixedForm;
 		}
+		onShow() { this.fixedInput.tabIndex = 0; }
+		onHide() { this.fixedInput.tabIndex = -1; }
 
 		init() {
 			this.score = parseFloat(this.fixedInput.value.trim()) || 94.333333;
@@ -1437,6 +1456,7 @@
 		createOptionsMarkup() {
 			let container = div('custom-curve-sort-buttons');
 			let editButton = create('button', 'custom-curve-edit', 'edit curve');
+			editButton.tabIndex = -1;
 			editButton.addEventListener('click', async () => {
 				let newCurve = await editCustomCurveModal(customCurve);
 				if (!newCurve) {
@@ -1445,8 +1465,11 @@
 				updateCustomCurve(newCurve);
 			});
 			container.append(editButton);
+			this.editButton = editButton;
 			return container;
 		}
+		onShow() { this.editButton.tabIndex = 0; }
+		onHide() { this.editButton.tabIndex = -1; }
 
 		run(element) {
 			updateEstimate(element, 100 * applyCurve(element.stars, customCurve));
@@ -1509,7 +1532,7 @@
 			header.appendChild(this.selectionTooltip);
 			let titleEl = div('list-title', title);
 			this.titleEl = titleEl;
-			let playlist = create('button', 'playlist', '', 'Create a playlist');
+			let playlist = create('button', 'playlist', 'playlist', 'Create a playlist');
 			playlist.onclick = this.createPlaylist.bind(this);
 			titleEl.appendChild(playlist);
 			header.appendChild(titleEl);
@@ -1572,12 +1595,14 @@
 			}
 			if (this.method) {
 				this.elem.classList.remove('method-' + this.method.id);
+				this.method.onHide();
 			}
 			this.content.scrollTop = 0;
 			this.displayed = 20;
 			this.method = method;
 			if (this.method) {
 				this.elem.classList.add('method-' + this.method.id);
+				this.method.onShow();
 			}
 			this.update();
 			this.onScroll();
@@ -1780,28 +1805,34 @@
 				this.elem.classList.remove('loading');
 			}
 			this.updating = updating;
-			if (method.async) {
-				this.elem.classList.add('loading');
-			}
+			this.elem.classList.add('loading');
 			await method.init(elements);
 			this.refresh();
 			let isCanceled = () => this.updating !== updating;
+			let lastUpdate = Date.now();
+			let dirty = false;
 			for (let i = 0; i < elements.length; i++) {
 				let result = await method.run(elements[i], isCanceled);
 				if (method.async) {
 					if (isCanceled()) {
 						return;
 					}
-					this.refresh();
+					let now = Date.now();
+					if (now - lastUpdate > 1000) {
+						lastUpdate = now;
+						this.refresh();
+						dirty = false;
+					} else {
+						dirty = true;
+					}
 				}
 				if (result === PAUSE_UPDATE) {
 					this.elem.classList.add('paused');
 					break;
 				}
 			}
-			if (method.async) {
-				this.elem.classList.remove('loading');
-			} else {
+			this.elem.classList.remove('loading');
+			if (!method.async || dirty) {
 				this.refresh();
 			}
 			this.updating = false;

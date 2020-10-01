@@ -699,26 +699,34 @@ body {
 	.playlist {
 		display: inline-block;
 		position: relative;
-		width: 22px;
-		height: 22px;
+		// width: 22px;
+		// height: 22px;
 		vertical-align: middle;
+		white-space: nowrap;
 		margin-left: 8px;
 		border: none;
 		background: none;
 		padding: 0;
+		color: #fff;
 		cursor: pointer;
 		outline: none;
 		&::before {
 			content: '';
-			display: block;
+			display: inline-block;
 			position: relative;
-			width: 100%;
-			height: 100%;
+			vertical-align: middle;
+			width: 22px;
+			height: 22px;
+			margin-right: 4px;
 			background: center / contain no-repeat;
 			background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23fff' d='M15,6H3V8H15V6M15,10H3V12H15V10M3,16H11V14H3V16M17,6V14.18C16.69,14.07 16.35,14 16,14A3,3 0 0,0 13,17A3,3 0 0,0 16,20A3,3 0 0,0 19,17V8H22V6H17Z' /%3E%3C/svg%3E");
 		}
-		&:focus::before {
-			outline: rgb(229, 151, 0) auto 5px;
+		&:focus {
+			color: #8ef;
+			&::before {
+				// outline: rgb(229, 151, 0) auto 5px;
+				background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%238ef' d='M15,6H3V8H15V6M15,10H3V12H15V10M3,16H11V14H3V16M17,6V14.18C16.69,14.07 16.35,14 16,14A3,3 0 0,0 13,17A3,3 0 0,0 16,20A3,3 0 0,0 19,17V8H22V6H17Z' /%3E%3C/svg%3E");
+			}
 		}
 	}
 }
@@ -729,10 +737,11 @@ body {
 	&::after {
 		content: '';
 		position: absolute;
-		bottom: 100%;
-		left: 100%;
+		bottom: 50%;
+		left: 22px;
 		width: 239px;
 		height: 119px;
+		margin-bottom: 11px;
 		transform-origin: bottom left;
 		background: url("/client/playlist-info.png") center / contain no-repeat;
 		pointer-events: none;
