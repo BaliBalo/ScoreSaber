@@ -14,10 +14,13 @@ async function run(command) {
 	});
 }
 
+const filePattern = 'pages/*.js';
+const command = (file) => 'npx terser "' + file + '" --compress --mangle -o "client/$(basename "' + file + '" .js).min.js"';
+
 (async () => {
 	if (!process.argv.includes('--watch')) {
 		try {
-			await run('for f in pages/*.js; do npx terser "$f" --compress --mangle -o client/$(basename "$f" .js).min.js; done');
+			await run('for f in ' + filePattern + '; do ' + command('$f') + '; done');
 		} catch(code) {
 			console.log('Error - exit code:', code);
 			return process.exit(code);
@@ -27,16 +30,15 @@ async function run(command) {
 	}
 
 	// Watch mode
-	const path = require('path');
 	const chokidar = require('chokidar');
 	let recompile = async file => {
 		try {
-			await run('npx terser "' + file + '" --compress --mangle -o "' + path.resolve(__dirname, 'client', path.basename(file, '.js') + '.min.js') + '"');
+			await run(command(file));
 			console.log('Recompiled ' + file);
 		} catch(code) {
 			console.log('Error compiling ' + file + ' - code:', code);
 		}
 	};
-	chokidar.watch('pages/*.js').on('change', recompile).on('add', recompile);
+	chokidar.watch(filePattern).on('change', recompile).on('add', recompile);
 	console.log('Watching JS files!');
 })();

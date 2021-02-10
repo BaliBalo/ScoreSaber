@@ -618,9 +618,16 @@ body {
 		color: #fcc;
 		margin: 8px 0;
 	}
+	.line {
+		line-height: 1.2;
+		&:not(:first-child) {
+			margin-top: 12px;
+		}
+	}
 	input {
 		width: 50px;
 		font: inherit;
+		line-height: 1;
 		color: currentColor;
 		background: none;
 		border: none;

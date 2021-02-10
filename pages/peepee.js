@@ -308,7 +308,9 @@
 		return src;
 	}
 
-	WebFont.load({ custom: { families: ['NeonTubes'] } });
+	try {
+		WebFont.load({ custom: { families: ['NeonTubes'] } });
+	} catch(e) {}
 
 	let userForm = document.getElementById('user');
 	let profileInput = document.getElementById('profile');
@@ -411,7 +413,7 @@
 			padding: inputStyle.padding,
 		});
 		let checkSize = () => {
-			ghost.textContent = input.value || ' ';
+			ghost.textContent = input.value || input.placeholder || ' ';
 			input.style.width = (ghost.clientWidth + 1) + 'px';
 		};
 		document.body.appendChild(ghost);
@@ -736,6 +738,10 @@
 				return;
 			}
 			cleared = true;
+			try {
+				countAutosize.stop();
+				offsetAutosize.stop();
+			} catch(e) {}
 			document.body.removeChild(container);
 		};
 		let finish = (data) => {
@@ -759,34 +765,62 @@
 		count.type = 'number';
 		count.min = 1;
 		count.max = maps.length;
-		let countLine = div('playlist count', ['Number of items from the top to include in the playlist: ', count]);
-		let countRepeat = span(null, 50);
+		let countAutosize = autosizeInput(count);
+		let countLine = div('line count', ['Number of items from the top to include in the playlist: ', count]);
+
+		let offset = textInput(null, '', 1);
+		offset.type = 'number';
+		offset.min = 1;
+		offset.max = maps.length;
+		let offsetAutosize = autosizeInput(offset);
+		let offsetLine = div('line offset', ['Starting from item number: ', offset]);
+
+		let selectedMaps = span(null, 'selection');
 		let gain = span(null, '0pp');
-		let estimateLine = div('playlist pp', ['Estimated PP gain for top ', countRepeat, ' maps: ', gain]);
+		let estimateLine = div('line pp', ['Estimated PP gain for ', selectedMaps, ': ', gain]);
 		let oneClickWarningLine = div('playlist warning', ['Warning: too many maps - OneClick™ will likely not work']);
 
 		let update = () => {
+			let offsetVal = offset.value.trim();
+			let actualOffset = clamp(!offsetVal || Number.isNaN(+offsetVal) ? 1 : Math.floor(offsetVal), 1, maps.length) - 1;
 			let val = count.value.trim();
-			let actualCount = clamp(!val || Number.isNaN(+val) ? defaultCount : ~~val, 1, maps.length);
-			countRepeat.textContent = actualCount;
+			let actualCount = clamp(!val || Number.isNaN(+val) ? defaultCount : Math.floor(val), 1, maps.length);
+			let included = maps.slice(actualOffset, actualOffset + actualCount);
+			let unique = included.filter((song, i, self) => song.id && self.findIndex(t => t.id === song.id) === i);
 
-			let includedMaps = maps.slice(0, actualCount);
+			let selectedSentence = '';
+			if (actualOffset === 0) {
+				let word = included.length === maps.length ? 'all' : 'top';
+				selectedSentence = word + ' ' + included.length + ' leaderboard' + (included.length !== 1 ? 's' : '');
+			} else if (included.length === 1) {
+				selectedSentence = 'leaderboard at position ' + (actualOffset + 1);
+			} else {
+				let from = actualOffset + 1;
+				let to = actualOffset + included.length;
+				selectedSentence = 'leaderboards from ' + from + ' to ' + to + ', inclusive';
+			}
+			if (unique.length !== included.length) {
+				selectedSentence += ' (from ' + unique.length + ' unique song' + (unique.length !== 1 ? 's' : '') + ')';
+			}
+			selectedMaps.textContent = selectedSentence;
+
 			// Issue: multiple difficulties have been removed (only top one kept) - fine for now
-			let estimate = getFullPPWithUpdate(includedMaps.map(e => e.uid), includedMaps.map(e => e.estimatePP || 0));
+			let estimate = getFullPPWithUpdate(unique.map(e => e.uid), unique.map(e => e.estimatePP || 0));
 			gain.textContent = '+' + round(Math.max(estimate - fullPP, 0), 2) + 'pp';
 
 			// .bplist: use front-end data-url generation to go around potential size limit and reduce server load
 			// buttonFile.href = getPlaylistURL(includedMaps, filename, options.title);
-			buttonFile.href = playlistDataUrl(includedMaps, options.title);
+			buttonFile.href = playlistDataUrl(unique, options.title);
 			buttonFile.download = filename;
 			// Temp assign non-oneclick url to convert relative to absolute url
-			buttonOneClick.href = getPlaylistURL(includedMaps, filename, options.title);
+			buttonOneClick.href = getPlaylistURL(unique, filename, options.title);
 			buttonOneClick.href = 'bsplaylist://playlist/' + encodeURIComponent(buttonOneClick.href);
 
 			let tooLong = buttonOneClick.href.length > 7500;
 			oneClickWarningLine.style.display = tooLong ? 'block' : 'none';
 		};
 		count.addEventListener('input', update);
+		offset.addEventListener('input', update);
 		update();
 		buttonDone.addEventListener('click', () => finish(null));
 		container.addEventListener('click', e => {
@@ -795,7 +829,7 @@
 			}
 		});
 		buttons.append(buttonFile, buttonOneClick, buttonDone);
-		scroller.append(countLine, estimateLine, oneClickWarningLine);
+		scroller.append(countLine, offsetLine, estimateLine, oneClickWarningLine);
 		content.append(title, scroller, buttons);
 		container.append(content);
 		document.body.append(container);
@@ -1585,8 +1619,7 @@
 		}
 
 		createPlaylist() {
-			let maps = this.elements.filter(this.filter).filter((song, i, self) => song.id && self.findIndex(t => t.id === song.id) === i);
-			return playlistDownloadModal(maps, this.getPlaylistName());
+			return playlistDownloadModal(this.elements.filter(this.filter), this.getPlaylistName());
 		}
 
 		changeMethod(method) {
