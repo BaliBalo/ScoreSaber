@@ -419,7 +419,13 @@
 		document.body.appendChild(ghost);
 		input.addEventListener('input', checkSize);
 		checkSize();
-		return { check: checkSize, stop: () => document.body.removeChild(ghost) };
+		return {
+			check: checkSize,
+			stop: () => {
+				input.removeEventListener('input', checkSize);
+				document.body.removeChild(ghost);
+			}
+		};
 	}
 	async function editFiltersModal(filters = {}) {
 		filters = Object.assign({}, filters);
