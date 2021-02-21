@@ -6,6 +6,7 @@ class Playlist {
 		this.author = options.authpr || 'ScoreSaber';
 		this.image = options.image || 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
 		this.songs = options.songs || [];
+		this.sync = options.sync || '';
 	}
 
 	setImage(image) {
@@ -32,6 +33,7 @@ class Playlist {
 		return {
 			playlistTitle: this.title,
 			playlistAuthor: this.author,
+			syncURL: this.sync,
 			image: this.image,
 			songs: this.songs
 		};
