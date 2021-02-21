@@ -5,7 +5,7 @@ const ranked = require('./ranked');
 const rankedUpdate = require('./ranked/update');
 
 let at = new Date().toUTCString();
-let playlist = new Playlist({ title: 'Top 200 Ranked', author: 'ScoreSaber' });
+let playlist = new Playlist({ title: 'Top 200 Ranked', author: 'ScoreSaber', sync: "https://scoresaber.balibalo.xyz/top200"});
 
 async function update() {
 	try {
