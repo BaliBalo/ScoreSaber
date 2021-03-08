@@ -23,7 +23,7 @@ async function getDataFromPage(page, list = []) {
 		stars: song.stars,
 		pp: song.stars * ranked.PP_PER_STAR,
 		scores: parseNumber(song.scores),
-		recentScores: parseNumber(song['24hr']),
+		recentScores: parseNumber(song.scores_day),
 	})).filter(e => e && e.uid);
 	list = list.concat(pageSongs);
 	if (pageSongs.length) {

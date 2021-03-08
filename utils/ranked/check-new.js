@@ -32,7 +32,7 @@ async function addNew(songsRaw) {
 			bpm: song.bpm,
 			diff: diffMatch[1],
 			scores: parseNumber(song.scores),
-			recentScores: parseNumber(song['24hr']),
+			recentScores: parseNumber(song.scores_day),
 			stars: song.stars,
 			pp: song.stars * ranked.PP_PER_STAR
 		};
