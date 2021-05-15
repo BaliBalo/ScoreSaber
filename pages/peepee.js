@@ -810,16 +810,15 @@
 			}
 			selectedMaps.textContent = selectedSentence;
 
-			// Issue: multiple difficulties have been removed (only top one kept) - fine for now
-			let estimate = getFullPPWithUpdate(unique.map(e => e.uid), unique.map(e => e.estimatePP || 0));
+			let estimate = getFullPPWithUpdate(included.map(e => e.uid), included.map(e => e.estimatePP || 0));
 			gain.textContent = '+' + round(Math.max(estimate - fullPP, 0), 2) + 'pp';
 
 			// .bplist: use front-end data-url generation to go around potential size limit and reduce server load
 			// buttonFile.href = getPlaylistURL(includedMaps, filename, options.title);
-			buttonFile.href = playlistDataUrl(unique, options.title);
+			buttonFile.href = playlistDataUrl(included, options.title);
 			buttonFile.download = filename;
 			// Temp assign non-oneclick url to convert relative to absolute url
-			buttonOneClick.href = getPlaylistURL(unique, filename, options.title);
+			buttonOneClick.href = getPlaylistURL(included, filename, options.title);
 			buttonOneClick.href = 'bsplaylist://playlist/' + encodeURIComponent(buttonOneClick.href);
 
 			let tooLong = buttonOneClick.href.length > 7500;
@@ -1090,7 +1089,7 @@
 	}
 
 	function playlistDataUrl(elements, title) {
-		let songs = elements.map(e => ({ hash: e.id, songName: e.name }));
+		let songs = elements.map(e => ({ hash: e.id, songName: e.name, difficulties: [{ characteristic: 'Standard', name: e.diff }] }));
 		let data = {
 			playlistTitle: title,
 			playlistAuthor: 'Peepee',

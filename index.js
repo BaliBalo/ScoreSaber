@@ -94,28 +94,24 @@ app.get(/^\/top-?200(\.bplist)?/, async (req, res) => {
 const customPlaylist = new Playlist({ author: 'Peepee' });
 let customPlaylistImage = customPlaylist.setImageFromFile(path.resolve(__dirname, 'client/scoresaber.png'));
 app.get('/custom-playlist/:filename', async (req, res) => {
-	let list = [];
-	if (req.query.s) {
-		list = req.query.s.split('.').filter(e => e);
-	} else if (req.query.i) {
-		let uids = req.query.i.split('.').map(e => +e).filter(e => e);
-		let fromDb = await ranked.find({ uid: { $in: uids } });
-		let maps = fromDb.reduce((o, e) => {
-			o[e.uid] = e.id;
-			return o;
-		}, {});
-		list = uids.map(e => maps[e]).filter(e => e);
-	}
-	if (!list || !list.length) {
-		return res.status(400).end();
-	}
 	await customPlaylistImage;
 	// Make a copy to ensure no weird race conditions
 	let pl = new Playlist(customPlaylist);
 	if (req.query.t) {
 		pl.title = req.query.t;
 	}
-	pl.setSongsFromHashes(list);
+	// let list = [];
+	if (req.query.s) {
+		pl.setSongsFromHashes(req.query.s.split('.').filter(e => e));
+	} else if (req.query.i) {
+		let uids = req.query.i.split('.').map(e => +e).filter(e => e);
+		let fromDb = await ranked.find({ uid: { $in: uids } });
+		let maps = fromDb.reduce((o, e) => (o[e.uid] = e, o), {});
+		pl.setSongs(uids.map(e => maps[e]).filter(e => e));
+	}
+	if (!pl.songs.length) {
+		return res.status(400).end();
+	}
 	res.append('Content-Disposition', 'attachment; filename="' + req.params.filename.replace(/"/g, '_') + '"');
 	res.set('Cache-Control', 'no-store');
 	res.send(pl.toJSON());

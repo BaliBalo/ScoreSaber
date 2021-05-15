@@ -143,18 +143,8 @@
 		let [sortProp, sortDir] = fields.sort.value.split('-');
 		sortDir = sortDir === 'desc' ? -1 : 1;
 		leaderboards.sort((a, b) => a[sortProp] < b[sortProp] ? -sortDir : a[sortProp] > b[sortProp] ? sortDir : 0);
-		let perSong = new Map();
-		leaderboards.forEach(ldb => {
-			let current = perSong.get(ldb.id);
-			if (!current) {
-				current = [];
-				perSong.set(ldb.id, current);
-			}
-			current.push(ldb);
-		});
 		while (preview.list.firstChild) preview.list.removeChild(preview.list.firstChild);
-		activeSongs = [...perSong.values()].map((list, i) => {
-			let data = list[0];
+		activeSongs = leaderboards.map((data, i) => {
 			let previewElem = document.createElement('div');
 			previewElem.className = 'item';
 			previewElem.title = [
@@ -165,14 +155,14 @@
 			let content = (i + 1) + '. ' + data.artist + ' - ' + data.name + ' | ' + data.mapper;
 			let details = [
 				data.rating && ('👍 ' + data.rating.toFixed(2) + '%'),
-				list.map(e => diffShort[e.diff] || e.diff).join(', ')
+				data.diff
 			].filter(e => e).join(' - ');
 			if (details) {
 				content += ' (' + details + ')';
 			}
 			previewElem.appendChild(document.createTextNode(content));
 			preview.list.appendChild(previewElem);
-			return { hash: data.id, songName: data.name };
+			return { hash: data.id, songName: data.name, difficulties: [{ characteristic: 'Standard', name: data.diff }] };
 		});
 		let ldbCount = leaderboards.length;
 		let songsCount = activeSongs.length;

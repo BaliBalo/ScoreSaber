@@ -18,11 +18,10 @@ class Playlist {
 	}
 
 	setSongs(list, count) {
-		list = list.filter((song, i, self) => self.findIndex(t => t.id === song.id) === i);
 		if (count) {
 			list = list.slice(0, count);
 		}
-		this.songs = list.map(e => ({ hash: e.id, songName: e.name }));
+		this.songs = list.map(e => ({ hash: e.id, songName: e.name, difficulties: [{ characteristic: 'Standard', name: e.diff }] }));
 	}
 	setSongsFromHashes(list) {
 		list = list.filter((song, i, self) => self.indexOf(song) === i);
