@@ -1,8 +1,3 @@
-// item.downloads = song.stats.downloads;
-// item.upvotes = song.stats.upVotes;
-// item.downvotes = song.stats.downVotes;
-// item.rating = song.stats.rating * 100;
-
 const { promiseSequence, timetag } = require('../../utils');
 const ranked = require('../../utils/ranked');
 const rankedUpdate = require('../../utils/ranked/update');
@@ -14,23 +9,26 @@ async function updateStats(log) {
 	}
 
 	let existing = await ranked.find({});
-	console.log(timetag(), 'Stats update: ' + existing.length + ' maps to process');
+	let updatedCount = 0;
 	await promiseSequence(existing, async (item, i) => {
 		if (log === true && (i % 50) === 0) {
 			console.log(timetag(), 'Stats update: ' + i + ' / ' + existing.length);
 		}
+		const previous = { ...item };
 		await beatsaver.addData(item);
-		const { _id, ...update } = item;
-		const result = await ranked.update({ _id }, { $set: update });
-		if (result !== 1) {
-			console.log(timetag(), 'Stats update result ' + result + ' for ' + item);
+		if (Object.keys(item).find(k => item[k] !== previous[k])) {
+			const { _id, ...update } = item;
+			await ranked.update({ _id }, { $set: update });
+			updatedCount++;
 		}
 		return ++i;
 	}, 0);
-	await rankedUpdate.setTime();
+	if (updatedCount) {
+		await rankedUpdate.setTime();
+	}
 
 	if (log === true) {
-		console.log(timetag(), 'Finsihed update of beatsaver stats');
+		console.log(timetag(), 'Finsihed update of beatsaver stats for ' + updatedCount + ' maps');
 	}
 }
 

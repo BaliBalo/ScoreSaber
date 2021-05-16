@@ -146,7 +146,7 @@ app.all('/admin/check-new/full', limiter, auth.check, execTask(checkNew.full, tr
 app.all('/admin/remove-unranks', limiter, auth.check, execTask(removeUnranks));
 app.all('/admin/remove-dupes', limiter, auth.check, execTask(removeDupes));
 app.all('/admin/remove-partial', limiter, auth.check, execTask(removePartial));
-app.all('/admin/update-scoresaber-values', limiter, auth.check, execTask(updateScoresaberValues));
+app.all('/admin/update-scoresaber-values', limiter, auth.check, execTask(updateScoresaberValues, true));
 app.all('/admin/update-stats', limiter, auth.check, execLongTask(updateStats, true));
 
 if (process.argv.includes('--dev')) {

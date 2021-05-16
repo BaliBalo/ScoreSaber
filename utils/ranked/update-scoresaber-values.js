@@ -32,27 +32,33 @@ async function getDataFromPage(page, list = []) {
 	return list;
 }
 
-async function updateScoresaberValues() {
-	console.log(timetag(), 'Started update of scoresaber values');
+async function updateScoresaberValues(log) {
+	if (log === true) {
+		console.log(timetag(), 'Started update of scoresaber values');
+	}
 
 	let allData = await getDataFromPage(1);
 	if (!allData) {
 		return console.log(timetag(), '(update-scoresaber-values) Error getting list of maps data');
 	}
 
+	let changes = 0;
 	await promiseSequence(allData, async ({ uid, ...update }) => {
-		const result = await ranked.update({ uid }, { $set: update });
-		if (result !== 1) {
-			console.log('Scoresaber values update result ' + result + ' for ' + uid);
-		}
+		const conditions = { uid };
+		// Only update if the row is not already what we need
+		Object.keys(update).forEach(k => (conditions[k] = { $ne: update[k] }));
+		changes += await ranked.update(conditions, { $set: update });
 	});
-	await rankedUpdate.setTime();
-
-	console.log(timetag(), 'Updated all scoresaber values');
+	if (changes) {
+		await rankedUpdate.setTime();
+	}
+	if (log === true) {
+		console.log(timetag(), 'Updated scoresaber values for ' + changes + ' maps');
+	}
 }
 
 if (require.main === module) {
-	updateScoresaberValues();
+	updateScoresaberValues(true);
 } else {
 	module.exports = updateScoresaberValues;
 }
