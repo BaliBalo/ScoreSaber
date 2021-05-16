@@ -21,12 +21,8 @@
 		{ name: 'Expert' },
 		{ name: 'ExpertPlus', label: 'Expert+' },
 	];
-	let diffShort = {
-		Easy: 'Ez',
-		Normal: 'N',
-		Hard: 'H',
-		Expert: 'Ex',
-		ExpertPlus: 'Ex+',
+	let diffNames = {
+		ExpertPlus: 'Expert+',
 	};
 	let $ = document.querySelector.bind(document);
 	let fields = {
@@ -155,7 +151,7 @@
 			let content = (i + 1) + '. ' + data.artist + ' - ' + data.name + ' | ' + data.mapper;
 			let details = [
 				data.rating && ('👍 ' + data.rating.toFixed(2) + '%'),
-				data.diff
+				diffNames[data.diff] || data.diff
 			].filter(e => e).join(' - ');
 			if (details) {
 				content += ' (' + details + ')';

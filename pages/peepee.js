@@ -918,6 +918,10 @@
 			};
 		}).filter(e => e);
 	}
+	function expandScoreData(song) {
+		let base = rankedMaps[song.uid];
+		return base && Object.assign({}, base, song);
+	}
 	async function getProfileAndScores(id, options) {
 		if (!id) {
 			// return { user: {}, scores: {} };
@@ -934,6 +938,7 @@
 		}
 		let currentPage = 1;
 		let user;
+		let rawScores = [];
 		let scores = {};
 		for (let hasMore = true; hasMore; currentPage++) {
 			if (typeof options.onProgress === 'function') {
@@ -942,17 +947,18 @@
 			let doc = await fetchScoreSaber(id, currentPage);
 			if (currentPage === 1) {
 				user = parseUser(id, doc);
+				if (typeof options.onUserInfo === 'function') {
+					options.onUserInfo(user);
+				}
 			}
 			let parsed = parsePage(doc);
 			if (!parsed) {
 				break;
 			}
 			parsed = parsed.filter(song => song.userPP);
+			rawScores.push(...parsed);
 			let len = parsed.length;
-			parsed = parsed.map(song => {
-				let base = rankedMaps[song.uid];
-				return base && Object.assign({}, base, song);
-			}).filter(e => e);
+			parsed = parsed.map(expandScoreData).filter(e => e);
 			parsed.forEach(e => scores[e.uid] = e);
 			if (len === USER_SCORES_PER_PAGE) {
 				await pause(scoresaberRLDelay);
@@ -965,26 +971,33 @@
 				localStorage.setItem('cached-' + id, JSON.stringify({ user, scores }));
 			} catch(e) { }
 		}
-		return { user, scores };
+		return { user, scores, rawScores };
 	}
-	async function getRecentScores(id, since) {
+	async function getRecentScores(id, since, options) {
+		options = options || {};
 		let currentPage = 1;
 		let user;
+		let rawScores = [];
 		let scores = {};
 		for (let hasMore = true; hasMore; currentPage++) {
+			if (typeof options.onProgress === 'function') {
+				options.onProgress(currentPage);
+			}
 			let doc = await fetchScoreSaber(id, currentPage, SORT_RECENT);
 			if (currentPage === 1) {
 				user = parseUser(id, doc);
+				if (typeof options.onUserInfo === 'function') {
+					options.onUserInfo(user);
+				}
 			}
 			let parsed = parsePage(doc);
 			if (!parsed) {
 				break;
 			}
 			let oldest = Math.min(...parsed.map(song => song.at));
-			parsed = parsed.map(song => {
-				let base = rankedMaps[song.uid];
-				return base && Object.assign({}, base, song);
-			}).filter(e => e);
+			parsed = parsed.filter(song => song.userPP && song.at > since);
+			rawScores.push(...parsed);
+			parsed = parsed.map(expandScoreData).filter(e => e);
 			parsed.forEach(e => scores[e.uid] = e);
 			if (oldest >= since) {
 				await pause(scoresaberRLDelay);
@@ -992,7 +1005,7 @@
 				hasMore = false;
 			}
 		}
-		return { user, scores };
+		return { user, scores, rawScores };
 	}
 	async function refresh() {
 		if (!user || !user.id) {
@@ -1004,6 +1017,12 @@
 			lastUpdate = Date.now();
 			let result = await getRecentScores(user.id, since);
 			user = result.user;
+			let historyElement = history.find(e => e.id === user.id);
+			if (historyElement && historyElement.rawScores) {
+				let rawScores = historyElement.rawScores.concat(result.rawScores);
+				user.rawScores = rawScores;
+				user.at = lastUpdate;
+			}
 			Object.assign(playerSongs, result.scores);
 			pushToHistory(user);
 			fullPP = getFullPPWithUpdate(0, 0);
@@ -1939,23 +1958,46 @@
 		lastUpdate = Date.now();
 		try {
 			let rankedMapsData = await rankedMapsPromise;
+			console.log(rankedMapsData);
 			rankedMaps = rankedMapsData.list.reduce((rankedMaps, map) => {
 				rankedMaps[map.uid] = map;
 				return rankedMaps;
 			}, {});
 
-			let results = await getProfileAndScores(id, {
+			let results;
+			let fnOptions = {
 				useCache: location.search.includes('debug'),
-				onProgress: page => (userFetchInfo.textContent = 'Getting scores page ' + page + '...')
-			});
+				onProgress: page => (userFetchInfo.textContent = 'Getting scores page ' + page + '...'),
+				onUserInfo: user => pushToHistory(user)
+			};
+			let historyEntry = history.find(e => e && e.id === id);
+			if (historyEntry && historyEntry.rawScores && historyEntry.at >= rankedMapsData.timestamp) {
+				results = await getRecentScores(id, historyEntry.at, fnOptions);
+				historyEntry.rawScores.map(expandScoreData).filter(e => e).forEach(e => {
+					if (!results.scores[e.uid]) {
+						results.scores[e.uid] = e;
+					}
+				});
+				results.rawScores = results.rawScores.concat(historyEntry.rawScores);
+			} else {
+				results = await getProfileAndScores(id, fnOptions);
+			}
+			if (!results) {
+				triggerAnimation(userForm, 'invalid');
+				return;
+			}
+
 			user = results.user;
+			user.rawScores = results.rawScores;
+			user.at = lastUpdate;
 			playerSongs = results.scores;
 			fullPP = getFullPPWithUpdate(0, 0);
+			// Push to history again to save the raw scores
 			pushToHistory(user);
 			updatePlayerProfile();
 			updateLists(rankedMapsData, playerSongs);
-			// Debugging
-			// window.playerSongs = playerSongs;
+			// For potential debugging purposes
+			window.playerSongs = playerSongs;
 			document.body.classList.add('step-results', 'user-' + id);
 		} catch(err) {
 			console.error(err);
