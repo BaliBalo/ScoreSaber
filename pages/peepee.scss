@@ -15,8 +15,8 @@ body {
 }
 
 @keyframes appear {
-	from { visibility: hidden; opacity: 0; }
-	to { visibility: visible; opacity: 1; }
+	from { opacity: 0; }
+	to { opacity: 1; }
 }
 .pick {
 	position: absolute;
@@ -281,13 +281,16 @@ body {
 	}
 }
 
-#show-help { display: none; }
+#show-help { position: fixed; top: -10px; left: -10px; width: 1px; height: 1px; opacity: .01; }
 .help-btn {
 	position: absolute;
 	top: 0;
 	right: 0;
 	cursor: pointer;
 	margin: 8px;
+}
+#show-help:focus ~ .help-btn {
+	color: #8ef;
 }
 .top-left-buttons {
 	position: absolute;

@@ -1958,7 +1958,6 @@
 		lastUpdate = Date.now();
 		try {
 			let rankedMapsData = await rankedMapsPromise;
-			console.log(rankedMapsData);
 			rankedMaps = rankedMapsData.list.reduce((rankedMaps, map) => {
 				rankedMaps[map.uid] = map;
 				return rankedMaps;
