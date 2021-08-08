@@ -8,7 +8,7 @@ async function beatsaverData(hash, retries = 2) {
 	try {
 		await wait(100);
 		return await request({
-			uri: 'https://beatsaver.com/api/maps/by-hash/' + hash,
+			uri: 'https://api.beatsaver.com/maps/hash/' + hash,
 			json: true,
 			headers: { 'User-Agent': 'Peepee/1.0.0' }
 		});
@@ -21,34 +21,46 @@ async function beatsaverData(hash, retries = 2) {
 	}
 }
 
-async function addData(item) {
+async function addData(item, cache) {
 	if (!item || !item.id) {
 		return;
 	}
+	let hash = item.id.toLowerCase();
 	let song;
 	try {
-		song = await beatsaverData(item.id.toLowerCase());
+		let getter;
+		if (cache && typeof cache === 'object') {
+			if (!cache[hash]) {
+				cache[hash] = beatsaverData(hash);
+			}
+			getter = cache[hash];
+		} else {
+			getter = beatsaverData(hash);
+		}
+		song = await getter;
 	} catch(e) {
 		// delete e.response;
 		// console.log('(beatsaver error)', e);
 	}
 	if (!song) {
-		console.log(timetag(), 'No beatsaver data found for ' + item.name + ' by ' + item.mapper + ' (' + item.uid + ' - ' + item.id.toLowerCase() + ')');
+		console.log(timetag(), 'No beatsaver data found for ' + item.name + ' by ' + item.mapper + ' (' + item.uid + ' - ' + hash + ')');
 		return;
 	}
-	item.beatSaverKey = song.key;
+	item.durationSeconds = song.metadata.duration;
 	item.downloads = song.stats.downloads;
-	item.upvotes = song.stats.upVotes;
-	item.downvotes = song.stats.downVotes;
-	item.rating = song.stats.rating * 100;
-	// item.beatSaverLink = 'https://beatsaver.com/beatmap/' + song.key;
-	item.download = 'https://beatsaver.com' + song.downloadURL;
-	let allCharacteristics = song.metadata && song.metadata.characteristics;
-	let stdCharacteristics = allCharacteristics && allCharacteristics.find(e => e.name === 'Standard');
-	let diffCamelCase = item.diff[0].toLowerCase() + item.diff.slice(1);
-	let characteristics = stdCharacteristics && stdCharacteristics.difficulties && stdCharacteristics.difficulties[diffCamelCase];
+	item.upvotes = song.stats.upvotes;
+	item.downvotes = song.stats.downvotes;
+	item.rating = song.stats.score * 100;
+	let matching = song.versions.find(version => version.hash === hash);
+	if (!matching) {
+		console.log(timetag(), 'WARNING! Found beatsaver data for ' + item.name + ' (' + item.uid + ' - ' + hash + ') does not have a matching version. Using latest.');
+		matching = song.versions[song.versions.length - 1];
+	}
+	item.beatSaverKey = matching.key;
+	item.download = matching.downloadURL;
+	let characteristics = matching.diffs.find(diff => diff.characteristic === 'Standard' && diff.difficulty === item.diff);
 	if (characteristics) {
-		item.duration = characteristics.duration;
+		// item.duration = characteristics.length;
 		item.noteCount = characteristics.notes;
 		// item.obstacleCount = characteristics.obstacles;
 		// item.bombsCount = characteristics.bombs;

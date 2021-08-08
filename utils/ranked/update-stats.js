@@ -10,12 +10,13 @@ async function updateStats(log) {
 
 	let existing = await ranked.find({});
 	let updatedCount = 0;
+	let beatsaverCache = {};
 	await promiseSequence(existing, async (item, i) => {
 		if (log === true && (i % 50) === 0) {
 			console.log(timetag(), 'Stats update: ' + i + ' / ' + existing.length);
 		}
 		const previous = { ...item };
-		await beatsaver.addData(item);
+		await beatsaver.addData(item, beatsaverCache);
 		if (Object.keys(item).find(k => item[k] !== previous[k])) {
 			const { _id, ...update } = item;
 			await ranked.update({ _id }, { $set: update });

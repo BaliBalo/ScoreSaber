@@ -38,7 +38,8 @@ async function addNew(songsRaw) {
 		};
 	});
 	try {
-		await promiseSequence(songs, beatsaver.addData);
+		let beatsaverCache = {};
+		await promiseSequence(songs, song => beatsaver.addData(song, beatsaverCache));
 	} catch(e) {}
 	songs = songs.filter(e => e && e.beatSaverKey);
 	if (songs.length) {
