@@ -129,7 +129,7 @@
 			if (!fields.difficulty[ldb.diff].checked) {
 				return false;
 			}
-			let dur = 60 * ldb.duration / ldb.bpm;
+			let dur = ldb.durationSeconds || (60 * ldb.duration / ldb.bpm);
 			return (
 				between(ldb.stars, stars[0], stars[1])
 				&& between(ldb.rating, rating[0], rating[1])

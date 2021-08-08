@@ -273,9 +273,9 @@
 		}
 	}
 	function getDuration(song) {
-		let minutesFloat = song.duration / song.bpm;
-		let minutes = Math.floor(minutesFloat);
-		let seconds = Math.round((minutesFloat - minutes) * 60);
+		let secondsTotal = song.durationSeconds || (60 * song.duration / song.bpm);
+		let minutes = Math.floor(secondsTotal / 60);
+		let seconds = Math.round(secondsTotal % 60);
 		return minutes + ':' + ('0' + seconds).slice(-2);
 	}
 
@@ -1017,12 +1017,12 @@
 			lastUpdate = Date.now();
 			let result = await getRecentScores(user.id, since);
 			user = result.user;
-			let historyElement = history.find(e => e.id === user.id);
-			if (historyElement && historyElement.rawScores) {
-				let rawScores = historyElement.rawScores.concat(result.rawScores);
-				user.rawScores = rawScores;
-				user.at = lastUpdate;
-			}
+			// let historyElement = history.find(e => e.id === user.id);
+			// if (historyElement && historyElement.rawScores) {
+			// 	let rawScores = historyElement.rawScores.concat(result.rawScores);
+			// 	user.rawScores = rawScores;
+			// 	user.at = lastUpdate;
+			// }
 			Object.assign(playerSongs, result.scores);
 			pushToHistory(user);
 			fullPP = getFullPPWithUpdate(0, 0);
@@ -1969,30 +1969,30 @@
 				onProgress: page => (userFetchInfo.textContent = 'Getting scores page ' + page + '...'),
 				onUserInfo: user => pushToHistory(user)
 			};
-			let historyEntry = history.find(e => e && e.id === id);
-			if (historyEntry && historyEntry.rawScores && historyEntry.at >= rankedMapsData.timestamp) {
-				results = await getRecentScores(id, historyEntry.at, fnOptions);
-				historyEntry.rawScores.map(expandScoreData).filter(e => e).forEach(e => {
-					if (!results.scores[e.uid]) {
-						results.scores[e.uid] = e;
-					}
-				});
-				results.rawScores = results.rawScores.concat(historyEntry.rawScores);
-			} else {
-				results = await getProfileAndScores(id, fnOptions);
-			}
+			results = await getProfileAndScores(id, fnOptions);
+			// let historyEntry = history.find(e => e && e.id === id);
+			// if (historyEntry && historyEntry.rawScores && historyEntry.at >= rankedMapsData.timestamp) {
+			// 	results = await getRecentScores(id, historyEntry.at, fnOptions);
+			// 	historyEntry.rawScores.map(expandScoreData).filter(e => e).forEach(e => {
+			// 		if (!results.scores[e.uid]) {
+			// 			results.scores[e.uid] = e;
+			// 		}
+			// 	});
+			// 	results.rawScores = results.rawScores.concat(historyEntry.rawScores);
+			// } else {
+			// 	results = await getProfileAndScores(id, fnOptions);
+			// }
 			if (!results) {
 				triggerAnimation(userForm, 'invalid');
 				return;
 			}
 
-			user = results.user;
-			user.rawScores = results.rawScores;
-			user.at = lastUpdate;
+			// user = results.user;
+			// user.rawScores = results.rawScores;
+			// user.at = lastUpdate;
 			playerSongs = results.scores;
 			fullPP = getFullPPWithUpdate(0, 0);
-			// Push to history again to save the raw scores
-			pushToHistory(user);
+			// pushToHistory(user);
 			updatePlayerProfile();
 			updateLists(rankedMapsData, playerSongs);
 			// For potential debugging purposes
