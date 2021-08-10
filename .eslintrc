@@ -7,6 +7,7 @@
     "node": true,
     "es6": true
   },
+  "ignorePatterns": ["*.min.js"],
   "rules": {
     "semi": ["error", "always"],
     "indent": ["error", "tab", { "SwitchCase": 1 }],
