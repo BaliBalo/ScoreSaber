@@ -1987,7 +1987,7 @@
 				return;
 			}
 
-			// user = results.user;
+			user = results.user;
 			// user.rawScores = results.rawScores;
 			// user.at = lastUpdate;
 			playerSongs = results.scores;
