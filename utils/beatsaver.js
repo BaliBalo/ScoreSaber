@@ -46,6 +46,7 @@ async function addData(item, cache) {
 		console.log(timetag(), 'No beatsaver data found for ' + item.name + ' by ' + item.mapper + ' (' + item.uid + ' - ' + hash + ')');
 		return;
 	}
+	item.beatSaverKey = song.id;
 	item.durationSeconds = song.metadata.duration;
 	item.downloads = song.stats.downloads;
 	item.upvotes = song.stats.upvotes;
@@ -56,7 +57,6 @@ async function addData(item, cache) {
 		console.log(timetag(), 'WARNING! Found beatsaver data for ' + item.name + ' (' + item.uid + ' - ' + hash + ') does not have a matching version. Using latest.');
 		matching = song.versions[song.versions.length - 1];
 	}
-	item.beatSaverKey = matching.key;
 	item.download = matching.downloadURL;
 	let characteristics = matching.diffs.find(diff => diff.characteristic === 'Standard' && diff.difficulty === item.diff);
 	if (characteristics) {
