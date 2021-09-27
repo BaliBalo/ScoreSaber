@@ -327,7 +327,7 @@
 	function refreshHistory() {
 		$history.innerHTML = '';
 		history.slice(0, 5).forEach(user => {
-			if (!user || !user.avatar || user.rank == null || !user.name) {
+			if (!user || !user.avatar || user.rank == null || user.name == null) {
 				return;
 			}
 			let line = div('line');
@@ -852,11 +852,11 @@
 
 	function parseUser(id, doc) {
 		let nameEl = doc.querySelector('h5.title');
-		let avatarEl = doc.querySelector('.avatar img');
-		if (!nameEl || !avatarEl) {
+		if (!nameEl) {
 			throw new Error('Invalid Profile');
 		}
 		let name = nameEl.textContent.trim();
+		let avatarEl = doc.querySelector('.avatar img');
 		let countryEl = nameEl.querySelector('img');
 		let dataEl = doc.querySelector('h5.title ~ ul');
 		let data = dataEl && dataEl.textContent || '';
