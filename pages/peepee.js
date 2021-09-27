@@ -852,11 +852,11 @@
 
 	function parseUser(id, doc) {
 		let nameEl = doc.querySelector('h5.title');
-		let name = nameEl && nameEl.textContent.trim();
-		if (!name) {
+		let avatarEl = doc.querySelector('.avatar img');
+		if (!nameEl || !avatarEl) {
 			throw new Error('Invalid Profile');
 		}
-		let avatarEl = doc.querySelector('.avatar img');
+		let name = nameEl.textContent.trim();
 		let countryEl = nameEl.querySelector('img');
 		let dataEl = doc.querySelector('h5.title ~ ul');
 		let data = dataEl && dataEl.textContent || '';
