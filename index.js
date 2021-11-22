@@ -34,7 +34,7 @@ app.use(['/client'], serveStaticFiles);
 app.get(['/favicon.ico', '/robots.txt'], serveStaticFiles);
 // Proxy requests (to avoid front-end cross-origin requests issues)
 app.use('/proxy', (req, res) => {
-	let srcStream = req.pipe(request('https://scoresaber.com' + req.url));
+	let srcStream = req.pipe(request('https://old.scoresaber.com' + req.url));
 	srcStream.on('error', error => {
 		res.status(502).send(error.message);
 	});
