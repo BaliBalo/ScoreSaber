@@ -10,7 +10,7 @@ async function _scoreSaberRequest(path, retries = 2) {
 	try {
 		return request({
 			url: path,
-			baseUrl: 'http://scoresaber.com/',
+			baseUrl: 'http://old.scoresaber.com/',
 			json: true
 		});
 	} catch(e) {
