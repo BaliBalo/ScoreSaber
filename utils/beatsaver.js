@@ -48,6 +48,7 @@ async function addData(item, cache) {
 	}
 	item.beatSaverKey = song.id;
 	item.durationSeconds = song.metadata.duration;
+	item.bpm = song.metadata.bpm;
 	item.downloads = song.stats.downloads;
 	item.upvotes = song.stats.upvotes;
 	item.downvotes = song.stats.downvotes;

@@ -9,12 +9,12 @@ async function getIdsFromPage(page, list = []) {
 	try {
 		data = await scoresaber.ranked(page, ~~(Date.now() / 3600000));
 	} catch(e) {}
-	if (!data || !data.songs) {
+	if (!data?.leaderboards) {
 		return;
 	}
-	let pageSongs = data.songs.map(song => song.uid).filter(e => e);
-	list = list.concat(pageSongs);
-	if (pageSongs.length) {
+	let ids = data.leaderboards.map(song => song.id).filter(e => e);
+	list = list.concat(ids);
+	if (ids.length) {
 		return getIdsFromPage(page + 1, list);
 	}
 	return list;

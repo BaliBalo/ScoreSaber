@@ -14,13 +14,13 @@ async function update() {
 		let list = await ranked.find({});
 		playlist.setSongs(list.sort((a, b) => b.stars - a.stars), 200);
 		at = new Date().toUTCString();
-	} catch(e) {}
+	} catch (e) {}
 }
 
 const setup = once(async () => {
 	try {
 		await playlist.setImageFromFile(path.resolve(__dirname, '../client/scoresaber200.png'));
-	} catch(e) {}
+	} catch (e) {}
 	await update();
 });
 

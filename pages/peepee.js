@@ -3,40 +3,28 @@
 	document.body.classList.add('js-loaded');
 
 	const scoresaberRLDelay = 200;
-	const USER_SCORES_PER_PAGE = 8;
+	const USER_SCORES_PER_PAGE = 100;
 	const LEADERBOARD_SCORES_PER_PAGE = 12;
 	const PLAYERS_PER_PAGE = 50;
 	const PP_DECAY = .965;
 	const PAUSE_UPDATE = 'PAUSE_UPDATE';
-	const SORT_TOP = 1;
-	const SORT_RECENT = 2;
-	const MODS = {
-		GN: .04,
-		DA: .02,
-		FS: .08,
-		NF: -.5,
-		NO: -.05,
-		NB: -.1,
-		SS: -.3,
-		NA: -.3
-	};
 	const ppCurve = [
 		{ at: 0, value: 0 },
-		{ at: 45, value: 0.015 },
-		{ at: 50, value: 0.03 },
-		{ at: 55, value: 0.06 },
-		{ at: 60, value: 0.105 },
-		{ at: 65, value: 0.16 },
-		{ at: 68, value: 0.24 },
-		{ at: 70, value: 0.285 },
-		{ at: 80, value: 0.563 },
-		{ at: 84, value: 0.695 },
-		{ at: 88, value: 0.826 },
-		{ at: 94.5, value: 1.015 },
-		{ at: 95, value: 1.046 },
-		{ at: 100, value: 1.12 },
-		{ at: 110, value: 1.18 },
-		{ at: 114, value: 1.25 },
+		{ at: .45, value: 0.015 },
+		{ at: .50, value: 0.03 },
+		{ at: .55, value: 0.06 },
+		{ at: .60, value: 0.105 },
+		{ at: .65, value: 0.16 },
+		{ at: .68, value: 0.24 },
+		{ at: .70, value: 0.285 },
+		{ at: .80, value: 0.563 },
+		{ at: .84, value: 0.695 },
+		{ at: .88, value: 0.826 },
+		{ at: .945, value: 1.015 },
+		{ at: .95, value: 1.046 },
+		{ at: 1.00, value: 1.12 },
+		{ at: 1.10, value: 1.18 },
+		{ at: 1.14, value: 1.25 },
 	];
 	const difficulties = {
 		ExpertPlus: { className: 'expert-plus', display: 'Expert+' },
@@ -172,66 +160,93 @@
 		await new Promise(res => setTimeout(res, duration));
 	}
 
-	function fetchJSON(...args) {
-		return fetch(...args).then(r => r.json());
+	async function fetchJSON(...args) {
+		return (await fetch(...args)).json();
 	}
-	async function fetchHTML(...args) {
-		return fetch(...args).then(r => r.ok ? r.text() : Promise.reject()).then(text => {
-			if (text.indexOf('<html') === -1) {
-				throw new Error('not an HTML page: ' + text);
-			}
-			let parser = new DOMParser();
-			return parser.parseFromString(text, 'text/html');
+
+	async function scoresaberAPI(path, query) {
+		let qs = '';
+		if (query) {
+			let searchParams = new URLSearchParams(query);
+			qs = '?' + searchParams.toString();
+		}
+		return await fetchJSON('/scoresaber-api' + path + qs);
+	}
+	async function getUserData(id) {
+		let data = await scoresaberAPI('/player/' + id + '/full');
+		return {
+			id: data.id,
+			name: data.name,
+			avatar: data.profilePicture,
+			country: data.country,
+			rank: data.rank,
+			pp: data.pp,
+			rankedPlays: data.scoreStats?.rankedPlayCount || '??'
+		};
+	}
+	async function getUserScores(user, page, sort = 'top', limit) {
+		let results = await scoresaberAPI('/player/' + user + '/scores', {
+			sort,
+			limit: limit || USER_SCORES_PER_PAGE,
+			page: +page || 1,
+		});
+
+		return results.map(({ score, leaderboard }) => {
+			return {
+				uid: leaderboard.id,
+				rank: score.rank,
+				at: +new Date(score.timeSet),
+				userPP: score.pp,
+				weighted: score.pp * score.weight,
+				maxScore: leaderboard.maxScore,
+				score: score.baseScore / leaderboard.maxScore,
+				modScore: score.modifiedScore / leaderboard.maxScore
+			};
 		});
 	}
-	async function fetchScoreSaber(id, page, sort = SORT_TOP, retries = 2) {
-		return fetchHTML('/proxy/u/'+id+'?sort='+sort+'&page='+(page || 1)).catch(async e => {
-			if (retries-- > 0) {
-				await pause(1000);
-				return fetchScoreSaber(id, page, sort, retries);
-			}
-			throw e;
-		});
+
+	async function getLeaderboardScores(leaderboard, page) {
+		let data = await scoresaberAPI('/leaderboard/by-id/' + leaderboard + '/scores', { page: +page || 1 });
+		return data.map(score => ({
+			rank: score.rank,
+			at: +new Date(score.timeSet),
+			userPP: score.pp,
+			weighted: score.pp * score.weight,
+			scoreRaw: score.baseScore,
+			modScoreRaw: score.modifiedScore
+		}));
 	}
-	function fetchRanked(modifiedSince) {
+	async function getPlayers(page) {
+		let data = await scoresaberAPI('/players', { page: +page || 1 });
+		return data.map(player => ({
+			id: player.id,
+			name: player.name,
+			rank: player.rank,
+			pp: player.pp,
+			country: player.country
+		}));
+	}
+
+	async function fetchRanked(modifiedSince) {
 		let options;
 		if (modifiedSince) {
 			options = { headers: { 'If-Modified-Since': modifiedSince.toUTCString() } };
 		}
-		return fetchJSON('/ranked', options).then(rankedMapsData => {
-			updateLastUpdate(rankedMapsData);
-			return rankedMapsData;
-		});
+		let rankedMapsData = await fetchJSON('/ranked', options);
+		updateLastUpdate(rankedMapsData);
+		return rankedMapsData;
 	}
 
-	function getMultFromMods(modString) {
-		return modString ? modString.split(',').reduce((mult, mod) => mult + (MODS[mod.trim()] || 0), 1) : 1;
-	}
 	async function getScoreAtRank(leaderboard, rank, retries = 2) {
-		if (!leaderboard || !rank) {
+		if (!leaderboard?.uid || !rank) {
 			console.log('Invalid score at rank request', leaderboard, rank);
 			return 0;
 		}
 		let page = Math.ceil(rank / LEADERBOARD_SCORES_PER_PAGE);
-		let indexOnPage = rank - (page - 1) * LEADERBOARD_SCORES_PER_PAGE;
+		let indexOnPage = rank - (page - 1) * LEADERBOARD_SCORES_PER_PAGE - 1;
 		try {
-			let doc = await fetchHTML('/proxy/leaderboard/'+leaderboard+'?page='+(page || 1));
-			if (!doc) {
-				return 0;
-			}
-			let row = doc.querySelector('.ranking tbody tr:nth-child('+indexOnPage+')');
-			if (!row) {
-				return 0;
-			}
-			let cell = row.querySelector('.percentage');
-			let match = (cell && cell.textContent || '').match(/[\d.]+/);
-			if (!match) {
-				return 0;
-			}
-			let mods = row.querySelector('.mods');
-			let mult = getMultFromMods(mods && mods.textContent);
-			let isOldPercentage = cell && cell.querySelector('span[style*=tomato]');
-			return match[0] * mult * (isOldPercentage ? (110 / 115) : 1);
+			let scores = await getLeaderboardScores(leaderboard?.uid, page);
+			return (scores[indexOnPage]?.scoreRaw || 0) / leaderboard.maxScore;
 		} catch(e) {
 			if (retries-- > 0) {
 				await pause(1000);
@@ -247,22 +262,10 @@
 			return null;
 		}
 		let page = Math.ceil(rank / PLAYERS_PER_PAGE);
-		let indexOnPage = rank - (page - 1) * PLAYERS_PER_PAGE;
+		let indexOnPage = rank - (page - 1) * PLAYERS_PER_PAGE - 1;
 		try {
-			let doc = await fetchHTML('/proxy/global/'+(page || 1));
-			if (!doc) {
-				return null;
-			}
-			let row = doc.querySelector('.ranking tbody tr:nth-child('+indexOnPage+')');
-			if (!row) {
-				return null;
-			}
-			let link = row.querySelector('.player a');
-			let match = (link && link.href || '').match(/\/u\/(\d+)/);
-			if (!match) {
-				return null;
-			}
-			return match[1];
+			let players = await getPlayers(page);
+			return players[indexOnPage]?.id;
 		} catch(e) {
 			if (retries-- > 0) {
 				await pause(1000);
@@ -294,18 +297,6 @@
 		let to = points[index];
 		let progress = (pos - from.at) / (to.at - from.at);
 		return from.value + (to.value - from.value) * progress;
-	}
-
-	function getImageSrc(el) {
-		if (!el) {
-			return null;
-		}
-		// Not .src cause it automatically expends the path
-		let src = el.getAttribute('src');
-		if (!src.match(/^https?:\/\//)) {
-			src = 'https://scoresaber.com' + (src[0] === '/' ? '' : '/') + src;
-		}
-		return src;
 	}
 
 	try {
@@ -850,77 +841,9 @@
 	let rankedMapsPromise = fetchRanked();
 	let fullPP = 0;
 
-	function parseUser(id, doc) {
-		let nameEl = doc.querySelector('h5.title');
-		if (!nameEl) {
-			throw new Error('Invalid Profile');
-		}
-		let name = nameEl.textContent.trim();
-		let avatarEl = doc.querySelector('.avatar img');
-		let countryEl = nameEl.querySelector('img');
-		let dataEl = doc.querySelector('h5.title ~ ul');
-		let data = dataEl && dataEl.textContent || '';
-		let rankMatch = data.match(/#([\d,]+) /);
-		let ppMatch = data.match(/([\d,.]+)pp/);
-		let user = {
-			id,
-			name,
-			avatar: getImageSrc(avatarEl),
-			country: getImageSrc(countryEl),
-			rank: rankMatch ? +rankMatch[1].replace(/\D/g, '') : 0,
-			pp: ppMatch ? +ppMatch[1].replace(/[^\d.]/g, '') : 0
-		};
-		return user;
-	}
-	function parsePage(doc) {
-		if (!doc) {
-			return;
-		}
-		let songsTable = doc.querySelector('table.ranking.songs tbody');
-		if (!songsTable) {
-			throw new Error('Error while parsing results page - maybe scoresaber is having issues?');
-		}
-		let rows = [...songsTable.querySelectorAll('tr')];
-		return rows.map(row => {
-			let leaderboardLink = row.querySelector('a[href*="/leaderboard/"]');
-			let uidMatch = leaderboardLink && leaderboardLink.href.match(/\/leaderboard\/(\d+)/);
-			if (!uidMatch) {
-				return;
-			}
-			let uid = +uidMatch[1];
-			let ppEl = row.querySelector('.ppValue');
-			let pp = ppEl && +ppEl.textContent;
-			let rankEl = row.querySelector('.rank');
-			let rankMatch = rankEl && rankEl.textContent.match(/#?([\d,]+)/);
-			let timeEl = row.querySelector('.time');
-			let timeValue = Date.now();
-			if (timeEl) {
-				let dateStr = (timeEl.title || '').replace(/^.*(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}).*$/, '$1T$2Z');
-				timeValue = +new Date(dateStr) || timeValue;
-			}
-			let weightedEl = row.querySelector('.ppWeightedValue');
-			let weightedMatch = weightedEl && weightedEl.textContent.match(/([\d.]+)/);
-			let scoreEl = row.querySelector('.scoreBottom');
-			let scoreMatch = scoreEl && scoreEl.textContent.match(/([\d.]+)%/);
-			let score = (scoreMatch && +scoreMatch[1]) || 0;
-			let modMatch = scoreEl && scoreEl.textContent.match(/\(([^)]+)\)/);
-			let mult = getMultFromMods(modMatch && modMatch[1]);
-			return {
-				uid,
-				rank: rankMatch && +rankMatch[1].replace(/\D/g, '') || Infinity,
-				at: timeValue,
-				userPP: pp,
-				weighted: weightedMatch && +weightedMatch[1] || 0,
-				// Actual percentage, used for PP calc etc.
-				score: score * mult,
-				// Score displayed
-				modScore: score
-			};
-		}).filter(e => e);
-	}
-	function expandScoreData(song) {
-		let base = rankedMaps[song.uid];
-		return base && Object.assign({}, base, song);
+	function expandScoreData(score) {
+		let base = rankedMaps[score.uid];
+		return base && Object.assign({}, base, score);
 	}
 	async function getProfileAndScores(id, options) {
 		if (!id) {
@@ -930,36 +853,34 @@
 		options = options || {};
 		if (options.useCache) {
 			try {
-				let data = JSON.parse(localStorage.getItem('cached-' + id));
+				let data = JSON.parse(localStorage.getItem('cached-v2-' + id));
 				if (data) {
 					return data;
 				}
 			} catch(e) { }
 		}
+		// let user = parseUser(await scoresaberAPI('/player/' + id + '/basic'));
+		let user = await getUserData(id);
+		if (typeof options.onUserInfo === 'function') {
+			options.onUserInfo(user);
+		}
 		let currentPage = 1;
-		let user;
 		let rawScores = [];
 		let scores = {};
 		for (let hasMore = true; hasMore; currentPage++) {
+			let amount = clamp(user.rankedPlays - rawScores.length, 20, USER_SCORES_PER_PAGE) || USER_SCORES_PER_PAGE;
 			if (typeof options.onProgress === 'function') {
-				options.onProgress(currentPage);
+				options.onProgress({ page: currentPage, amount, currentScores: rawScores, user });
 			}
-			let doc = await fetchScoreSaber(id, currentPage);
-			if (currentPage === 1) {
-				user = parseUser(id, doc);
-				if (typeof options.onUserInfo === 'function') {
-					options.onUserInfo(user);
-				}
-			}
-			let parsed = parsePage(doc);
-			if (!parsed) {
+			let pageScores = await getUserScores(id, currentPage, 'top', amount);
+			if (!pageScores) {
 				break;
 			}
-			parsed = parsed.filter(song => song.userPP);
-			rawScores.push(...parsed);
-			let len = parsed.length;
-			parsed = parsed.map(expandScoreData).filter(e => e);
-			parsed.forEach(e => scores[e.uid] = e);
+			pageScores = pageScores.filter(song => song.userPP);
+			rawScores.push(...pageScores);
+			let len = pageScores.length;
+			pageScores = pageScores.map(expandScoreData).filter(e => e);
+			pageScores.forEach(e => scores[e.uid] = e);
 			if (len === USER_SCORES_PER_PAGE) {
 				await pause(scoresaberRLDelay);
 			} else {
@@ -976,29 +897,25 @@
 	async function getRecentScores(id, since, options) {
 		options = options || {};
 		let currentPage = 1;
-		let user;
+		let user = await getUserData(id);
+		if (typeof options.onUserInfo === 'function') {
+			options.onUserInfo(user);
+		}
 		let rawScores = [];
 		let scores = {};
 		for (let hasMore = true; hasMore; currentPage++) {
 			if (typeof options.onProgress === 'function') {
 				options.onProgress(currentPage);
 			}
-			let doc = await fetchScoreSaber(id, currentPage, SORT_RECENT);
-			if (currentPage === 1) {
-				user = parseUser(id, doc);
-				if (typeof options.onUserInfo === 'function') {
-					options.onUserInfo(user);
-				}
-			}
-			let parsed = parsePage(doc);
-			if (!parsed) {
+			let scores = await getUserScores(id, currentPage, 'recent', 20);
+			if (!scores) {
 				break;
 			}
-			let oldest = Math.min(...parsed.map(song => song.at));
-			parsed = parsed.filter(song => song.userPP && song.at > since);
-			rawScores.push(...parsed);
-			parsed = parsed.map(expandScoreData).filter(e => e);
-			parsed.forEach(e => scores[e.uid] = e);
+			let oldest = Math.min(...scores.map(song => song.at));
+			scores = scores.filter(song => song.userPP && song.at > since);
+			rawScores.push(...scores);
+			scores = scores.map(expandScoreData).filter(e => e);
+			scores.forEach(e => scores[e.uid] = e);
 			if (oldest >= since) {
 				await pause(scoresaberRLDelay);
 			} else {
@@ -1041,10 +958,10 @@
 	}
 
 	function updateLists(rankedMapsData, playerSongs) {
-		played.elements = Object.values(playerSongs);
-		unplayed.elements = rankedMapsData.list.filter(song => {
-			return !Object.prototype.hasOwnProperty.call(playerSongs, song.uid);
-		}).map(e => Object.assign({}, e));
+		played.elements = Object.values(playerSongs).map(e => ({ ...e }));
+		unplayed.elements = rankedMapsData.list.filter(song => (
+			!(song.uid in playerSongs)
+		)).map(e => ({ ...e }));
 		played.update();
 		unplayed.update();
 		updateEstCurve();
@@ -1171,14 +1088,14 @@
 		ctx.globalCompositeOperation = 'lighter';
 		Object.values(playerSongs).forEach(song => {
 			let x = marginX + (song.stars / maxStars) * (c.width - marginX);
-			let y = (c.height - marginY) * (1 - (song.score / 100) / maxPercentage);
+			let y = (c.height - marginY) * (1 - song.score / maxPercentage);
 			ctx.fillRect(x - 1, y - 1, 2, 2);
 		});
 		ctx.globalCompositeOperation = 'source-over';
 		ctx.beginPath();
 		for (let i = 0; i < numPoints; i++) {
 			let p = i / (numPoints - 1);
-			let score = getScoreEstimate(p * maxStars) / 100;
+			let score = getScoreEstimate(p * maxStars);
 			let x = marginX + p * (c.width - marginX);
 			let y = (c.height - marginY) * (1 - score / maxPercentage);
 			ctx.lineTo(x, y);
@@ -1207,7 +1124,9 @@
 	};
 	function updatePlayerProfile() {
 		$profile.avatar.style.backgroundImage = 'url('+user.avatar+')';
-		$profile.flag.style.backgroundImage = 'url('+user.country+')';
+		let countryCodePoints = [...user.country.toLowerCase()].map(c => (c.codePointAt(0) + 127365).toString(16));
+		let countryFlag = 'https://twemoji.maxcdn.com/v/13.1.0/svg/' + countryCodePoints.join('-') + '.svg';
+		$profile.flag.style.backgroundImage = 'url('+countryFlag+')';
 		$profile.name.textContent = user.name;
 		$profile.name.href = 'https://scoresaber.com/u/' + user.id;
 		$profile.rank.textContent = user.rank.toLocaleString();
@@ -1267,16 +1186,12 @@
 
 		createOptionsMarkup() {
 			let rankForm = create('form', 'rank-form');
-			rankForm.addEventListener('submit', e => e.preventDefault());
+			rankForm.addEventListener('submit', e => { e.preventDefault(); this.triggerUpdate(); });
 			this.rankInput = create('input', 'rank-input');
 			this.rankInput.type = 'text';
 			this.rankInput.placeholder = (user.rank || 1).toLocaleString() + ' (desired rank)';
 			this.rankInput.tabIndex = -1;
-			this.rankInput.addEventListener('change', () => {
-				if (this.list.method === this) {
-					this.list.update();
-				}
-			});
+			this.rankInput.addEventListener('change', () => this.triggerUpdate());
 			rankForm.appendChild(this.rankInput);
 			let submit = create('button', 'rank-submit');
 			submit.type = 'submit';
@@ -1286,6 +1201,12 @@
 		}
 		onShow() { this.rankInput.tabIndex = 0; }
 		onHide() { this.rankInput.tabIndex = -1; }
+
+		triggerUpdate() {
+			if (this.list.method === this) {
+				this.list.update();
+			}
+		}
 
 		init(elements) {
 			// elements.forEach(el => updateEstimate(el, getScoreEstimate(el.stars)));
@@ -1311,7 +1232,7 @@
 					scores = +scores.replace(/,/g, '') || Infinity;
 				}
 				if (rank <= (scores + 100) && rank < (+element.rank || Infinity)) {
-					score = await getScoreAtRank(element.uid, rank);
+					score = await getScoreAtRank(element, rank);
 					rankScoreCheckCount++;
 					usePause = true;
 				}
@@ -1442,7 +1363,7 @@
 			elements.sort((a, b) => b.pp - a.pp);
 			elements.forEach(el => updateEstimate(el, 0));
 			this.userId = this.compareInput.value;
-			if (!compareCache[this.userId]) {
+			if (this.userId && !compareCache[this.userId]) {
 				compareCache[this.userId] = getProfileAndScores(this.userId);
 			}
 			try {
@@ -1466,7 +1387,7 @@
 			super(list);
 			this.name = 'Fixed score';
 			this.id = 'raw';
-			this.score = 94.333333;
+			this.score = .94333333;
 		}
 
 		createOptionsMarkup() {
@@ -1493,7 +1414,7 @@
 		onHide() { this.fixedInput.tabIndex = -1; }
 
 		init() {
-			this.score = parseFloat(this.fixedInput.value.trim()) || 94.333333;
+			this.score = (parseFloat(this.fixedInput.value.trim()) / 100) || .94333333;
 			if (this.score <= 0) {
 				this.score = 0.01;
 			}
@@ -1530,7 +1451,7 @@
 		onHide() { this.editButton.tabIndex = -1; }
 
 		run(element) {
-			updateEstimate(element, 100 * applyCurve(element.stars, customCurve));
+			updateEstimate(element, applyCurve(element.stars, customCurve));
 		}
 	}
 
@@ -1772,7 +1693,7 @@
 
 			let left = div('left');
 			let pic = div('pic');
-			pic.style.backgroundImage = 'url(https://scoresaber.com/imports/images/songs/'+element.id+'.png)';
+			pic.style.backgroundImage = 'url(https://cdn.scoresaber.com/covers/'+element.id+'.png)';
 			left.appendChild(pic);
 			let nameGroup = div('name-group');
 			let nameAndArtist = div('name-and-artist');
@@ -1788,7 +1709,7 @@
 			difficultyAndScore.appendChild(span('difficulty ' + (diff.className || srcDiff.toLowerCase()), (diff.display || srcDiff) + ' '));
 			if (element.score || element.score === 0) {
 				let scoreAndRank = span('score-and-rank');
-				scoreAndRank.appendChild(span('score', [round(element.score, 2), span('percent-sign', '% ')]));
+				scoreAndRank.appendChild(span('score', [round(element.score * 100, 2), span('percent-sign', '% ')]));
 				if (element.at) {
 					let at = new Date(element.at);
 					scoreAndRank.appendChild(span('at', dateDistance(at) + ' ', standardDate(at)));
@@ -1824,10 +1745,12 @@
 			}
 			right.appendChild(important);
 			let secondary = div('secondary');
-			if (element.duration) {
+			if (element.duration || element.durationSeconds) {
 				secondary.appendChild(div('duration', getDuration(element), 'Duration'));
 			}
-			secondary.appendChild(div('bpm', round(element.bpm, 2), 'BPM'));
+			if (element.bpm) {
+				secondary.appendChild(div('bpm', round(element.bpm, 2), 'BPM'));
+			}
 			// secondary.appendChild(div('notes', element.noteCount, 'Notes count'));
 			// secondary.appendChild(div('obstacles', element.obstacleCount, 'Obstacles count'));
 			right.appendChild(secondary);
@@ -1927,7 +1850,7 @@
 				if (el.estimateScore === undefined) {
 					updateEstimate(el, 0);
 				}
-				el._potScore.textContent = round(el.estimateScore, 2);
+				el._potScore.textContent = round(el.estimateScore * 100, 2);
 				el._potPP.textContent = round(el.estimatePP, 2);
 				el._potInc.textContent = round(Math.max(el.estimateFull - fullPP, 0), 2);
 				this.content.appendChild(el.markup);
@@ -1966,7 +1889,7 @@
 			let results;
 			let fnOptions = {
 				useCache: location.search.includes('debug'),
-				onProgress: page => (userFetchInfo.textContent = 'Getting scores page ' + page + '...'),
+				onProgress: ({ currentScores, amount, user }) => (userFetchInfo.textContent = 'Getting scores ' + Math.min(currentScores.length + amount, +user.rankedPlays || 0) + '/' + user.rankedPlays + ' ...'),
 				onUserInfo: user => pushToHistory(user)
 			};
 			results = await getProfileAndScores(id, fnOptions);

@@ -33,13 +33,15 @@ let serveStaticFiles = express.static('client', { extensions: ['html'], cacheCon
 app.use(['/client'], serveStaticFiles);
 app.get(['/favicon.ico', '/robots.txt'], serveStaticFiles);
 // Proxy requests (to avoid front-end cross-origin requests issues)
-app.use('/proxy', (req, res) => {
-	let srcStream = req.pipe(request('https://old.scoresaber.com' + req.url));
+const proxy = base => (req, res) => {
+	let srcStream = req.pipe(request(base + req.url));
 	srcStream.on('error', error => {
 		res.status(502).send(error.message);
 	});
 	return srcStream.pipe(res);
-});
+};
+app.use('/proxy', proxy('https://old.scoresaber.com'));
+app.use('/scoresaber-api', proxy('https://scoresaber.com/api'));
 
 // Custom urls - if string, makes a client file available at root
 //   e.g. 'thing' makes `client/thing.html` available at `/thing`
@@ -61,7 +63,7 @@ app.use('/proxy', (req, res) => {
 				let content = await fs.promises.readFile(path.resolve(__dirname, data.file), 'utf8');
 				content = content.replace(/\/client\/([^"' /]+)\.min\.js/g, '/dev/pages/$1.js');
 				res.send(content);
-			} catch(e) {
+			} catch (e) {
 				console.error(e);
 				res.sendStatus(500);
 			}
@@ -127,7 +129,7 @@ const execTask = (fn, ...args) => async (req, res) => {
 			message += ' - ' + result;
 		}
 		res.send(message);
-	} catch(e) {
+	} catch (e) {
 		console.log(timetag(), 'Error during task', e);
 		res.status(500).send('Error');
 	}

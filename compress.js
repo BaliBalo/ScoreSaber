@@ -19,7 +19,7 @@ async function compileJS(file) {
 }
 async function compileCSS(file) {
 	try {
-		let result = await sass({ file });
+		let result = await sass({ file, outputStyle: 'compressed' });
 		let dest = path.resolve(__dirname, 'client', path.basename(file, '.scss') + '.css');
 		await fs.writeFile(dest, result.css, 'utf8');
 		console.log('Compiled ' + file);

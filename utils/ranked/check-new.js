@@ -4,35 +4,27 @@ const rankedUpdate = require('../../utils/ranked/update');
 const beatsaver = require('../../utils/beatsaver');
 const scoresaber = require('../../utils/scoresaber');
 
-function parseNumber(v) {
-	if (typeof v === 'string') {
-		return +v.replace(/,/g, '') || v;
-	}
-	return v;
-}
-
 async function addNew(songsRaw) {
-	const existing = (await ranked.find({ uid: { $in: songsRaw.map(e => e.uid) } })).map(e => e.uid);
-	let newRanked = songsRaw.filter(e => !existing.includes(e.uid));
+	const existing = (await ranked.find({ uid: { $in: songsRaw.map(e => e.id) } })).map(e => e.uid);
+	let newRanked = songsRaw.filter(e => !existing.includes(e.id));
 	if (!newRanked.length) {
 		return 0;
 	}
 	let songs = newRanked.map(song => {
 		// Only Standard for now
-		let diffMatch = song.diff.match(/^_(Easy|Normal|Hard|Expert|ExpertPlus)_SoloStandard$/);
+		let diffMatch = song.difficultyRaw?.match(/^_(Easy|Normal|Hard|Expert|ExpertPlus)_SoloStandard$/);
 		if (!diffMatch || !song.stars) {
 			return;
 		}
 		return {
-			uid: song.uid,
-			id: song.id,
-			name: song.name,
+			uid: song.id,
+			id: song.songHash,
+			name: song.songName,
 			artist: song.songAuthorName,
 			mapper: song.levelAuthorName,
-			bpm: song.bpm,
 			diff: diffMatch[1],
-			scores: parseNumber(song.scores),
-			recentScores: parseNumber(song.scores_day),
+			scores: song.plays,
+			recentScores: song.dailyPlays,
 			stars: song.stars,
 			pp: song.stars * ranked.PP_PER_STAR
 		};
@@ -41,7 +33,7 @@ async function addNew(songsRaw) {
 		let beatsaverCache = {};
 		await promiseSequence(songs, song => beatsaver.addData(song, beatsaverCache));
 	} catch(e) {}
-	songs = songs.filter(e => e && e.beatSaverKey);
+	songs = songs.filter(e => e?.beatSaverKey);
 	if (songs.length) {
 		await ranked.insert(songs);
 		await rankedUpdate.setTime();
@@ -59,10 +51,10 @@ async function checkFromPage(page, log) {
 	try {
 		data = await scoresaber.recentRanks(page, ~~(Date.now() / 3600000));
 	} catch(e) {}
-	if (!data || !data.songs || !data.songs.length) {
+	if (!data?.songs?.length) {
 		return;
 	}
-	if (await addNew(data.songs)) {
+	if (await addNew(data.leaderboards)) {
 		return checkFromPage(page + 1, log);
 	}
 }
@@ -75,10 +67,10 @@ async function checkFull(page, log) {
 	try {
 		data = await scoresaber.ranked(page);
 	} catch(e) {}
-	if (!data || !data.songs || !data.songs.length) {
+	if (!data?.leaderboards?.length) {
 		return;
 	}
-	await addNew(data.songs);
+	await addNew(data.leaderboards);
 	return checkFull(page + 1, log);
 }
 
