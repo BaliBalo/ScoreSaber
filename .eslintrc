@@ -1,11 +1,13 @@
 {
-  "parser": "babel-eslint",
   "extends": "eslint:recommended",
   "env": {
     "browser": true,
     "commonjs": true,
     "node": true,
     "es6": true
+  },
+  "parserOptions": {
+    "ecmaVersion": 2020
   },
   "ignorePatterns": ["*.min.js"],
   "rules": {

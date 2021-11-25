@@ -28,9 +28,7 @@ On a production server, start the code using `node index.js`.
 ### Scripts
 - `npm run dev`: starts the development setup, running the server in dev mode and auto-compiling files from `pages/` to `client/`
 - `npm run serve-dev`: runs the server in dev mode
-- `npm run sass`: builds css files in `client/` based on the source files in `sass/`
-- `npm run sass-watch`: same as above but also auto-recompiles when saving a sass file
-- `npm run compress`: generates .min.js files in `client/` for all .js files in the `pages/` folder
+- `npm run compress`: generates compressed .min.js files in `client/` for all .js files in the `pages/` folder, and compressed .css files in `client/` for all .scss files in the `pages/` folder
 - `npm run compress-watch`: same as above but also auto-recompiles when saving a file
 
 ### Endpoints

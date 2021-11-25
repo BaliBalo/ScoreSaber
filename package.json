@@ -4,13 +4,10 @@
   "description": "ScoreSaber-related stuff",
   "main": "index.js",
   "scripts": {
-    "dev": "npm run sass-watch & npm run compress-watch & npm run serve-dev ; fg ; fg",
+    "dev": "node compress.js --watch --serve",
     "serve-dev": "node index.js --dev",
-    "sass": "npx node-sass pages/ -o client/ --output-style compressed",
-    "sass-watch": "npx node-sass pages/ -o client/ --output-style compressed && npx node-sass -w pages/ -o client/ --output-style compressed",
     "compress": "node compress.js",
-    "compress-watch": "node compress.js --watch",
-    "compress-peepee": "npx terser pages/peepee.js --compress --mangle -o client/peepee.min.js"
+    "compress-watch": "node compress.js --watch"
   },
   "repository": {
     "type": "git",
@@ -23,20 +20,20 @@
   },
   "homepage": "https://github.com/BaliBalo/ScoreSaber#readme",
   "dependencies": {
-    "cookie-parser": "^1.4.5",
+    "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
     "cron": "^1.8.2",
     "express": "^4.17.1",
-    "express-rate-limit": "^5.2.6",
+    "express-rate-limit": "^5.5.1",
     "nedb": "^1.8.0",
     "request": "^2.88.2",
     "request-promise-native": "^1.0.9"
   },
   "devDependencies": {
-    "babel-eslint": "^10.1.0",
     "chokidar": "^3.5.1",
-    "eslint": "^7.26.0",
+    "eslint": "^8.3.0",
+    "glob": "^7.2.0",
     "node-sass": "^6.0.0",
-    "terser": "^5.7.0"
+    "terser": "^5.10.0"
   }
 }

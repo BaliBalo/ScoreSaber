@@ -1,44 +1,63 @@
-const { spawn } = require('child_process');
+const path = require('path');
+const fs = require('fs').promises;
+const util = require('util');
+// const { spawn } = require('child_process');
+const { fork } = require('child_process');
+const { minify } = require('terser');
+const sass = util.promisify(require('node-sass').render);
+const glob = util.promisify(require('glob'));
 
-async function run(command) {
-	return new Promise((resolve, reject) => {
-		const script = spawn('bash', ['-c', command]);
-		script.stdout.on('data', data => console.log(data));
-		script.stderr.on('data', data => console.error(data));
-		script.on('close', code => {
-			if (!code) {
-				return resolve();
-			}
-			reject(code);
-		});
-	});
+async function compileJS(file) {
+	try {
+		let result = await minify(await fs.readFile(file, 'utf8'));
+		let dest = path.resolve(__dirname, 'client', path.basename(file, '.js') + '.min.js');
+		await fs.writeFile(dest, result.code, 'utf8');
+		console.log('Compiled ' + file);
+	} catch (e) {
+		console.log('Error compiling ' + file, e);
+	}
+}
+async function compileCSS(file) {
+	try {
+		let result = await sass({ file });
+		let dest = path.resolve(__dirname, 'client', path.basename(file, '.scss') + '.css');
+		await fs.writeFile(dest, result.css, 'utf8');
+		console.log('Compiled ' + file);
+	} catch (e) {
+		console.log('Error compiling ' + file, e);
+	}
 }
 
-const filePattern = 'pages/*.js';
-const command = (file) => 'npx terser "' + file + '" --compress --mangle -o "client/$(basename "' + file + '" .js).min.js"';
+let patterns = [
+	{ pattern: 'pages/*.js', action: compileJS },
+	{ pattern: 'pages/*.scss', action: compileCSS }
+];
 
 (async () => {
 	if (!process.argv.includes('--watch')) {
 		try {
-			await run('for f in ' + filePattern + '; do ' + command('$f') + '; done');
-		} catch(code) {
+			await Promise.all(patterns.map(async ({ pattern, action }) => {
+				let files = await glob(pattern);
+				for (let file of files) {
+					await action(file);
+				}
+			}));
+		} catch (code) {
 			console.log('Error - exit code:', code);
 			return process.exit(code);
 		}
-		console.log('All JS files compressed!');
-		return process.exit();
+		console.log('All files compressed!');
+		return;
 	}
 
 	// Watch mode
 	const chokidar = require('chokidar');
-	let recompile = async file => {
-		try {
-			await run(command(file));
-			console.log('Recompiled ' + file);
-		} catch(code) {
-			console.log('Error compiling ' + file + ' - code:', code);
-		}
-	};
-	chokidar.watch(filePattern).on('change', recompile).on('add', recompile);
-	console.log('Watching JS files!');
+	patterns.forEach(({ pattern, action }) => {
+		chokidar.watch(pattern).on('change', action).on('add', action);
+	});
+	console.log('Watching files!');
+
+	if (process.argv.includes('--serve')) {
+		fork('index.js', ['--dev']);
+	}
 })();
