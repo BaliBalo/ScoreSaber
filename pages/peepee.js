@@ -868,7 +868,8 @@
 		let rawScores = [];
 		let scores = {};
 		for (let hasMore = true; hasMore; currentPage++) {
-			let amount = clamp(user.rankedPlays - rawScores.length, 20, USER_SCORES_PER_PAGE) || USER_SCORES_PER_PAGE;
+			// let amount = clamp(user.rankedPlays - rawScores.length, 20, USER_SCORES_PER_PAGE) || USER_SCORES_PER_PAGE;
+			let amount = USER_SCORES_PER_PAGE;
 			if (typeof options.onProgress === 'function') {
 				options.onProgress({ page: currentPage, amount, currentScores: rawScores, user });
 			}
