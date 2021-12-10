@@ -194,7 +194,7 @@
 			page: +page || 1,
 		});
 
-		return results.map(({ score, leaderboard }) => {
+		return results.playerScores.map(({ score, leaderboard }) => {
 			return {
 				uid: leaderboard.id,
 				rank: score.rank,
@@ -210,7 +210,7 @@
 
 	async function getLeaderboardScores(leaderboard, page) {
 		let data = await scoresaberAPI('/leaderboard/by-id/' + leaderboard + '/scores', { page: +page || 1 });
-		return data.map(score => ({
+		return data.scores.map(score => ({
 			rank: score.rank,
 			at: +new Date(score.timeSet),
 			userPP: score.pp,
@@ -221,7 +221,7 @@
 	}
 	async function getPlayers(page) {
 		let data = await scoresaberAPI('/players', { page: +page || 1 });
-		return data.map(player => ({
+		return data.players.map(player => ({
 			id: player.id,
 			name: player.name,
 			rank: player.rank,
@@ -862,7 +862,6 @@
 				}
 			} catch(e) { }
 		}
-		// let user = parseUser(await scoresaberAPI('/player/' + id + '/basic'));
 		let user = await getUserData(id);
 		if (typeof options.onUserInfo === 'function') {
 			options.onUserInfo(user);
