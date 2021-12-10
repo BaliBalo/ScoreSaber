@@ -11,7 +11,7 @@
 			tick: dt => {
 				last += dt || 0;
 				while (last >= interval) {
-					let colorMix = Math.random();
+					let colorMix = Math.random() * .7;
 					colorMix *= colorMix * colorMix;
 					let whichColor = Math.random() < .5;
 					let red = 255 - colorMix * (whichColor ? 0 : 255);
