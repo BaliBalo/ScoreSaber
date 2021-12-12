@@ -23,7 +23,7 @@ async function getIdsFromPage(page, list = []) {
 async function run() {
 	let allIds = await getIdsFromPage(1);
 	if (!allIds) {
-		return console.log('Error getting list of map ids');
+		return console.log(timetag(), '(remove-unranks) Error getting list of map ids');
 	}
 	let condition = { uid: { $nin: allIds } };
 	let toRemove = await ranked.find(condition);

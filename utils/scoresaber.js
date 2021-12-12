@@ -28,7 +28,7 @@ async function _scoreSaberRequest(path, query, retries = 2) {
 }
 const scoreSaberRequest = async (path, query) => _scoreSaberRequest(path, query);
 
-const rankedLeaderboards = (sortMethod = SORT_METHOD_STARS, sortOrder = SORT_ORDER_DESCENDING, page, cacheBreaker) => (
+const rankedLeaderboards = (sortMethod = SORT_METHOD_STARS, sortOrder = SORT_ORDER_DESCENDING, page) => (
 	scoreSaberRequest('/leaderboards', {
 		ranked: true,
 		category: sortMethod,

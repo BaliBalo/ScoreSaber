@@ -12,7 +12,7 @@ async function addNew(songsRaw) {
 	}
 	let songs = newRanked.map(song => {
 		// Only Standard for now
-		let diffMatch = song.difficultyRaw?.match(/^_(Easy|Normal|Hard|Expert|ExpertPlus)_SoloStandard$/);
+		let diffMatch = song?.difficulty?.difficultyRaw?.match(/^_(Easy|Normal|Hard|Expert|ExpertPlus)_SoloStandard$/);
 		if (!diffMatch || !song.stars) {
 			return;
 		}
@@ -51,7 +51,7 @@ async function checkFromPage(page, log) {
 	try {
 		data = await scoresaber.recentRanks(page, ~~(Date.now() / 3600000));
 	} catch(e) {}
-	if (!data?.songs?.length) {
+	if (!data?.leaderboards?.length) {
 		return;
 	}
 	if (await addNew(data.leaderboards)) {
