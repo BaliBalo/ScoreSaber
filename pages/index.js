@@ -96,7 +96,7 @@ li::before {
 }
 body { font-family: "Comic Sans MS", "Comic Sans", cursive; font-size: 20px; font-weight: bold; color: yellow; cursor: crosshair; }
 .intro { font-size: 2em; }
-.trail { position: fixed; top: 0; left: 0; font-size: 30px; transform: translate(-5px, -50%); pointer-events: none; }
+.trail { position: fixed; top: 0; left: 0; font-size: 30px; transform: translate(-5px, -50%); pointer-events: none; font-weight: normal; color: #fff; }
 `,
 			intro: 'wow cool site',
 			action: (e) => {
@@ -106,7 +106,7 @@ body { font-family: "Comic Sans MS", "Comic Sans", cursive; font-size: 20px; fon
 					let dom = document.createElement('div');
 					dom.className = 'trail';
 					dom.textContent = e;
-					let x = initX + 22 * i;
+					let x = initX + 28 * i;
 					dom.style.left = x + 'px';
 					dom.style.top = initY + 'px';
 					document.body.appendChild(dom);
