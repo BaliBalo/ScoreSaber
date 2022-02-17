@@ -210,7 +210,7 @@
 
 	async function getLeaderboardScores(leaderboard, page) {
 		let data = await scoresaberAPI('/leaderboard/by-id/' + leaderboard + '/scores', { page: +page || 1 });
-		return data.scores.map(score => ({
+		return (data.scores || []).map(score => ({
 			rank: score.rank,
 			at: +new Date(score.timeSet),
 			userPP: score.pp,
@@ -250,7 +250,7 @@
 		try {
 			let scores = await getLeaderboardScores(leaderboard?.uid, page);
 			return (scores[indexOnPage]?.scoreRaw || 0) / leaderboard.maxScore;
-		} catch(e) {
+		} catch (e) {
 			if (retries-- > 0) {
 				await pause(1000);
 				return getScoreAtRank(leaderboard, rank, retries);
@@ -269,7 +269,7 @@
 		try {
 			let players = await getPlayers(page);
 			return players[indexOnPage]?.id;
-		} catch(e) {
+		} catch (e) {
 			if (retries-- > 0) {
 				await pause(1000);
 				return getPlayerAtRank(rank, retries);
@@ -986,7 +986,8 @@
 		return result;
 	}
 
-	function updateEstimate(song, score) {
+	function updateEstimate(song, score, waiting) {
+		song.waiting = !!waiting;
 		if (song.score && song.score >= score) {
 			song.estimateScore = song.score;
 			song.estimatePP = song.userPP;
@@ -1215,7 +1216,8 @@
 			// elements.forEach(el => updateEstimate(el, getScoreEstimate(el.stars)));
 			// elements.sort((a, b) => b.pp - a.pp);
 			elements.sort((a, b) => b.stars - a.stars);
-			elements.forEach(el => updateEstimate(el, 0));
+			elements.forEach(el => updateEstimate(el, 0, true));
+
 			this.rankInput.placeholder = (user.rank || 1).toLocaleString() + ' (desired rank)';
 			this.rank = ~~(+this.rankInput.value.replace(/,/g, ''));
 			if (!this.rank || this.rank <= 0) {
@@ -1246,7 +1248,7 @@
 				return;
 			}
 			updateEstimate(element, element[key] || 0);
-			if (rankScoreCheckCount >= 100) {
+			if (rankScoreCheckCount >= 500) {
 				return PAUSE_UPDATE;
 			}
 			if (usePause) {
@@ -1382,7 +1384,7 @@
 
 		async init(elements) {
 			elements.sort((a, b) => b.pp - a.pp);
-			elements.forEach(el => updateEstimate(el, 0));
+			elements.forEach(el => updateEstimate(el, 0, true));
 			this.userId = this.compareInput.value;
 			if (this.userId && !compareCache[this.userId]) {
 				compareCache[this.userId] = getProfileAndScores(this.userId);
@@ -1513,7 +1515,7 @@
 			this.methods = methods.map(Method => new Method(this));
 			this.method = this.methods[0];
 			this.elements = elements;
-			this.displayed = 20;
+			// this.displayed = 20;
 			elem.innerHTML = '';
 			let header = div('list-header');
 			this.selectionTooltip = div('list-selection-tooltip');
@@ -1567,11 +1569,11 @@
 			this.content = div('list-content');
 			this.content.addEventListener('click', this.onContentClick.bind(this));
 			this.content.addEventListener('contextmenu', this.onContextMenu.bind(this));
-			this.content.addEventListener('scroll', this.onScroll.bind(this));
+			// this.content.addEventListener('scroll', this.onScroll.bind(this));
 			elem.appendChild(this.content);
 			this.updateSelectionTooltip();
 			this.update();
-			this.onScroll();
+			// this.onScroll();
 		}
 
 		getPlaylistName() {
@@ -1597,14 +1599,14 @@
 				this.method.onHide();
 			}
 			this.content.scrollTop = 0;
-			this.displayed = 20;
+			// this.displayed = 20;
 			this.method = method;
 			if (this.method) {
 				this.elem.classList.add('method-' + this.method.id);
 				this.method.onShow();
 			}
 			this.update();
-			this.onScroll();
+			// this.onScroll();
 		}
 
 		clearSelection() {
@@ -1629,10 +1631,10 @@
 		}
 
 		getClosestElement(el) {
-			while (el && !el.classList.contains('element') && this.content.contains(el)) {
+			while (el && !el.classList.contains('list-element') && this.content.contains(el)) {
 				el = el.parentElement;
 			}
-			if (!el || !el.classList.contains('element')) {
+			if (!el || !el.classList.contains('list-element')) {
 				return null;
 			}
 			return el;
@@ -1656,7 +1658,7 @@
 			}
 			let el = this.content.querySelector('[data-uid="' + uid + '"]');
 			if (el) {
-				el.classList[selected ? 'add' : 'remove']('selected');
+				el.classList[selected ? 'add' : 'remove']('list-element-selected');
 			}
 			this.updateSelectionTooltip();
 		}
@@ -1694,56 +1696,57 @@
 			], { x: e.clientX, y: e.clientY });
 		}
 
-		onScroll() {
-			if (this.content.scrollTop + this.content.clientHeight > this.content.scrollHeight - 50) {
-				this.displayMore();
-			}
-		}
+		// onScroll() {
+		// 	if (this.content.scrollTop + this.content.clientHeight > this.content.scrollHeight - 50) {
+		// 		this.displayMore();
+		// 	}
+		// }
 
-		displayMore() {
-			if (this.displayed >= this.elements.length) {
-				return;
-			}
-			this.displayed += 20;
-			this.refresh();
-		}
+		// displayMore() {
+		// 	if (this.displayed >= this.elements.length) {
+		// 		return;
+		// 	}
+		// 	this.displayed += 20;
+		// 	this.refresh();
+		// }
 
 		createMarkup(element) {
-			let el = div('element');
+			let el = div('list-element');
 			el.setAttribute('data-uid', element.uid);
 
-			let left = div('left');
-			let pic = div('pic');
+			let left = div('list-element-content-left');
+			let pic = div('list-element-pic');
 			pic.style.backgroundImage = 'url(https://cdn.scoresaber.com/covers/'+element.id+'.png)';
 			left.appendChild(pic);
-			let nameGroup = div('name-group');
-			let nameAndArtist = div('name-and-artist');
+			let nameGroup = div('list-element-name-group');
+			let nameAndArtist = div('list-element-name-and-artist');
 			nameAndArtist.title = element.name + ' - ' + element.artist;
-			nameAndArtist.appendChild(span('name', (element.name || '') + ' '));
-			nameAndArtist.appendChild(span('sep'));
-			nameAndArtist.appendChild(span('artist', element.artist));
+			nameAndArtist.appendChild(span('list-element-name', (element.name || '') + ' '));
+			nameAndArtist.appendChild(span('list-element-sep'));
+			nameAndArtist.appendChild(span('list-element-artist', element.artist));
+			element._nameAndArtist = nameAndArtist;
 			nameGroup.appendChild(nameAndArtist);
-			nameGroup.appendChild(div('mapper', element.mapper));
+			nameGroup.appendChild(div('list-element-mapper', element.mapper));
 			let srcDiff = element.diff || 'Easy';
 			let diff = difficulties[srcDiff] || {};
-			let difficultyAndScore = div('difficulty-and-score');
-			difficultyAndScore.appendChild(span('difficulty ' + (diff.className || srcDiff.toLowerCase()), (diff.display || srcDiff) + ' '));
+			let difficultyAndScore = div('list-element-difficulty-and-score');
+			difficultyAndScore.appendChild(span('list-element-difficulty ' + (diff.className || srcDiff.toLowerCase()), (diff.display || srcDiff) + ' '));
 			if (element.score || element.score === 0) {
-				let scoreAndRank = span('score-and-rank');
-				scoreAndRank.appendChild(span('score', [round(element.score * 100, 2), span('percent-sign', '% ')]));
+				let scoreAndRank = span('list-element-score-and-rank');
+				scoreAndRank.appendChild(span('list-element-score', [round(element.score * 100, 2), span('percent-sign', '% ')]));
 				if (element.at) {
 					let at = new Date(element.at);
-					scoreAndRank.appendChild(span('at', dateDistance(at) + ' ', standardDate(at)));
+					scoreAndRank.appendChild(span('list-element-at', dateDistance(at) + ' ', standardDate(at)));
 				}
-				scoreAndRank.appendChild(span('sep'));
-				scoreAndRank.appendChild(span('rank', element.rank.toLocaleString()));
+				scoreAndRank.appendChild(span('list-element-sep'));
+				scoreAndRank.appendChild(span('list-element-rank', element.rank.toLocaleString()));
 				difficultyAndScore.appendChild(scoreAndRank);
 			}
 			nameGroup.appendChild(difficultyAndScore);
 			left.appendChild(nameGroup);
 			el.appendChild(left);
 
-			let middle = div('middle');
+			let middle = div('list-element-content-middle');
 			middle.appendChild(div('pot-title', 'Potential'));
 			element._potScore = div('pot-score');
 			middle.appendChild(element._potScore);
@@ -1755,7 +1758,7 @@
 			middle.appendChild(potPP);
 			el.appendChild(middle);
 
-			let right = div('right');
+			let right = div('list-element-content-right');
 			let important = div('important');
 			important.appendChild(div('star-difficulty', element.stars, 'Star difficulty'));
 			if (element.upvotes !== undefined) {
@@ -1871,9 +1874,10 @@
 				if (el.estimateScore === undefined) {
 					updateEstimate(el, 0);
 				}
-				el._potScore.textContent = round(el.estimateScore * 100, 2);
-				el._potPP.textContent = round(el.estimatePP, 2);
-				el._potInc.textContent = round(Math.max(el.estimateFull - fullPP, 0), 2);
+				el._potScore.textContent = el.waiting ? '...' : round(el.estimateScore * 100, 2);
+				el._potPP.textContent = el.waiting ? '...' : round(el.estimatePP, 2);
+				el._potInc.textContent = el.waiting ? '...' : round(Math.max(el.estimateFull - fullPP, 0), 2);
+				el._nameAndArtist.setAttribute('data-position', i + 1);
 				this.content.appendChild(el.markup);
 			});
 		}
