@@ -1864,7 +1864,7 @@
 			}
 			let sort = this.method.sort || this.defaultSort;
 			this.elements = sort(this.elements);
-			this.elements.filter(this.filter).slice(0, this.displayed).forEach(el => {
+			this.elements.filter(this.filter).forEach((el, i) => {
 				if (!el.markup) {
 					this.createMarkup(el);
 				}
