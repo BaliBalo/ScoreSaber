@@ -25,6 +25,7 @@ async function addNew(songsRaw) {
 			diff: diffMatch[1],
 			scores: song.plays,
 			recentScores: song.dailyPlays,
+			maxScore: song.maxScore,
 			stars: song.stars,
 			pp: song.stars * ranked.PP_PER_STAR
 		};

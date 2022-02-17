@@ -12,9 +12,9 @@ async function compileJS(file) {
 		let result = await minify(await fs.readFile(file, 'utf8'));
 		let dest = path.resolve(__dirname, 'client', path.basename(file, '.js') + '.min.js');
 		await fs.writeFile(dest, result.code, 'utf8');
-		console.log('Compiled ' + file);
+		console.log('[JS] Compiled ' + file);
 	} catch (e) {
-		console.log('Error compiling ' + file, e);
+		console.log('[JS] Error compiling ' + file, e);
 	}
 }
 async function compileCSS(file) {
@@ -22,9 +22,9 @@ async function compileCSS(file) {
 		let result = await sass({ file, outputStyle: 'compressed' });
 		let dest = path.resolve(__dirname, 'client', path.basename(file, '.scss') + '.css');
 		await fs.writeFile(dest, result.css, 'utf8');
-		console.log('Compiled ' + file);
+		console.log('[CSS] Compiled ' + file);
 	} catch (e) {
-		console.log('Error compiling ' + file, e);
+		console.log('[CSS] Error compiling ' + file, e);
 	}
 }
 

@@ -17,6 +17,7 @@ async function getDataFromPage(page, list = []) {
 		pp: song.stars * ranked.PP_PER_STAR,
 		scores: song.plays,
 		recentScores: song.dailyPlays,
+		maxScore: song.maxScore
 	})).filter(e => e && e.uid);
 	list = list.concat(pageSongs);
 	if (pageSongs.length) {
@@ -38,10 +39,12 @@ async function updateScoresaberValues(log) {
 	let changes = 0;
 	await promiseSequence(allData, async ({ uid, ...update }) => {
 		// Only update if the row is not already what we need
-		const conditions = Object.entries(update).reduce((conditions, [key, value]) => {
-			conditions[key] = { $ne: value };
-			return conditions;
-		}, { uid });
+		const conditions = {
+			uid,
+			$or: Object.entries(update).map(([key, value]) => {
+				return { $or: [{ [key]: { $ne: value } }, { [key]: { $exists: false } }] };
+			})
+		};
 		changes += await ranked.update(conditions, { $set: update });
 	});
 	if (changes) {
