@@ -1623,7 +1623,7 @@
 		clearSelection() {
 			this.selection = [];
 			this.updateSelectionTooltip();
-			[...this.content.querySelectorAll('.element.selected')].forEach(el => el.classList.remove('selected'));
+			[...this.content.querySelectorAll('.list-element-selected')].forEach(el => el.classList.remove('list-element-selected'));
 		}
 
 		updateSelectionTooltip() {
