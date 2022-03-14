@@ -9,7 +9,7 @@ const glob = util.promisify(require('glob'));
 
 async function compileJS(file) {
 	try {
-		let result = await minify(await fs.readFile(file, 'utf8'));
+		let result = await minify(await fs.readFile(file, 'utf8'), { toplevel: true, compress: { ecma: '2016' } });
 		let dest = path.resolve(__dirname, 'client', path.basename(file, '.js') + '.min.js');
 		await fs.writeFile(dest, result.code, 'utf8');
 		console.log('[JS] Compiled ' + file);

@@ -645,6 +645,9 @@ body {
 			margin: 0;
 		}
 	}
+	.playlist-title input {
+		width: 200px;
+	}
 	.done {
 		background: #fff;
 		color: #2c3e50;
@@ -700,7 +703,7 @@ body {
 .list {
 	display: inline-block;
 	flex: 1 1 auto;
-	min-width: 200px;
+	min-width: 550px;
 	max-width: 800px;
 	height: calc(100vh - 144px);
 	display: flex;
@@ -1207,6 +1210,7 @@ body {
 	.list {
 		height: auto;
 		max-height: 450px;
+		min-width: 200px;
 	}
 	.list-element {
 		flex-flow: row wrap;

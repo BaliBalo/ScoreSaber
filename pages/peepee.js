@@ -304,7 +304,7 @@
 
 	try {
 		WebFont.load({ custom: { families: ['NeonTubes'] } });
-	} catch(e) {}
+	} catch (e) {}
 
 	let userForm = document.getElementById('user');
 	let profileInput = document.getElementById('profile');
@@ -316,7 +316,7 @@
 		if (Array.isArray(savedHistory)) {
 			history = savedHistory;
 		}
-	} catch(e) { /* Nothing */ }
+	} catch (e) { /* Nothing */ }
 	let $history = document.querySelector('.history');
 	function refreshHistory() {
 		$history.innerHTML = '';
@@ -346,7 +346,7 @@
 		history = history.slice(0, 5);
 		try {
 			localStorage.setItem('history', JSON.stringify(history));
-		} catch(e) { /* Nothing */ }
+		} catch (e) { /* Nothing */ }
 		refreshHistory();
 	}
 	refreshHistory();
@@ -373,7 +373,7 @@
 			let saved = JSON.parse(localStorage.getItem('peepee-filters'), (key, value) => value === 'Infinity' || value === '-Infinity' ? +value : value);
 			Object.assign(filters, saved);
 			sanitizeFilters();
-		} catch(e) {}
+		} catch (e) {}
 	}
 	loadFilters();
 	async function updateFilters(newFilters) {
@@ -381,7 +381,7 @@
 		try {
 			let str = JSON.stringify(newFilters, (key, val) => Math.abs(val) === Infinity ? val + '' : val);
 			localStorage.setItem('peepee-filters', str);
-		} catch(e) {}
+		} catch (e) {}
 		// updateLists(await rankedMapsPromise, playerSongs);
 		played.refresh();
 		unplayed.refresh();
@@ -529,14 +529,14 @@
 			if (Array.isArray(saved)) {
 				customCurve = saved;
 			}
-		} catch(e) {}
+		} catch (e) {}
 	}
 	loadCustomCurve();
 	async function updateCustomCurve(curve) {
 		customCurve = curve;
 		try {
 			localStorage.setItem('peepee-custom-curve', JSON.stringify(curve));
-		} catch(e) {}
+		} catch (e) {}
 		[played, unplayed].forEach(list => {
 			if (list.method instanceof SortCustomCurve) {
 				list.update();
@@ -729,6 +729,9 @@
 		queryString.push('i=' + encodeURIComponent(list.map(m => m.uid).join('.')));
 		return '/custom-playlist/' + (filename || 'playlist.bplist') + '?' + queryString.join('&');
 	}
+	function slugify(str) {
+		return str.toLowerCase().replace(/[\W-]+/g, '-').replace(/^-+|-+$/, '');
+	}
 	async function playlistDownloadModal(maps, options = {}) {
 		let resolve;
 		let promise = new Promise(_resolve => resolve = _resolve);
@@ -739,9 +742,10 @@
 			}
 			cleared = true;
 			try {
+				titleAutosize.stop();
 				countAutosize.stop();
 				offsetAutosize.stop();
-			} catch(e) {}
+			} catch (e) {}
 			document.body.removeChild(container);
 		};
 		let finish = (data) => {
@@ -750,16 +754,17 @@
 		};
 		let container = div('playlist-modal');
 		let content = div('content');
-		let title = create('h2', null, 'CREATE A PLAYLIST');
+		let modalTitle = create('h2', null, 'CREATE A PLAYLIST');
 		let buttons = div('buttons');
 		let buttonDone = create('button', 'done', 'Done');
 		let buttonFile = link('#', 'button file', '.bplist');
-		let buttonOneClick = link('#', 'button oneclick', 'OneClick™');
+		let buttonOneClick = link('#', 'button playlist-oneclick', 'OneClick™');
 		let scroller = div('scroller');
 		let defaultCount = 50;
-		let filename = options.filename || 'playlist.bplist';
 
-		buttonFile.download = filename;
+		let titleInput = textInput(null, '', options.title);
+		let titleLine = div('line playlist-title', ['Playlist title: ', titleInput]);
+		let titleAutosize = autosizeInput(titleInput);
 
 		let count = textInput(null, '', defaultCount);
 		count.type = 'number';
@@ -781,6 +786,10 @@
 		let oneClickWarningLine = div('playlist warning', ['Warning: too many maps - OneClick™ will likely not work']);
 
 		let update = () => {
+			let title = titleInput.value.trim() || options.title || '';
+			let filename = slugify(title) || 'playlist';
+			filename += '.bplist';
+
 			let offsetVal = offset.value.trim();
 			let actualOffset = clamp(!offsetVal || Number.isNaN(+offsetVal) ? 1 : Math.floor(offsetVal), 1, maps.length) - 1;
 			let val = count.value.trim();
@@ -809,15 +818,16 @@
 
 			// .bplist: use front-end data-url generation to go around potential size limit and reduce server load
 			// buttonFile.href = getPlaylistURL(includedMaps, filename, options.title);
-			buttonFile.href = playlistDataUrl(included, options.title);
+			buttonFile.href = playlistDataUrl(included, title);
 			buttonFile.download = filename;
 			// Temp assign non-oneclick url to convert relative to absolute url
-			buttonOneClick.href = getPlaylistURL(included, filename, options.title);
+			buttonOneClick.href = getPlaylistURL(included, filename, title);
 			buttonOneClick.href = 'bsplaylist://playlist/' + encodeURIComponent(buttonOneClick.href);
 
 			let tooLong = buttonOneClick.href.length > 7500;
 			oneClickWarningLine.style.display = tooLong ? 'block' : 'none';
 		};
+		titleInput.addEventListener('input', update);
 		count.addEventListener('input', update);
 		offset.addEventListener('input', update);
 		update();
@@ -828,8 +838,8 @@
 			}
 		});
 		buttons.append(buttonFile, buttonOneClick, buttonDone);
-		scroller.append(countLine, offsetLine, estimateLine, oneClickWarningLine);
-		content.append(title, scroller, buttons);
+		scroller.append(titleLine, countLine, offsetLine, estimateLine, oneClickWarningLine);
+		content.append(modalTitle, scroller, buttons);
 		container.append(content);
 		document.body.append(container);
 		count.focus();
@@ -860,7 +870,7 @@
 				if (data) {
 					return data;
 				}
-			} catch(e) { }
+			} catch (e) { }
 		}
 		let user = await getUserData(id);
 		if (typeof options.onUserInfo === 'function') {
@@ -893,7 +903,7 @@
 		if (options.useCache) {
 			try {
 				localStorage.setItem('cached-' + id, JSON.stringify({ user, scores }));
-			} catch(e) { }
+			} catch (e) { }
 		}
 		return { user, scores, rawScores };
 	}
@@ -947,14 +957,14 @@
 			pushToHistory(user);
 			fullPP = getFullPPWithUpdate(0, 0);
 			updatePlayerProfile();
-		} catch(e) { /* Nothing */ }
+		} catch (e) { /* Nothing */ }
 		// Also update the list of ranked maps
 		let newRankedRequest = fetchRanked(new Date(rankedMapsUpdate));
 		try {
 			// If the request fails, just keep the previous data
 			await newRankedRequest;
 			rankedMapsPromise = newRankedRequest;
-		} catch(e) {}
+		} catch (e) {}
 		let rankedMapsData = await rankedMapsPromise;
 		updateLists(rankedMapsData, playerSongs);
 		document.body.classList.remove('refreshing');
@@ -1393,7 +1403,7 @@
 				let result = await compareCache[this.userId];
 				this.user = result.user;
 				this.scores = result.scores;
-			} catch(e) {
+			} catch (e) {
 				this.user = {};
 				this.scores = {};
 			}
@@ -1515,7 +1525,8 @@
 			this.methods = methods.map(Method => new Method(this));
 			this.method = this.methods[0];
 			this.elements = elements;
-			// this.displayed = 20;
+			this.displayedPageSize = 200;
+			this.displayed = this.displayedPageSize;
 			elem.innerHTML = '';
 			let header = div('list-header');
 			this.selectionTooltip = div('list-selection-tooltip');
@@ -1528,7 +1539,7 @@
 			this.selectionTooltipPP = div('line', '+0.00pp');
 			this.selectionTooltip.appendChild(this.selectionTooltipPP);
 			this.selectionTooltipBplist = link('#', 'bplist', '.bplist');
-			this.selectionTooltipOneClick = link('#', 'oneclick', 'OneClick');
+			this.selectionTooltipOneClick = link('#', 'playlist-oneclick', 'OneClick');
 			let selectionPlaylistLine = div('selection-playlist', [this.selectionTooltipBplist, ' - ', this.selectionTooltipOneClick]);
 			this.selectionTooltip.appendChild(selectionPlaylistLine);
 			header.appendChild(this.selectionTooltip);
@@ -1569,11 +1580,11 @@
 			this.content = div('list-content');
 			this.content.addEventListener('click', this.onContentClick.bind(this));
 			this.content.addEventListener('contextmenu', this.onContextMenu.bind(this));
-			// this.content.addEventListener('scroll', this.onScroll.bind(this));
+			this.content.addEventListener('scroll', this.onScroll.bind(this));
 			elem.appendChild(this.content);
 			this.updateSelectionTooltip();
 			this.update();
-			// this.onScroll();
+			this.onScroll();
 		}
 
 		getPlaylistName() {
@@ -1599,14 +1610,14 @@
 				this.method.onHide();
 			}
 			this.content.scrollTop = 0;
-			// this.displayed = 20;
+			this.displayed = this.displayedPageSize;
 			this.method = method;
 			if (this.method) {
 				this.elem.classList.add('method-' + this.method.id);
 				this.method.onShow();
 			}
 			this.update();
-			// this.onScroll();
+			this.onScroll();
 		}
 
 		clearSelection() {
@@ -1696,19 +1707,19 @@
 			], { x: e.clientX, y: e.clientY });
 		}
 
-		// onScroll() {
-		// 	if (this.content.scrollTop + this.content.clientHeight > this.content.scrollHeight - 50) {
-		// 		this.displayMore();
-		// 	}
-		// }
+		onScroll() {
+			if (this.displayed < this.elements.length && this.content.scrollTop + this.content.clientHeight > this.content.scrollHeight - 50) {
+				this.displayMore();
+			}
+		}
 
-		// displayMore() {
-		// 	if (this.displayed >= this.elements.length) {
-		// 		return;
-		// 	}
-		// 	this.displayed += 20;
-		// 	this.refresh();
-		// }
+		displayMore() {
+			if (this.displayed >= this.elements.length) {
+				return;
+			}
+			this.displayed += this.displayedPageSize;
+			this.refresh();
+		}
 
 		createMarkup(element) {
 			let el = div('list-element');
@@ -1867,7 +1878,7 @@
 			}
 			let sort = this.method.sort || this.defaultSort;
 			this.elements = sort(this.elements);
-			this.elements.filter(this.filter).forEach((el, i) => {
+			this.elements.filter(this.filter).slice(0, this.displayed).forEach((el, i) => {
 				if (!el.markup) {
 					this.createMarkup(el);
 				}
@@ -1946,7 +1957,7 @@
 			// For potential debugging purposes
 			window.playerSongs = playerSongs;
 			document.body.classList.add('step-results', 'user-' + id);
-		} catch(err) {
+		} catch (err) {
 			console.error(err);
 			triggerAnimation(userForm, 'invalid');
 		}
