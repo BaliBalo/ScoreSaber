@@ -42,6 +42,7 @@
 		name: $('.name'),
 		author: $('.author'),
 		count: $('.count'),
+		deduping: $('.deduping'),
 		sort: $('.sort'),
 	};
 	let preview = {
@@ -140,10 +141,31 @@
 		sortDir = sortDir === 'desc' ? -1 : 1;
 		leaderboards.sort((a, b) => a[sortProp] < b[sortProp] ? -sortDir : a[sortProp] > b[sortProp] ? sortDir : 0);
 		while (preview.list.firstChild) preview.list.removeChild(preview.list.firstChild);
-		activeSongs = leaderboards.map((data, i) => {
+
+		let usedLeaderboards = leaderboards;
+		let dedupe = fields.deduping.value !== 'all';
+		if (dedupe) {
+			let perSong = leaderboards.reduce((perSong, ldb) => {
+				let current = perSong.get(ldb.id);
+				if (!current) {
+					current = { ...ldb };
+					current.allStars = [];
+					current.diffs = [];
+					perSong.set(ldb.id, current);
+				}
+				current.allStars.push(ldb.stars);
+				current.diffs.push(ldb.diff);
+				return perSong;
+			}, new Map());
+			usedLeaderboards = [...perSong.values()];
+		}
+		activeSongs = usedLeaderboards.map((data, i) => {
+			let allStars = data.allStars || [data.stars];
+			let diffs = data.diffs || [data.diff];
 			let previewElem = document.createElement('div');
 			previewElem.className = 'item';
 			previewElem.title = [
+				'★: ' + allStars.join(', '),
 				'downloads: ' + data.downloads,
 				'upvotes: ' + data.upvotes,
 				'downvotes: ' + data.downvotes,
@@ -151,18 +173,17 @@
 			let content = (i + 1) + '. ' + data.artist + ' - ' + data.name + ' | ' + data.mapper;
 			let details = [
 				data.rating && ('👍 ' + data.rating.toFixed(2) + '%'),
-				diffNames[data.diff] || data.diff
+				diffs.map(diff => diffNames[diff] || diff).join(', ')
 			].filter(e => e).join(' - ');
 			if (details) {
 				content += ' (' + details + ')';
 			}
 			previewElem.appendChild(document.createTextNode(content));
 			preview.list.appendChild(previewElem);
-			return { hash: data.id, songName: data.name, difficulties: [{ characteristic: 'Standard', name: data.diff }] };
+			return { hash: data.id, songName: data.name, difficulties: diffs.map(diff => ({ characteristic: 'Standard', name: diff })) };
 		});
-		let ldbCount = leaderboards.length;
-		let songsCount = activeSongs.length;
-		preview.count.textContent = ldbCount + ' leaderboard' + (ldbCount === 1 ? '' : 's') + ' from ' + songsCount + ' map' + (songsCount === 1 ? '' : 's');
+		let rowsCount = usedLeaderboards.length;
+		preview.count.textContent = rowsCount + ' ' + (dedupe ? 'song' : 'leaderboard') + (rowsCount === 1 ? '' : 's');
 		updateLink();
 	}
 	function updateLink() {
@@ -187,6 +208,7 @@
 		fields.rating.to,
 		fields.duration.from,
 		fields.duration.to,
+		fields.deduping,
 		fields.sort,
 	].forEach(input => input.addEventListener('input', updateSongs));
 	[

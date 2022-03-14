@@ -33,7 +33,7 @@
 		</fieldset>
 		<fieldset class="preview">
 			<legend>Preview</legend>
-			<div>Count: <span class="result-count">0 leaderboards from 0 maps</span></div>
+			<div>Count: <span class="result-count">0 leaderboards</span></div>
 			<div class="list"></div>
 		</fieldset>
 		<fieldset class="details">
@@ -42,6 +42,13 @@
 			<label><span class="desc">Name:</span><input type="text" class="name" placeholder="Ranked"></label>
 			<label><span class="desc">Author:</span><input type="text" class="author" placeholder="ScoreSaber"></label>
 			<label><span class="desc">Count:</span><input type="text" class="count" placeholder="All"></label>
+			<label>
+				<span class="desc">Deduping:</span><!--
+				--><select class="deduping">
+					<option value="all">Include all difficulties independently</option>
+					<option value="songs">Only include each song once</option>
+				</select>
+			</label>
 			<label>
 				<span class="desc">Sort:</span><!--
 				--><select class="sort">
