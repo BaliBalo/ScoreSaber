@@ -23,7 +23,7 @@
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
     "cron": "^1.8.2",
-    "express": "^4.17.1",
+    "express": "^4.17.3",
     "express-rate-limit": "^5.5.1",
     "nedb": "^1.8.0",
     "request": "^2.88.2",
