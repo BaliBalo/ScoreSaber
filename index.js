@@ -17,8 +17,11 @@ const updateScoresaberValues = require('./utils/ranked/update-scoresaber-values'
 const updateStats = require('./utils/ranked/update-stats');
 const Playlist = require('./utils/playlist');
 const top200 = require('./utils/top200');
+
 const app = express();
 const port = 2148;
+
+const isDev = process.argv.includes('--dev');
 
 fs.mkdirSync(path.resolve(__dirname, 'data'), { recursive: true });
 
@@ -57,7 +60,7 @@ app.use('/scoresaber-api', proxy('https://scoresaber.com/api'));
 	if (!data.url || !data.file) {
 		return;
 	}
-	if (process.argv.includes('--dev')) {
+	if (isDev) {
 		app.get(data.url, async (req, res) => {
 			try {
 				let content = await fs.promises.readFile(path.resolve(__dirname, data.file), 'utf8');
@@ -151,7 +154,7 @@ app.all('/admin/remove-partial', limiter, auth.check, execTask(removePartial));
 app.all('/admin/update-scoresaber-values', limiter, auth.check, execTask(updateScoresaberValues, true));
 app.all('/admin/update-stats', limiter, auth.check, execLongTask(updateStats, true));
 
-if (process.argv.includes('--dev')) {
+if (isDev) {
 	app.use(['/dev/pages'], express.static('pages', { cacheControl: false }));
 } else {
 	new CronJob('0 */5 * * * *', checkNew, null, true);
