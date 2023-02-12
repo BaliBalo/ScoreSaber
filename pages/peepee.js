@@ -139,10 +139,11 @@
 		}
 		return elem;
 	};
-	let selectOption = (text, value) => {
+	let selectOption = (text, value, selected = false) => {
 		let elem = create('option');
 		elem.textContent = text;
 		elem.value = value;
+		elem.selected = selected
 		return elem;
 	};
 	let link = (href, className, text, title, target) => {
@@ -373,6 +374,9 @@
 		if (!Array.isArray(filters.hiddenMaps)) {
 			filters.hiddenMaps = [];
 		}
+		if (!Array.isArray(filters.tags)) {
+			filters.tags = [];
+		}
 	}
 	function loadFilters() {
 		filters = {
@@ -380,7 +384,8 @@
 			scoreTo: Infinity,
 			starsFrom: 0,
 			starsTo: Infinity,
-			hiddenMaps: []
+			hiddenMaps: [],
+			tags: []
 		};
 		try {
 			let saved = JSON.parse(localStorage.getItem('peepee-filters'), (key, value) => value === 'Infinity' || value === '-Infinity' ? +value : value);
@@ -439,6 +444,9 @@
 		if (filters.hiddenMaps) {
 			filters.hiddenMaps = filters.hiddenMaps.slice();
 		}
+		if (filters.tags) {
+			filters.tags = filters.tags.slice();
+		}
 		let resolve;
 		let promise = new Promise(_resolve => resolve = _resolve);
 		let autosizeInputs = [];
@@ -486,6 +494,15 @@
 		hiddenMapsRemoveButton.disabled = true;
 		let hiddenMapsFilter = div('filter hidden-maps', ['Hide these specific maps (right click on a map to add it to this list):', hiddenMapsSelect, hiddenMapsRemoveButton]);
 
+		let tagsSelect = create('select');
+		tagsSelect.size = 6;
+		let tagsOptions = ["accuracy", "balanced", "challenge", "dance", "fitness", "speed", "tech"];
+		tagsOptions.forEach(tag => {
+			tagsSelect.append(selectOption(tag, tag, filters.tags.includes(tag)));
+		});
+		let resetTagsButton = create('button', null, 'Reset tag');
+		let tagsFilter = div('filter tags', ['Filter based on tags:', tagsSelect, resetTagsButton]);
+
 		let validateData = () => {
 			scoreFrom.value = +scoreFrom.value || 0;
 			scoreTo.value = !scoreTo.value || isNaN(+scoreTo.value) ? 'Infinity' : +scoreTo.value;
@@ -511,6 +528,9 @@
 			hiddenMapsSelect.selectedIndex = Math.min(index, hiddenMapsSelect.length - 1);
 			// hiddenMapsSelect.focus();
 		});
+		resetTagsButton.addEventListener('click', () => {
+			[...tagsSelect.options].forEach(opt => opt.selected = false)
+		});
 		buttonOk.addEventListener('click', () => {
 			validateData();
 			finish({
@@ -518,7 +538,8 @@
 				scoreTo: +scoreTo.value,
 				starsFrom: +starsFrom.value,
 				starsTo: +starsTo.value,
-				hiddenMaps: [...hiddenMapsSelect.options].map(opt => +opt.value)
+				hiddenMaps: [...hiddenMapsSelect.options].map(opt => +opt.value),
+				tags: [...tagsSelect.selectedOptions].map(opt => opt.value)
 			});
 		});
 		buttonCancel.addEventListener('click', () => finish(null));
@@ -527,7 +548,7 @@
 				finish(null);
 			}
 		});
-		scroller.append(scoreFilter, starsFilter, hiddenMapsFilter);
+		scroller.append(scoreFilter, starsFilter, hiddenMapsFilter, tagsFilter);
 		buttons.append(buttonCancel, buttonOk);
 		content.append(title, scroller, buttons);
 		container.append(content);
@@ -1881,6 +1902,11 @@
 			}
 			if (el.stars < filters.starsFrom || el.stars > filters.starsTo) {
 				return false;
+			}
+			if (filters.tags && filters.tags.length) {
+				if ((el.tags || []).filter(value => filters.tags.includes(value)).length === 0) {
+					return false
+				}
 			}
 			return true;
 		}
