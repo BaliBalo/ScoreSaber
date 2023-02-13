@@ -46,6 +46,54 @@
 		ExpertPlus: { className: 'expert-plus', display: 'Expert+' },
 	};
 
+	const MAP_STYLE = 1;
+	const MUSIC_GENRE = 2;
+	const tags = [
+		{ type: MAP_STYLE, name: 'Tech', slug: 'tech' },
+		{ type: MAP_STYLE, name: 'Dance', slug: 'dance-style' },
+		{ type: MAP_STYLE, name: 'Speed', slug: 'speed' },
+		{ type: MAP_STYLE, name: 'Balanced', slug: 'balanced' },
+		{ type: MAP_STYLE, name: 'Challenge', slug: 'challenge' },
+		{ type: MAP_STYLE, name: 'Accuracy', slug: 'accuracy' },
+		{ type: MAP_STYLE, name: 'Fitness', slug: 'fitness' },
+		{ type: MUSIC_GENRE, name: 'Swing', slug: 'swing' },
+		{ type: MUSIC_GENRE, name: 'Nightcore', slug: 'nightcore' },
+		{ type: MUSIC_GENRE, name: 'Folk & Acoustic', slug: 'folk-acoustic' },
+		{ type: MUSIC_GENRE, name: 'Kids & Family', slug: 'kids-family' },
+		{ type: MUSIC_GENRE, name: 'Ambient', slug: 'ambient' },
+		{ type: MUSIC_GENRE, name: 'Funk & Disco', slug: 'funk-disco' },
+		{ type: MUSIC_GENRE, name: 'Jazz', slug: 'jazz' },
+		{ type: MUSIC_GENRE, name: 'Classical & Orchestral', slug: 'classical-orchestral' },
+		{ type: MUSIC_GENRE, name: 'Soul', slug: 'soul' },
+		{ type: MUSIC_GENRE, name: 'Speedcore', slug: 'speedcore' },
+		{ type: MUSIC_GENRE, name: 'Punk', slug: 'punk' },
+		{ type: MUSIC_GENRE, name: 'R&B', slug: 'rb' },
+		{ type: MUSIC_GENRE, name: 'Holiday', slug: 'holiday' },
+		{ type: MUSIC_GENRE, name: 'Vocaloid', slug: 'vocaloid' },
+		{ type: MUSIC_GENRE, name: 'J-Rock', slug: 'j-rock' },
+		{ type: MUSIC_GENRE, name: 'Trance', slug: 'trance' },
+		{ type: MUSIC_GENRE, name: 'Drum and Bass', slug: 'drum-and-bass' },
+		{ type: MUSIC_GENRE, name: 'Comedy & Meme', slug: 'comedy-meme' },
+		{ type: MUSIC_GENRE, name: 'Instrumental', slug: 'instrumental' },
+		{ type: MUSIC_GENRE, name: 'Hardcore', slug: 'hardcore' },
+		{ type: MUSIC_GENRE, name: 'K-Pop', slug: 'k-pop' },
+		{ type: MUSIC_GENRE, name: 'Indie', slug: 'indie' },
+		{ type: MUSIC_GENRE, name: 'Techno', slug: 'techno' },
+		{ type: MUSIC_GENRE, name: 'House', slug: 'house' },
+		{ type: MUSIC_GENRE, name: 'Video Game', slug: 'video-game-soundtrack' },
+		{ type: MUSIC_GENRE, name: 'TV & Film', slug: 'tv-movie-soundtrack' },
+		{ type: MUSIC_GENRE, name: 'Alternative', slug: 'alternative' },
+		{ type: MUSIC_GENRE, name: 'Dubstep', slug: 'dubstep' },
+		{ type: MUSIC_GENRE, name: 'Metal', slug: 'metal' },
+		{ type: MUSIC_GENRE, name: 'Anime', slug: 'anime' },
+		{ type: MUSIC_GENRE, name: 'Hip Hop & Rap', slug: 'hip-hop-rap' },
+		{ type: MUSIC_GENRE, name: 'J-Pop', slug: 'j-pop' },
+		{ type: MUSIC_GENRE, name: 'Dance', slug: 'dance' },
+		{ type: MUSIC_GENRE, name: 'Rock', slug: 'rock' },
+		{ type: MUSIC_GENRE, name: 'Pop', slug: 'pop' },
+		{ type: MUSIC_GENRE, name: 'Electronic', slug: 'electronic' },
+	];
+
 	function triggerAnimation(el, name) {
 		if (!el) {
 			return;
@@ -139,10 +187,11 @@
 		}
 		return elem;
 	};
-	let selectOption = (text, value) => {
+	let selectOption = (text, value, selected) => {
 		let elem = create('option');
 		elem.textContent = text;
 		elem.value = value;
+		elem.selected = !!selected;
 		return elem;
 	};
 	let link = (href, className, text, title, target) => {
@@ -373,6 +422,9 @@
 		if (!Array.isArray(filters.hiddenMaps)) {
 			filters.hiddenMaps = [];
 		}
+		if (!Array.isArray(filters.tags)) {
+			filters.tags = [];
+		}
 	}
 	function loadFilters() {
 		filters = {
@@ -380,7 +432,8 @@
 			scoreTo: Infinity,
 			starsFrom: 0,
 			starsTo: Infinity,
-			hiddenMaps: []
+			hiddenMaps: [],
+			tags: []
 		};
 		try {
 			let saved = JSON.parse(localStorage.getItem('peepee-filters'), (key, value) => value === 'Infinity' || value === '-Infinity' ? +value : value);
@@ -439,6 +492,9 @@
 		if (filters.hiddenMaps) {
 			filters.hiddenMaps = filters.hiddenMaps.slice();
 		}
+		if (filters.tags) {
+			filters.tags = filters.tags.slice();
+		}
 		let resolve;
 		let promise = new Promise(_resolve => resolve = _resolve);
 		let autosizeInputs = [];
@@ -486,6 +542,16 @@
 		hiddenMapsRemoveButton.disabled = true;
 		let hiddenMapsFilter = div('filter hidden-maps', ['Hide these specific maps (right click on a map to add it to this list):', hiddenMapsSelect, hiddenMapsRemoveButton]);
 
+		let tagsSelect = create('select');
+		tagsSelect.size = 6;
+		tagsSelect.multiple = true;
+		tags.forEach(tag => {
+			tagsSelect.append(selectOption(tag.name, tag.slug, filters.tags.includes(tag.slug)));
+		});
+		let resetTagsButton = create('button', null, 'Reset tags');
+		const ctrlKey = navigator.userAgent.includes('Mac OS X') ? 'cmd' : 'ctrl';
+		let tagsFilter = div('filter tags', [`Filter based on tags (${ctrlKey}+click to select multiple):`, tagsSelect, resetTagsButton]);
+
 		let validateData = () => {
 			scoreFrom.value = +scoreFrom.value || 0;
 			scoreTo.value = !scoreTo.value || isNaN(+scoreTo.value) ? 'Infinity' : +scoreTo.value;
@@ -511,6 +577,9 @@
 			hiddenMapsSelect.selectedIndex = Math.min(index, hiddenMapsSelect.length - 1);
 			// hiddenMapsSelect.focus();
 		});
+		resetTagsButton.addEventListener('click', () => {
+			[...tagsSelect.options].forEach(opt => opt.selected = false);
+		});
 		buttonOk.addEventListener('click', () => {
 			validateData();
 			finish({
@@ -518,7 +587,8 @@
 				scoreTo: +scoreTo.value,
 				starsFrom: +starsFrom.value,
 				starsTo: +starsTo.value,
-				hiddenMaps: [...hiddenMapsSelect.options].map(opt => +opt.value)
+				hiddenMaps: [...hiddenMapsSelect.options].map(opt => +opt.value),
+				tags: [...tagsSelect.selectedOptions].map(opt => opt.value)
 			});
 		});
 		buttonCancel.addEventListener('click', () => finish(null));
@@ -527,7 +597,7 @@
 				finish(null);
 			}
 		});
-		scroller.append(scoreFilter, starsFilter, hiddenMapsFilter);
+		scroller.append(scoreFilter, starsFilter, hiddenMapsFilter, tagsFilter);
 		buttons.append(buttonCancel, buttonOk);
 		content.append(title, scroller, buttons);
 		container.append(content);
@@ -1881,6 +1951,11 @@
 			}
 			if (el.stars < filters.starsFrom || el.stars > filters.starsTo) {
 				return false;
+			}
+			if (filters.tags && filters.tags.length) {
+				if (!filters.tags.some(tag => el.tags && el.tags.includes(tag))) {
+					return false;
+				}
 			}
 			return true;
 		}
