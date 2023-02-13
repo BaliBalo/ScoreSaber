@@ -46,6 +46,54 @@
 		ExpertPlus: { className: 'expert-plus', display: 'Expert+' },
 	};
 
+	const MAP_STYLE = 1;
+	const MUSIC_GENRE = 2;
+	const tags = [
+		{ type: MAP_STYLE, name: 'Tech', slug: 'tech' },
+		{ type: MAP_STYLE, name: 'Dance', slug: 'dance-style' },
+		{ type: MAP_STYLE, name: 'Speed', slug: 'speed' },
+		{ type: MAP_STYLE, name: 'Balanced', slug: 'balanced' },
+		{ type: MAP_STYLE, name: 'Challenge', slug: 'challenge' },
+		{ type: MAP_STYLE, name: 'Accuracy', slug: 'accuracy' },
+		{ type: MAP_STYLE, name: 'Fitness', slug: 'fitness' },
+		{ type: MUSIC_GENRE, name: 'Swing', slug: 'swing' },
+		{ type: MUSIC_GENRE, name: 'Nightcore', slug: 'nightcore' },
+		{ type: MUSIC_GENRE, name: 'Folk & Acoustic', slug: 'folk-acoustic' },
+		{ type: MUSIC_GENRE, name: 'Kids & Family', slug: 'kids-family' },
+		{ type: MUSIC_GENRE, name: 'Ambient', slug: 'ambient' },
+		{ type: MUSIC_GENRE, name: 'Funk & Disco', slug: 'funk-disco' },
+		{ type: MUSIC_GENRE, name: 'Jazz', slug: 'jazz' },
+		{ type: MUSIC_GENRE, name: 'Classical & Orchestral', slug: 'classical-orchestral' },
+		{ type: MUSIC_GENRE, name: 'Soul', slug: 'soul' },
+		{ type: MUSIC_GENRE, name: 'Speedcore', slug: 'speedcore' },
+		{ type: MUSIC_GENRE, name: 'Punk', slug: 'punk' },
+		{ type: MUSIC_GENRE, name: 'R&B', slug: 'rb' },
+		{ type: MUSIC_GENRE, name: 'Holiday', slug: 'holiday' },
+		{ type: MUSIC_GENRE, name: 'Vocaloid', slug: 'vocaloid' },
+		{ type: MUSIC_GENRE, name: 'J-Rock', slug: 'j-rock' },
+		{ type: MUSIC_GENRE, name: 'Trance', slug: 'trance' },
+		{ type: MUSIC_GENRE, name: 'Drum and Bass', slug: 'drum-and-bass' },
+		{ type: MUSIC_GENRE, name: 'Comedy & Meme', slug: 'comedy-meme' },
+		{ type: MUSIC_GENRE, name: 'Instrumental', slug: 'instrumental' },
+		{ type: MUSIC_GENRE, name: 'Hardcore', slug: 'hardcore' },
+		{ type: MUSIC_GENRE, name: 'K-Pop', slug: 'k-pop' },
+		{ type: MUSIC_GENRE, name: 'Indie', slug: 'indie' },
+		{ type: MUSIC_GENRE, name: 'Techno', slug: 'techno' },
+		{ type: MUSIC_GENRE, name: 'House', slug: 'house' },
+		{ type: MUSIC_GENRE, name: 'Video Game', slug: 'video-game-soundtrack' },
+		{ type: MUSIC_GENRE, name: 'TV & Film', slug: 'tv-movie-soundtrack' },
+		{ type: MUSIC_GENRE, name: 'Alternative', slug: 'alternative' },
+		{ type: MUSIC_GENRE, name: 'Dubstep', slug: 'dubstep' },
+		{ type: MUSIC_GENRE, name: 'Metal', slug: 'metal' },
+		{ type: MUSIC_GENRE, name: 'Anime', slug: 'anime' },
+		{ type: MUSIC_GENRE, name: 'Hip Hop & Rap', slug: 'hip-hop-rap' },
+		{ type: MUSIC_GENRE, name: 'J-Pop', slug: 'j-pop' },
+		{ type: MUSIC_GENRE, name: 'Dance', slug: 'dance' },
+		{ type: MUSIC_GENRE, name: 'Rock', slug: 'rock' },
+		{ type: MUSIC_GENRE, name: 'Pop', slug: 'pop' },
+		{ type: MUSIC_GENRE, name: 'Electronic', slug: 'electronic' },
+	];
+
 	function triggerAnimation(el, name) {
 		if (!el) {
 			return;
@@ -139,11 +187,11 @@
 		}
 		return elem;
 	};
-	let selectOption = (text, value, selected = false) => {
+	let selectOption = (text, value, selected) => {
 		let elem = create('option');
 		elem.textContent = text;
 		elem.value = value;
-		elem.selected = selected
+		elem.selected = !!selected;
 		return elem;
 	};
 	let link = (href, className, text, title, target) => {
@@ -496,12 +544,13 @@
 
 		let tagsSelect = create('select');
 		tagsSelect.size = 6;
-		let tagsOptions = ["accuracy", "balanced", "challenge", "dance", "fitness", "speed", "tech"];
-		tagsOptions.forEach(tag => {
-			tagsSelect.append(selectOption(tag, tag, filters.tags.includes(tag)));
+		tagsSelect.multiple = true;
+		tags.forEach(tag => {
+			tagsSelect.append(selectOption(tag.name, tag.slug, filters.tags.includes(tag.slug)));
 		});
-		let resetTagsButton = create('button', null, 'Reset tag');
-		let tagsFilter = div('filter tags', ['Filter based on tags:', tagsSelect, resetTagsButton]);
+		let resetTagsButton = create('button', null, 'Reset tags');
+		const ctrlKey = navigator.userAgent.includes('Mac OS X') ? 'cmd' : 'ctrl';
+		let tagsFilter = div('filter tags', [`Filter based on tags (${ctrlKey}+click to select multiple):`, tagsSelect, resetTagsButton]);
 
 		let validateData = () => {
 			scoreFrom.value = +scoreFrom.value || 0;
@@ -529,7 +578,7 @@
 			// hiddenMapsSelect.focus();
 		});
 		resetTagsButton.addEventListener('click', () => {
-			[...tagsSelect.options].forEach(opt => opt.selected = false)
+			[...tagsSelect.options].forEach(opt => opt.selected = false);
 		});
 		buttonOk.addEventListener('click', () => {
 			validateData();
@@ -1904,8 +1953,8 @@
 				return false;
 			}
 			if (filters.tags && filters.tags.length) {
-				if ((el.tags || []).filter(value => filters.tags.includes(value)).length === 0) {
-					return false
+				if (!filters.tags.some(tag => el.tags && el.tags.includes(tag))) {
+					return false;
 				}
 			}
 			return true;

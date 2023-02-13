@@ -53,7 +53,7 @@ async function addData(item, cache) {
 	item.upvotes = song.stats.upvotes;
 	item.downvotes = song.stats.downvotes;
 	item.rating = song.stats.score * 100;
-	item.tags = (song.tags || [])
+	item.tags = song.tags || [];
 	let matching = song.versions.find(version => version.hash === hash);
 	if (!matching) {
 		console.log(timetag(), 'WARNING! Found beatsaver data for ' + item.name + ' (' + item.uid + ' - ' + hash + ') does not have a matching version. Using latest.');
