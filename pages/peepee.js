@@ -2132,7 +2132,7 @@
 			} else {
 				this.selectedTagsPerType = null;
 			}
-			return this.elements.filter(this.filter);
+			return this.elements.filter(this.filter, this);
 		}
 
 		refresh() {
