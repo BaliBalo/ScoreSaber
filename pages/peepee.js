@@ -622,12 +622,10 @@
 
 		let suggestionVisibilityTimer;
 		let showSuggestions = () => {
-			console.log('focusin');
 			cancelAnimationFrame(suggestionVisibilityTimer);
 			suggestions.classList.add('visible');
 		};
 		let hideSuggestions = () => {
-			console.log('focusout');
 			cancelAnimationFrame(suggestionVisibilityTimer);
 			suggestionVisibilityTimer = requestAnimationFrame(() => suggestions.classList.remove('visible'));
 		};
