@@ -9,7 +9,7 @@ module.exports = {
 		if (!key) {
 			return res.status(401).end('Unauthorized');
 		}
-		let user = auth && auth.keys && auth.keys[key];
+		let user = auth?.keys?.[key];
 		if (!user) {
 			return res.status(401).end('Unauthorized');
 		}

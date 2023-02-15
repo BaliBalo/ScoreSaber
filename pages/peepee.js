@@ -1,4 +1,7 @@
 /* global WebFont */
+
+// TODO: split this file...
+
 (async function() {
 	document.body.classList.add('js-loaded');
 
@@ -49,49 +52,49 @@
 	const MAP_STYLE = 1;
 	const MUSIC_GENRE = 2;
 	const tags = [
-		{ type: MAP_STYLE, name: 'Tech', slug: 'tech' },
-		{ type: MAP_STYLE, name: 'Dance', slug: 'dance-style' },
-		{ type: MAP_STYLE, name: 'Speed', slug: 'speed' },
+		{ type: MAP_STYLE, name: 'Accuracy', slug: 'accuracy' },
 		{ type: MAP_STYLE, name: 'Balanced', slug: 'balanced' },
 		{ type: MAP_STYLE, name: 'Challenge', slug: 'challenge' },
-		{ type: MAP_STYLE, name: 'Accuracy', slug: 'accuracy' },
+		{ type: MAP_STYLE, name: 'Dance', slug: 'dance-style' },
 		{ type: MAP_STYLE, name: 'Fitness', slug: 'fitness' },
-		{ type: MUSIC_GENRE, name: 'Swing', slug: 'swing' },
-		{ type: MUSIC_GENRE, name: 'Nightcore', slug: 'nightcore' },
-		{ type: MUSIC_GENRE, name: 'Folk & Acoustic', slug: 'folk-acoustic' },
-		{ type: MUSIC_GENRE, name: 'Kids & Family', slug: 'kids-family' },
+		{ type: MAP_STYLE, name: 'Speed', slug: 'speed' },
+		{ type: MAP_STYLE, name: 'Tech', slug: 'tech' },
+		{ type: MUSIC_GENRE, name: 'Alternative', slug: 'alternative' },
 		{ type: MUSIC_GENRE, name: 'Ambient', slug: 'ambient' },
-		{ type: MUSIC_GENRE, name: 'Funk & Disco', slug: 'funk-disco' },
-		{ type: MUSIC_GENRE, name: 'Jazz', slug: 'jazz' },
+		{ type: MUSIC_GENRE, name: 'Anime', slug: 'anime' },
 		{ type: MUSIC_GENRE, name: 'Classical & Orchestral', slug: 'classical-orchestral' },
-		{ type: MUSIC_GENRE, name: 'Soul', slug: 'soul' },
-		{ type: MUSIC_GENRE, name: 'Speedcore', slug: 'speedcore' },
+		{ type: MUSIC_GENRE, name: 'Comedy & Meme', slug: 'comedy-meme' },
+		{ type: MUSIC_GENRE, name: 'Dance', slug: 'dance' },
+		{ type: MUSIC_GENRE, name: 'Drum and Bass', slug: 'drum-and-bass' },
+		{ type: MUSIC_GENRE, name: 'Dubstep', slug: 'dubstep' },
+		{ type: MUSIC_GENRE, name: 'Electronic', slug: 'electronic' },
+		{ type: MUSIC_GENRE, name: 'Folk & Acoustic', slug: 'folk-acoustic' },
+		{ type: MUSIC_GENRE, name: 'Funk & Disco', slug: 'funk-disco' },
+		{ type: MUSIC_GENRE, name: 'Hardcore', slug: 'hardcore' },
+		{ type: MUSIC_GENRE, name: 'Hip Hop & Rap', slug: 'hip-hop-rap' },
+		{ type: MUSIC_GENRE, name: 'Holiday', slug: 'holiday' },
+		{ type: MUSIC_GENRE, name: 'House', slug: 'house' },
+		{ type: MUSIC_GENRE, name: 'Indie', slug: 'indie' },
+		{ type: MUSIC_GENRE, name: 'Instrumental', slug: 'instrumental' },
+		{ type: MUSIC_GENRE, name: 'J-Pop', slug: 'j-pop' },
+		{ type: MUSIC_GENRE, name: 'J-Rock', slug: 'j-rock' },
+		{ type: MUSIC_GENRE, name: 'Jazz', slug: 'jazz' },
+		{ type: MUSIC_GENRE, name: 'K-Pop', slug: 'k-pop' },
+		{ type: MUSIC_GENRE, name: 'Kids & Family', slug: 'kids-family' },
+		{ type: MUSIC_GENRE, name: 'Metal', slug: 'metal' },
+		{ type: MUSIC_GENRE, name: 'Nightcore', slug: 'nightcore' },
+		{ type: MUSIC_GENRE, name: 'Pop', slug: 'pop' },
 		{ type: MUSIC_GENRE, name: 'Punk', slug: 'punk' },
 		{ type: MUSIC_GENRE, name: 'R&B', slug: 'rb' },
-		{ type: MUSIC_GENRE, name: 'Holiday', slug: 'holiday' },
-		{ type: MUSIC_GENRE, name: 'Vocaloid', slug: 'vocaloid' },
-		{ type: MUSIC_GENRE, name: 'J-Rock', slug: 'j-rock' },
-		{ type: MUSIC_GENRE, name: 'Trance', slug: 'trance' },
-		{ type: MUSIC_GENRE, name: 'Drum and Bass', slug: 'drum-and-bass' },
-		{ type: MUSIC_GENRE, name: 'Comedy & Meme', slug: 'comedy-meme' },
-		{ type: MUSIC_GENRE, name: 'Instrumental', slug: 'instrumental' },
-		{ type: MUSIC_GENRE, name: 'Hardcore', slug: 'hardcore' },
-		{ type: MUSIC_GENRE, name: 'K-Pop', slug: 'k-pop' },
-		{ type: MUSIC_GENRE, name: 'Indie', slug: 'indie' },
-		{ type: MUSIC_GENRE, name: 'Techno', slug: 'techno' },
-		{ type: MUSIC_GENRE, name: 'House', slug: 'house' },
-		{ type: MUSIC_GENRE, name: 'Video Game', slug: 'video-game-soundtrack' },
-		{ type: MUSIC_GENRE, name: 'TV & Film', slug: 'tv-movie-soundtrack' },
-		{ type: MUSIC_GENRE, name: 'Alternative', slug: 'alternative' },
-		{ type: MUSIC_GENRE, name: 'Dubstep', slug: 'dubstep' },
-		{ type: MUSIC_GENRE, name: 'Metal', slug: 'metal' },
-		{ type: MUSIC_GENRE, name: 'Anime', slug: 'anime' },
-		{ type: MUSIC_GENRE, name: 'Hip Hop & Rap', slug: 'hip-hop-rap' },
-		{ type: MUSIC_GENRE, name: 'J-Pop', slug: 'j-pop' },
-		{ type: MUSIC_GENRE, name: 'Dance', slug: 'dance' },
 		{ type: MUSIC_GENRE, name: 'Rock', slug: 'rock' },
-		{ type: MUSIC_GENRE, name: 'Pop', slug: 'pop' },
-		{ type: MUSIC_GENRE, name: 'Electronic', slug: 'electronic' },
+		{ type: MUSIC_GENRE, name: 'Soul', slug: 'soul' },
+		{ type: MUSIC_GENRE, name: 'Speedcore', slug: 'speedcore' },
+		{ type: MUSIC_GENRE, name: 'Swing', slug: 'swing' },
+		{ type: MUSIC_GENRE, name: 'Techno', slug: 'techno' },
+		{ type: MUSIC_GENRE, name: 'Trance', slug: 'trance' },
+		{ type: MUSIC_GENRE, name: 'TV & Film', slug: 'tv-movie-soundtrack' },
+		{ type: MUSIC_GENRE, name: 'Video Game', slug: 'video-game-soundtrack' },
+		{ type: MUSIC_GENRE, name: 'Vocaloid', slug: 'vocaloid' },
 	];
 
 	function triggerAnimation(el, name) {
@@ -168,7 +171,7 @@
 			elem.className = className;
 		}
 		if (text != undefined) {
-			elem.append(...(Array.isArray(text) ? text : [text]));
+			Array.isArray(text) ? elem.append(...text) : elem.append(text);
 		}
 		if (title != undefined) {
 			elem.title = title;
@@ -187,11 +190,9 @@
 		}
 		return elem;
 	};
-	let selectOption = (text, value, selected) => {
-		let elem = create('option');
-		elem.textContent = text;
+	let selectOption = (text, value) => {
+		let elem = create('option', '', text);
 		elem.value = value;
-		elem.selected = !!selected;
 		return elem;
 	};
 	let link = (href, className, text, title, target) => {
@@ -386,14 +387,14 @@
 			if (!user || !user.avatar || user.rank == null || user.name == null) {
 				return;
 			}
-			let line = div('line');
-			line.onclick = () => {
+			let line = create('button', 'line');
+			line.addEventListener('click', () => {
 				if (profileInput.disabled) {
 					return;
 				}
 				profileInput.value = user.id;
 				onSubmit();
-			};
+			});
 			let avatar = div('avatar');
 			avatar.style.backgroundImage = 'url('+user.avatar+')';
 			line.appendChild(avatar);
@@ -414,6 +415,20 @@
 	refreshHistory();
 
 	let filters = {};
+	function filtersFromString(str) {
+		let data = JSON.parse(str, (key, value) => /^-?Infinity$/.test(value) ? +value : value);
+		data.tags = data.tags?.map?.(tag => tags.find(t => t.slug === tag)).filter(e => e);
+		return data;
+	}
+	function stringifyFilters(filters) {
+		return JSON.stringify(
+			{
+				...filters,
+				tags: filters.tags.map(filter => filter?.slug).filter(e => e)
+			},
+			(key, val) => typeof val === 'number' && Math.abs(val) === Infinity ? val + '' : val
+		);
+	}
 	function sanitizeFilters() {
 		filters.scoreFrom = +filters.scoreFrom || 0;
 		filters.scoreTo = isNaN(+filters.scoreTo) ? Infinity : +filters.scoreTo;
@@ -436,7 +451,7 @@
 			tags: []
 		};
 		try {
-			let saved = JSON.parse(localStorage.getItem('peepee-filters'), (key, value) => value === 'Infinity' || value === '-Infinity' ? +value : value);
+			let saved = filtersFromString(localStorage.getItem('peepee-filters'));
 			Object.assign(filters, saved);
 			sanitizeFilters();
 		} catch (e) {}
@@ -445,8 +460,7 @@
 	async function updateFilters(newFilters) {
 		filters = newFilters;
 		try {
-			let str = JSON.stringify(newFilters, (key, val) => Math.abs(val) === Infinity ? val + '' : val);
-			localStorage.setItem('peepee-filters', str);
+			localStorage.setItem('peepee-filters', stringifyFilters(newFilters));
 		} catch (e) {}
 		// updateLists(await rankedMapsPromise, playerSongs);
 		played.refresh();
@@ -455,7 +469,7 @@
 	async function hideMap(uid) {
 		let hiddenMaps = filters.hiddenMaps || [];
 		hiddenMaps.push(uid);
-		updateFilters(Object.assign(filters, { hiddenMaps }));
+		updateFilters({ ...filters, hiddenMaps });
 	}
 	function autosizeInput(input) {
 		let ghost = span();
@@ -487,14 +501,170 @@
 			}
 		};
 	}
+	function setFocusIn(element) {
+		let interactiveElement = element.querySelector(':is(input:not([type=hidden]), select, textarea, button):not([disabled])') || element;
+		interactiveElement?.focus();
+	}
+
+	function isOverflowElement(el) {
+		// From https://github.com/floating-ui/floating-ui
+		const { overflow, overflowX, overflowY, display } = getComputedStyle(el);
+		return /auto|scroll|overlay|hidden|clip/.test(overflow + overflowY + overflowX) && !['inline', 'contents'].includes(display);
+	}
+	function anchorTop(anchored, target) {
+		let update = () => {
+			let targetRect = target.getBoundingClientRect();
+			anchored.style.left = targetRect.left + 'px';
+			anchored.style.bottom = (window.innerHeight - targetRect.top) + 'px';
+			anchored.style.width = targetRect.width + 'px';
+		};
+
+		let ancestors = [window];
+		let parent = target;
+		do {
+			parent = parent.parentNode;
+			if (isOverflowElement(parent)) {
+				ancestors.push(parent);
+			}
+		} while (parent.parentNode && parent.parentNode !== document);
+
+		let resizeObserver = new ResizeObserver(update);
+		ancestors.forEach(ancestor => {
+			ancestor.addEventListener('scroll', update, { passive: true });
+			if (ancestor !== window) {
+				resizeObserver.observe(ancestor);
+			}
+		});
+
+		update();
+
+		return {
+			stop: () => {
+				resizeObserver.disconnect();
+				ancestors.forEach(ancestor => ancestor.removeEventListener('scroll', update));
+			}
+		};
+	}
+	function tagSelector(selectedValues = []) {
+		let values = selectedValues.slice();
+		let selectionWrapper = span('selection-wrapper');
+		let input = textInput(null, '', 'Select a tag...');
+		input.id = 'tag-selector-input';
+		let asi = autosizeInput(input);
+		let wrapper = create('label', 'tag-selector', [selectionWrapper, input]);
+		wrapper.htmlFor = input.id;
+		wrapper.tabIndex = -1;
+		let suggestions = div('tag-selector-suggestions');
+		suggestions.tabIndex = 0;
+		suggestions.addEventListener('focus', () => suggestions.firstElementChild?.focus());
+
+		let update = () => {
+			selectionWrapper.innerHTML = '';
+			selectionWrapper.append(...values.map(value => {
+				let removeButton = create('button', 'remove', '×');
+				let tag = div(`tag type-${value.type}`, [value.name, removeButton]);
+				removeButton.addEventListener('click', e => {
+					e.preventDefault();
+					e.stopPropagation();
+					values = values.filter(v => v !== value);
+					update();
+					requestAnimationFrame(() => input.focus());
+				});
+				return tag;
+			}));
+			updateSuggestions();
+		};
+
+		let updateSuggestions = () => {
+			let search = input.value.toLowerCase();
+			let matchingTags = tags.filter(tag => (
+				!values.includes(tag) && (tag.name.toLowerCase().includes(search) || tag.slug.includes(search))
+			));
+
+			suggestions.innerHTML = '';
+			suggestions.append(...matchingTags.map((suggestion, i) => {
+				let tag = create('button', `tag type-${suggestion?.type} ${!i ? 'selected' : ''}`, suggestion?.name || suggestion.slug);
+				tag.addEventListener('click', () => {
+					values.push(suggestion);
+					input.value = '';
+					asi.check();
+					update();
+					requestAnimationFrame(() => input.focus());
+				});
+				return tag;
+			}).filter(e => e));
+		};
+		input.addEventListener('input', updateSuggestions);
+		input.addEventListener('keydown', e => {
+			if (e.ctrlKey || e.shiftKey || e.altKey || e.metaKey) {
+				return;
+			}
+			if (e.key === 'Backspace' && !input.value && values.length) {
+				values.pop();
+				update();
+				e.preventDefault();
+				return;
+			}
+			let selected = suggestions.querySelector('.selected');
+
+			let useLeftRight = input.selectionStart === input.selectionEnd && input.selectionStart === input.value.length;
+			if (e.key === 'ArrowDown' || e.key === 'ArrowUp' || (useLeftRight && (e.key === 'ArrowLeft' || e.key === 'ArrowRight'))) {
+				let next = e.key === 'ArrowDown' || e.key === 'ArrowRight';
+				let newElement = selected?.[next ? 'nextElementSibling' : 'previousElementSibling'] || suggestions[next ? 'firstElementChild' : 'lastElementChild'];
+				selected?.classList.remove('selected');
+				newElement?.classList.add('selected');
+				e.preventDefault();
+			} else if (e.key === 'Enter') {
+				selected?.click();
+				e.preventDefault();
+			}
+		});
+
+		let suggestionVisibilityTimer;
+		let showSuggestions = () => {
+			console.log('focusin');
+			cancelAnimationFrame(suggestionVisibilityTimer);
+			suggestions.classList.add('visible');
+		};
+		let hideSuggestions = () => {
+			console.log('focusout');
+			cancelAnimationFrame(suggestionVisibilityTimer);
+			suggestionVisibilityTimer = requestAnimationFrame(() => suggestions.classList.remove('visible'));
+		};
+		wrapper.addEventListener('focusin', showSuggestions);
+		wrapper.addEventListener('focusout', hideSuggestions);
+
+		document.body.append(suggestions);
+
+		let suggestionsAnchor;
+		let observer = new MutationObserver(() =>  {
+			if (document.contains(wrapper)) {
+				suggestionsAnchor = anchorTop(suggestions, wrapper);
+				observer.disconnect();
+				observer = null;
+			}
+		});
+		observer.observe(document, { childList: true, subtree: true });
+
+		update();
+
+		return {
+			dom: wrapper,
+			get value() { return values; },
+			set value(v) { values = v; update(); },
+			dispose: () => {
+				observer?.disconnect();
+				suggestionsAnchor?.stop();
+				asi.stop();
+				document.body.removeChild(suggestions);
+			},
+		};
+	}
 	async function editFiltersModal(filters = {}) {
 		filters = Object.assign({}, filters);
-		if (filters.hiddenMaps) {
-			filters.hiddenMaps = filters.hiddenMaps.slice();
-		}
-		if (filters.tags) {
-			filters.tags = filters.tags.slice();
-		}
+		filters.hiddenMaps = filters.hiddenMaps.slice();
+		filters.tags = filters.tags.slice();
+
 		let resolve;
 		let promise = new Promise(_resolve => resolve = _resolve);
 		let autosizeInputs = [];
@@ -505,6 +675,7 @@
 			}
 			cleared = true;
 			autosizeInputs.forEach(asi => asi.stop());
+			tagInput?.dispose();
 			document.body.removeChild(container);
 		};
 		let finish = (data) => {
@@ -527,30 +698,22 @@
 		let starsTo = textInput(null, filters.starsTo);
 		let starsFilter = div('filter stars', ['Only show maps if their ★ difficulty is between ', starsFrom, ' and ', starsTo]);
 
-		let hiddenMapsSelect = create('select');
-		hiddenMapsSelect.size = 6;
-		hiddenMapsSelect.multiple = true;
-		(filters.hiddenMaps || []).forEach(hiddenMap => {
+		let hiddenMapsSelect = create('select', null, filters.hiddenMaps.map(hiddenMap => {
 			let map = rankedMaps[hiddenMap];
 			if (!map) {
 				return;
 			}
 			let optionText = map.name + ' - ' + map.artist + ' (' + map.mapper + ') | ' + map.diff;
-			hiddenMapsSelect.append(selectOption(optionText, hiddenMap));
-		});
+			return selectOption(optionText, hiddenMap);
+		}));
+		hiddenMapsSelect.size = 6;
+		hiddenMapsSelect.multiple = true;
 		let hiddenMapsRemoveButton = create('button', null, 'Unhide selected');
 		hiddenMapsRemoveButton.disabled = true;
 		let hiddenMapsFilter = div('filter hidden-maps', ['Hide these specific maps (right click on a map to add it to this list):', hiddenMapsSelect, hiddenMapsRemoveButton]);
 
-		let tagsSelect = create('select');
-		tagsSelect.size = 6;
-		tagsSelect.multiple = true;
-		tags.forEach(tag => {
-			tagsSelect.append(selectOption(tag.name, tag.slug, filters.tags.includes(tag.slug)));
-		});
-		let resetTagsButton = create('button', null, 'Reset tags');
-		const ctrlKey = navigator.userAgent.includes('Mac OS X') ? 'cmd' : 'ctrl';
-		let tagsFilter = div('filter tags', [`Filter based on tags (${ctrlKey}+click to select multiple):`, tagsSelect, resetTagsButton]);
+		let tagInput = tagSelector(filters.tags);
+		let tagsFilter = div('filter tags', ['Only show maps with these BeatSaver tags:', tagInput.dom]);
 
 		let validateData = () => {
 			scoreFrom.value = +scoreFrom.value || 0;
@@ -568,17 +731,12 @@
 			scoreFrom, scoreTo,
 			starsFrom, starsTo,
 		].map(autosizeInput));
-		hiddenMapsSelect.addEventListener('change', () => {
-			hiddenMapsRemoveButton.disabled = !hiddenMapsSelect.selectedOptions.length;
-		});
+		hiddenMapsSelect.addEventListener('change', () => hiddenMapsRemoveButton.disabled = !hiddenMapsSelect.selectedOptions.length);
 		hiddenMapsRemoveButton.addEventListener('click', () => {
 			let index = hiddenMapsSelect.selectedIndex;
 			[...hiddenMapsSelect.selectedOptions].forEach(option => hiddenMapsSelect.removeChild(option));
 			hiddenMapsSelect.selectedIndex = Math.min(index, hiddenMapsSelect.length - 1);
 			// hiddenMapsSelect.focus();
-		});
-		resetTagsButton.addEventListener('click', () => {
-			[...tagsSelect.options].forEach(opt => opt.selected = false);
 		});
 		buttonOk.addEventListener('click', () => {
 			validateData();
@@ -588,7 +746,7 @@
 				starsFrom: +starsFrom.value,
 				starsTo: +starsTo.value,
 				hiddenMaps: [...hiddenMapsSelect.options].map(opt => +opt.value),
-				tags: [...tagsSelect.selectedOptions].map(opt => opt.value)
+				tags: tagInput.value
 			});
 		});
 		buttonCancel.addEventListener('click', () => finish(null));
@@ -602,6 +760,7 @@
 		content.append(title, scroller, buttons);
 		container.append(content);
 		document.body.append(container);
+		setFocusIn(container);
 		return promise;
 	}
 
@@ -866,7 +1025,7 @@
 		let selectedMaps = span(null, 'selection');
 		let gain = span(null, '0pp');
 		let estimateLine = div('line pp', ['Estimated PP gain for ', selectedMaps, ': ', gain]);
-		let oneClickWarningLine = div('playlist warning', ['Warning: too many maps - OneClick™ will likely not work']);
+		let oneClickWarningLine = div('playlist warning', ['Warning: too many maps - OneClick™ will likely not work (you can still download the .bplist)']);
 
 		let update = () => {
 			let title = titleInput.value.trim() || options.title || '';
@@ -1681,7 +1840,7 @@
 		}
 
 		createPlaylist() {
-			return playlistDownloadModal(this.elements.filter(this.filter), this.getPlaylistName());
+			return playlistDownloadModal(this.getFilteredElements(), this.getPlaylistName());
 		}
 
 		changeMethod(method) {
@@ -1952,12 +2111,28 @@
 			if (el.stars < filters.starsFrom || el.stars > filters.starsTo) {
 				return false;
 			}
-			if (filters.tags && filters.tags.length) {
-				if (!filters.tags.some(tag => el.tags && el.tags.includes(tag))) {
+			if (this.selectedTagsPerType) {
+				if (!this.selectedTagsPerType.every(type => type.some(tag => el.tags?.includes(tag.slug)))) {
 					return false;
 				}
 			}
 			return true;
+		}
+
+		getFilteredElements() {
+			if (filters.tags?.length) {
+				// Here to avoid doing it for every element
+				this.selectedTagsPerType = Object.values(
+					filters.tags.reduce((o, e) => {
+						o[e.type] = o[e.type] || [];
+						o[e.type].push(e);
+						return o;
+					}, {})
+				);
+			} else {
+				this.selectedTagsPerType = null;
+			}
+			return this.elements.filter(this.filter);
 		}
 
 		refresh() {
@@ -1966,7 +2141,7 @@
 			}
 			let sort = this.method.sort || this.defaultSort;
 			this.elements = sort(this.elements);
-			this.elements.filter(this.filter).slice(0, this.displayed).forEach((el, i) => {
+			this.getFilteredElements().slice(0, this.displayed).forEach((el, i) => {
 				if (!el.markup) {
 					this.createMarkup(el);
 				}

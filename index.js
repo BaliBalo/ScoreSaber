@@ -105,7 +105,6 @@ app.get('/custom-playlist/:filename', async (req, res) => {
 	if (req.query.t) {
 		pl.title = req.query.t;
 	}
-	// let list = [];
 	if (req.query.s) {
 		pl.setSongsFromHashes(req.query.s.split('.').filter(e => e));
 	} else if (req.query.i) {
