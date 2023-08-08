@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
-const request = require('request-promise-native');
 const { timetag, promiseMapSequence } = require('../utils');
+const getJSON = require('../utils/getJSON');
 const factorization = require('./factorization');
 
 const dataFolder = path.resolve(__dirname, '../data');
@@ -12,14 +12,14 @@ async function pause(duration) {
 
 async function getMaps() {
 	// Temp get it through request - use utils/ranked once live
-	const result = await request({ uri: 'https://scoresaber.balibalo.xyz/ranked', json: true });
+	const result = await getJSON('https://scoresaber.balibalo.xyz/ranked');
 	return result.list.sort((a, b) => b.stars - a.stars).map(e => e.uid);
 }
 async function getPlayers() {
 	// 200 users (page 1 to 4)
 	let users = [];
 	for (let page = 1; page <= 4; page++) {
-		const result = await request({ uri: 'https://new.scoresaber.com/api/players/' + page, json: true });
+		const result = await getJSON('https://scoresaber.com/api/players/' + page);
 		users = users.concat(result.map(e => e.playerid));
 		await pause(100);
 	}
@@ -28,7 +28,7 @@ async function getPlayers() {
 
 const getPlayerScores = (() => {
 	async function getAllScores(id, page = 1, scores = []) {
-		const result = await request({ uri: 'https://new.scoresaber.com/api/player/' + id + '/scores/top/' + page, json: true });
+		const result = await getJSON('https://scoresaber.com/api/player/' + id + '/scores/top/' + page);
 		const pageScores = result.scores;
 		scores = scores.concat(pageScores);
 		if (pageScores.length && pageScores[pageScores.length - 1].pp) {
@@ -101,7 +101,7 @@ async function getData() {
 			usersFeatures = result.usersFeatures;
 		}
 		// console.log(timetag(), 'End');
-	} catch(e) {
+	} catch (e) {
 		console.log('ERROR RUNNING ML STUFF', e);
 	}
 })();

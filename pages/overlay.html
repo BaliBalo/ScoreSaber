@@ -285,19 +285,15 @@
 			}
 			refreshingUser = true;
 			try {
-				let doc = await fetchHTML('/proxy/u/' + playerID);
-				let data = doc.querySelector('.columns ul');
-				let countryData = data.children[0].querySelector('a[href*=country]');
-				dom.pp.textContent = getNumber(data.children[1].textContent).toLocaleString() + 'pp';
-				dom.playerRank.textContent = '#' + getNumber(data.children[0].textContent).toLocaleString();
-				dom.playerCountryRank.textContent = '#' + getNumber(countryData.textContent).toLocaleString();
-				dom.playerCountryRank.style.backgroundImage = 'url("https://scoresaber.com' + countryData.querySelector('img').getAttribute('src') + '")';
-				let image = doc.querySelector('.avatar img').getAttribute('src');
-				if (image[0] === '/') {
-					image = 'https://scoresaber.com' + image;
-				}
-				dom.playerImage.src = image;
-			} catch(e) { console.log('err', e); }
+				let data = await scoresaberAPI('/player/' + playerID + '/full');
+				dom.pp.textContent = (data.pp || 0).toLocaleString() + 'pp';
+				dom.playerRank.textContent = '#' + (data.rank || 0).toLocaleString();
+				dom.playerCountryRank.textContent = '#' + (data.countryRank || 0).toLocaleString();
+				let countryCodePoints = [...data.country.toLowerCase()].map(c => (c.codePointAt(0) + 127365).toString(16));
+				let countryFlag = 'https://twemoji.maxcdn.com/v/13.1.0/svg/' + countryCodePoints.join('-') + '.svg';
+				dom.playerCountryRank.style.backgroundImage = 'url("' + countryFlag + '")';
+				dom.playerImage.src = data.profilePicture;
+			} catch (e) { console.log('err', e); }
 			refreshingUser = false;
 		}
 		refreshUser();

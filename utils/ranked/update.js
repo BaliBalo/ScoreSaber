@@ -7,7 +7,7 @@ try {
 	if (!fs.existsSync(lastUpdateFile)) {
 		fs.closeSync(fs.openSync(lastUpdateFile, 'w'));
 	}
-} catch(e) {
+} catch (e) {
 	console.log('Error creating last update file', e);
 }
 
@@ -22,7 +22,7 @@ function removeListener(fn) {
 }
 function callListeners() {
 	listeners.forEach(fn => {
-		try { fn(); } catch(e) {}
+		try { fn(); } catch (e) {}
 	});
 }
 
@@ -35,14 +35,14 @@ async function setTime(time) {
 			time /= 1000;
 		}
 		await fs.promises.utimes(lastUpdateFile, time, time);
-	} catch(e) {}
+	} catch (e) {}
 	callListeners();
 }
 async function getTime() {
 	try {
 		let data = await fs.promises.stat(lastUpdateFile);
 		return data.mtimeMs;
-	} catch(e) {}
+	} catch (e) {}
 	// If the time can't be read from the file, assume the last update is now
 	return Date.now();
 }

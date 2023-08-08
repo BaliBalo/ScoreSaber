@@ -5,7 +5,7 @@ const util = require('util');
 const { fork } = require('child_process');
 const { minify } = require('terser');
 const sass = util.promisify(require('node-sass').render);
-const glob = util.promisify(require('glob'));
+const { glob } = require('glob');
 
 async function compileJS(file) {
 	try {

@@ -111,7 +111,7 @@
 					if (typeof element.action === 'function') {
 						try {
 							element.action(e, element);
-						} catch(e) {}
+						} catch (e) {}
 					}
 				});
 			}

@@ -33,7 +33,7 @@ async function addNew(songsRaw) {
 	try {
 		let beatsaverCache = {};
 		await promiseSequence(songs, song => beatsaver.addData(song, beatsaverCache));
-	} catch(e) {}
+	} catch (e) {}
 	songs = songs.filter(e => e?.beatSaverKey);
 	if (songs.length) {
 		await ranked.insert(songs);
@@ -51,7 +51,7 @@ async function checkFromPage(page, log) {
 	let data;
 	try {
 		data = await scoresaber.recentRanks(page, ~~(Date.now() / 3600000));
-	} catch(e) {}
+	} catch (e) {}
 	if (!data?.leaderboards?.length) {
 		return;
 	}
@@ -67,7 +67,7 @@ async function checkFull(page, log) {
 	let data;
 	try {
 		data = await scoresaber.ranked(page);
-	} catch(e) {}
+	} catch (e) {}
 	if (!data?.leaderboards?.length) {
 		return;
 	}

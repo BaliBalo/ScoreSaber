@@ -1,9 +1,9 @@
 const fs = require('fs');
 const path = require('path');
 const express = require('express');
+const { Readable } = require('stream');
 const rateLimit = require('express-rate-limit');
 const cookieParser = require('cookie-parser');
-const request = require('request');
 const CronJob = require('cron').CronJob;
 const { timetag } = require('./utils');
 const auth = require('./utils/auth');
@@ -36,14 +36,11 @@ let serveStaticFiles = express.static('client', { extensions: ['html'], cacheCon
 app.use(['/client'], serveStaticFiles);
 app.get(['/favicon.ico', '/robots.txt'], serveStaticFiles);
 // Proxy requests (to avoid front-end cross-origin requests issues)
-const proxy = base => (req, res) => {
-	let srcStream = req.pipe(request(base + req.url));
-	srcStream.on('error', error => {
-		res.status(502).send(error.message);
-	});
-	return srcStream.pipe(res);
+const proxy = base => async (req, res) => {
+	const response = await fetch(base + req.url);
+	res.status(response.status);
+	Readable.fromWeb(response.body).pipe(res);
 };
-app.use('/proxy', proxy('https://old.scoresaber.com'));
 app.use('/scoresaber-api', proxy('https://scoresaber.com/api'));
 
 // Custom urls - if string, makes a client file available at root

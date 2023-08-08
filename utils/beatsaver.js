@@ -1,18 +1,13 @@
-/* eslint-disable require-atomic-updates */
-const request = require('request-promise-native');
 const { timetag } = require('../utils');
+const getJSON = require('../utils/getJSON');
 
 const wait = ms => new Promise(r => setTimeout(r, ms));
 
 async function beatsaverData(hash, retries = 2) {
 	try {
 		await wait(100);
-		return await request({
-			uri: 'https://api.beatsaver.com/maps/hash/' + hash,
-			json: true,
-			headers: { 'User-Agent': 'Peepee/1.0.0' }
-		});
-	} catch(err) {
+		return await getJSON('https://api.beatsaver.com/maps/hash/' + hash);
+	} catch (err) {
 		if (err.statusCode !== 404 && retries && retries > 0) {
 			await wait(3000);
 			return beatsaverData(hash, retries - 1);
@@ -38,7 +33,7 @@ async function addData(item, cache) {
 			getter = beatsaverData(hash);
 		}
 		song = await getter;
-	} catch(e) {
+	} catch (e) {
 		// delete e.response;
 		// console.log('(beatsaver error)', e);
 	}

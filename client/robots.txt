@@ -1,6 +1,6 @@
 User-agent: *
 Disallow: /admin/
-Disallow: /proxy/
+Disallow: /scoresaber-api/
 Disallow: /ranked
 Disallow: /top200
 Allow: /

@@ -2,7 +2,7 @@
 // cat=1 : ordered by rank date
 // cat=3 : order by star diff
 
-const request = require('request-promise-native');
+const getJSON = require('./getJSON');
 const wait = ms => new Promise(r => setTimeout(r, ms));
 
 const SORT_METHOD_STARS = 3;
@@ -12,13 +12,10 @@ const SORT_ORDER_DESCENDING = 0;
 
 async function _scoreSaberRequest(path, query, retries = 2) {
 	try {
-		return request({
-			baseUrl: 'https://scoresaber.com/api/',
-			url: path,
-			qs: query,
-			json: true
-		});
-	} catch(e) {
+		const url = new URL(path, 'https://scoresaber.com/api/');
+		url.search = new URLSearchParams(query);
+		return await getJSON(url);
+	} catch (e) {
 		if (retries && retries > 0) {
 			await wait(3000);
 			return _scoreSaberRequest(path, retries - 1);
@@ -29,7 +26,7 @@ async function _scoreSaberRequest(path, query, retries = 2) {
 const scoreSaberRequest = async (path, query) => _scoreSaberRequest(path, query);
 
 const rankedLeaderboards = (sortMethod = SORT_METHOD_STARS, sortOrder = SORT_ORDER_DESCENDING, page) => (
-	scoreSaberRequest('/leaderboards', {
+	scoreSaberRequest('leaderboards', {
 		ranked: true,
 		category: sortMethod,
 		sort: sortOrder,
