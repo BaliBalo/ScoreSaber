@@ -2134,12 +2134,11 @@
 		}
 
 		refresh() {
-			while (this.content.firstChild) {
-				this.content.removeChild(this.content.firstChild);
-			}
+			this.content.innerHTML = '';
 			let sort = this.method.sort || this.defaultSort;
 			this.elements = sort(this.elements);
-			this.getFilteredElements().slice(0, this.displayed).forEach((el, i) => {
+			const filtered = this.getFilteredElements();
+			filtered.slice(0, this.displayed).forEach((el, i) => {
 				if (!el.markup) {
 					this.createMarkup(el);
 				}
@@ -2152,6 +2151,17 @@
 				el._nameAndArtist.setAttribute('data-position', i + 1);
 				this.content.appendChild(el.markup);
 			});
+			if (this.displayed >= filtered.length && filtered.length !== this.elements.length) {
+				const amount = this.elements.length - filtered.length;
+				const editFiltersButton = create('button', '', 'Edit your filters');
+				editFiltersButton.addEventListener('click', editFilters);
+				const warning = div('warning', [
+					`${amount} element${amount !== 1 ? 's have' : ' has'} been hidden from this list. `,
+					editFiltersButton,
+					' to show more.',
+				]);
+				this.content.appendChild(warning);
+			}
 		}
 	}
 
@@ -2237,13 +2247,14 @@
 		document.body.classList.remove('step-results');
 	});
 	document.getElementById('refresh').addEventListener('click', refresh);
-	document.getElementById('show-filters').addEventListener('click', async () => {
+	async function editFilters() {
 		let newFilters = await editFiltersModal(filters);
 		if (!newFilters) {
 			return;
 		}
 		updateFilters(newFilters);
-	});
+	}
+	document.getElementById('show-filters').addEventListener('click', editFilters);
 	document.getElementById('export-curve').addEventListener('click', () => {
 		let c = document.createElement('canvas');
 		c.width = 800;
