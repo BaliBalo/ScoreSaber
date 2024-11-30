@@ -2,7 +2,7 @@
 
 // TODO: split this file...
 
-(async function() {
+(async function () {
 	document.body.classList.add('js-loaded');
 
 	const scoresaberRLDelay = 200;
@@ -10,7 +10,7 @@
 	const LEADERBOARD_SCORES_PER_PAGE = 12;
 	const PLAYERS_PER_PAGE = 50;
 	const PP_DECAY = .965;
-	const PAUSE_UPDATE = 'PAUSE_UPDATE';
+	const PAUSE_UPDATE = Symbol('pause');
 	const ppCurve = [
 		{ at: 0, value: 0 },
 		{ at: 0.6, value: 0.18223233667439062 },
@@ -114,9 +114,19 @@
 	function round(n, p = 0) {
 		return n.toFixed(p).replace(/\.?0*$/, '');
 	}
-	function clamp(n, m, M) { return n < m ? m : n > M ? M : n; }
-	function lerp(p, a, b) { return a + p * (b - a); }
-	function ilerp(v, a, b) { return clamp((v - a) / (b - a), 0, 1); }
+	function clamp(n, m, M) {
+		return n < m ? m : n > M ? M : n;
+	}
+	function lerp(p, a, b) {
+		return a + p * (b - a);
+	}
+	function ilerp(v, a, b, limit) {
+		const r = (v - a) / (b - a);
+		return limit ? clamp(r, 0, 1) : r;
+	}
+	function scale(v, fromMin, fromMax, toMin, toMax) {
+		return lerp(ilerp(v, fromMin, fromMax), toMin, toMax);
+	}
 
 	function pad2(n) {
 		return ('0' + n).slice(-2);
@@ -129,7 +139,7 @@
 		}
 		return datePart + ' ' + timePart;
 	}
-	const dateDistance = (function() {
+	const dateDistance = (() => {
 		const SECOND = 1000;
 		const MINUTE = 60 * SECOND;
 		const HOUR = 60 * MINUTE;
@@ -359,20 +369,19 @@
 		}
 		let index = points.findIndex(o => o.at >= pos);
 		if (index === -1) {
-			return points[points.length - 1].value;
+			return points.at(-1).value;
 		}
 		if (!index) {
-			return points[0].value;
+			return points.at(0).value;
 		}
 		let from = points[index - 1];
 		let to = points[index];
-		let progress = (pos - from.at) / (to.at - from.at);
-		return from.value + (to.value - from.value) * progress;
+		return scale(pos, from.at, to.at, from.value, to.value);
 	}
 
 	try {
 		WebFont.load({ custom: { families: ['NeonTubes'] } });
-	} catch (e) {}
+	} catch { /* Nothing */ }
 
 	let userForm = document.getElementById('user');
 	let profileInput = document.getElementById('profile');
@@ -384,11 +393,11 @@
 		if (Array.isArray(savedHistory)) {
 			history = savedHistory;
 		}
-	} catch (e) { /* Nothing */ }
+	} catch { /* Nothing */ }
 	let $history = document.querySelector('.history');
 	function refreshHistory() {
 		$history.innerHTML = '';
-		history.slice(0, 5).forEach(user => {
+		history.slice(0, 5).forEach((user) => {
 			if (!user || !user.avatar || user.rank == null || user.name == null) {
 				return;
 			}
@@ -401,7 +410,7 @@
 				onSubmit();
 			});
 			let avatar = div('avatar');
-			avatar.style.backgroundImage = 'url('+user.avatar+')';
+			avatar.style.backgroundImage = `url(${user.avatar})`;
 			line.appendChild(avatar);
 			line.appendChild(div('rank', user.rank.toLocaleString()));
 			line.appendChild(div('name', user.name));
@@ -414,7 +423,7 @@
 		history = history.slice(0, 5);
 		try {
 			localStorage.setItem('history', JSON.stringify(history));
-		} catch (e) { /* Nothing */ }
+		} catch { /* Nothing */ }
 		refreshHistory();
 	}
 	refreshHistory();
@@ -459,14 +468,14 @@
 			let saved = filtersFromString(localStorage.getItem('peepee-filters'));
 			Object.assign(filters, saved);
 			sanitizeFilters();
-		} catch (e) {}
+		} catch { /* Nothing */ }
 	}
 	loadFilters();
 	async function updateFilters(newFilters) {
 		filters = newFilters;
 		try {
 			localStorage.setItem('peepee-filters', stringifyFilters(newFilters));
-		} catch (e) {}
+		} catch { /* Nothing */ }
 		// updateLists(await rankedMapsPromise, playerSongs);
 		played.refresh();
 		unplayed.refresh();
@@ -534,7 +543,7 @@
 		} while (parent.parentNode && parent.parentNode !== document);
 
 		let resizeObserver = new ResizeObserver(update);
-		ancestors.forEach(ancestor => {
+		ancestors.forEach((ancestor) => {
 			ancestor.addEventListener('scroll', update, { passive: true });
 			if (ancestor !== window) {
 				resizeObserver.observe(ancestor);
@@ -565,10 +574,10 @@
 
 		let update = () => {
 			selectionWrapper.innerHTML = '';
-			selectionWrapper.append(...values.map(value => {
+			selectionWrapper.append(...values.map((value) => {
 				let removeButton = create('button', 'remove', '×');
 				let tag = div(`tag type-${value.type}`, [value.name, removeButton]);
-				removeButton.addEventListener('click', e => {
+				removeButton.addEventListener('click', (e) => {
 					e.preventDefault();
 					e.stopPropagation();
 					values = values.filter(v => v !== value);
@@ -600,7 +609,7 @@
 			}).filter(e => e));
 		};
 		input.addEventListener('input', updateSuggestions);
-		input.addEventListener('keydown', e => {
+		input.addEventListener('keydown', (e) => {
 			if (e.ctrlKey || e.shiftKey || e.altKey || e.metaKey) {
 				return;
 			}
@@ -640,7 +649,7 @@
 		document.body.append(suggestions);
 
 		let suggestionsAnchor;
-		let observer = new MutationObserver(() =>  {
+		let observer = new MutationObserver(() => {
 			if (document.contains(wrapper)) {
 				suggestionsAnchor = anchorTop(suggestions, wrapper);
 				observer.disconnect();
@@ -654,7 +663,10 @@
 		return {
 			dom: wrapper,
 			get value() { return values; },
-			set value(v) { values = v; update(); },
+			set value(v) {
+				values = v;
+				update();
+			},
 			dispose: () => {
 				observer?.disconnect();
 				suggestionsAnchor?.stop();
@@ -701,7 +713,7 @@
 		let starsTo = textInput(null, filters.starsTo);
 		let starsFilter = div('filter stars', ['Only show maps if their ★ difficulty is between ', starsFrom, ' and ', starsTo]);
 
-		let hiddenMapsSelect = create('select', null, filters.hiddenMaps.map(hiddenMap => {
+		let hiddenMapsSelect = create('select', null, filters.hiddenMaps.map((hiddenMap) => {
 			let map = rankedMaps[hiddenMap];
 			if (!map) {
 				return;
@@ -753,7 +765,7 @@
 			});
 		});
 		buttonCancel.addEventListener('click', () => finish(null));
-		container.addEventListener('click', e => {
+		container.addEventListener('click', (e) => {
 			if (!content.contains(e.target)) {
 				finish(null);
 			}
@@ -774,15 +786,15 @@
 			if (Array.isArray(saved)) {
 				customCurve = saved;
 			}
-		} catch (e) {}
+		} catch { /* Nothing */ }
 	}
 	loadCustomCurve();
 	async function updateCustomCurve(curve) {
 		customCurve = curve;
 		try {
 			localStorage.setItem('peepee-custom-curve', JSON.stringify(curve));
-		} catch (e) {}
-		[played, unplayed].forEach(list => {
+		} catch { /* Nothing */ }
+		[played, unplayed].forEach((list) => {
 			if (list.method instanceof SortCustomCurve) {
 				list.update();
 			}
@@ -826,18 +838,14 @@
 		let maxStars = 15;
 		let selectedPoint = null;
 		let grabbed = false;
-		let pixelFromPoint = point => {
-			return {
-				x: lerp(point.at / maxStars, marginX, canvas.width),
-				y: lerp(point.value / maxPercentage, canvas.height - marginY, 0)
-			};
-		};
-		let pointFromPixel = pixel => {
-			return {
-				at: maxStars * ilerp(pixel.x, marginX, canvas.width),
-				value: maxPercentage * ilerp(pixel.y, canvas.height - marginY, 0)
-			};
-		};
+		let pixelFromPoint = point => ({
+			x: lerp(point.at / maxStars, marginX, canvas.width),
+			y: lerp(point.value / maxPercentage, canvas.height - marginY, 0)
+		});
+		let pointFromPixel = pixel => ({
+			at: maxStars * ilerp(pixel.x, marginX, canvas.width, true),
+			value: maxPercentage * ilerp(pixel.y, canvas.height - marginY, 0, true)
+		});
 
 		let draw = () => {
 			updateEstCurve(ctx, {
@@ -852,7 +860,7 @@
 				ctx.beginPath();
 				let firstPos = pixelFromPoint({ at: 0, value: curve[0].value });
 				ctx.moveTo(firstPos.x, firstPos.y);
-				curve.forEach(point => {
+				curve.forEach((point) => {
 					let pos = pixelFromPoint(point);
 					ctx.lineTo(pos.x, pos.y);
 				});
@@ -861,7 +869,7 @@
 				ctx.stroke();
 				ctx.fillStyle = 'rgba(20, 250, 120, 1)';
 				ctx.strokeStyle = 'rgba(20, 250, 120, 1)';
-				curve.forEach(point => {
+				curve.forEach((point) => {
 					let pos = pixelFromPoint(point);
 					ctx.fillRect(pos.x - 3, pos.y - 3, 6, 6);
 					if (point === selectedPoint) {
@@ -877,7 +885,7 @@
 		let updatePoints = () => {
 			curve.sort((a, b) => a.at - b.at);
 			pointsDetails.innerHTML = '';
-			curve.forEach(point => {
+			curve.forEach((point) => {
 				let elem = div('point');
 				let at = div('at', [span('label', 'At: '), span('value', round(point.at, 2) + '★')]);
 				let score = div('score', [span('label', 'Score: '), span('value', round(100 * point.value, 2) + '%')]);
@@ -886,7 +894,7 @@
 			});
 		};
 
-		let onMouseMove = e => {
+		let onMouseMove = (e) => {
 			if (!curve.length) {
 				return;
 			}
@@ -901,7 +909,7 @@
 				draw();
 				return;
 			}
-			let distances = curve.map(point => {
+			let distances = curve.map((point) => {
 				let px = pixelFromPoint(point);
 				let dx = x - px.x;
 				let dy = y - px.y;
@@ -916,7 +924,7 @@
 		};
 		document.addEventListener('mousemove', onMouseMove);
 
-		canvas.addEventListener('mousedown', e => {
+		canvas.addEventListener('mousedown', (e) => {
 			e.preventDefault();
 			if (e.button === 2) {
 				curve = curve.filter(p => p !== selectedPoint);
@@ -949,7 +957,7 @@
 
 		buttonOk.addEventListener('click', () => finish(curve));
 		buttonCancel.addEventListener('click', () => finish(null));
-		container.addEventListener('click', e => {
+		container.addEventListener('click', (e) => {
 			if (!content.contains(e.target)) {
 				finish(null);
 			}
@@ -990,7 +998,7 @@
 				titleAutosize.stop();
 				countAutosize.stop();
 				offsetAutosize.stop();
-			} catch (e) {}
+			} catch { /* Nothing */ }
 			document.body.removeChild(container);
 		};
 		let finish = (data) => {
@@ -1077,7 +1085,7 @@
 		offset.addEventListener('input', update);
 		update();
 		buttonDone.addEventListener('click', () => finish(null));
-		container.addEventListener('click', e => {
+		container.addEventListener('click', (e) => {
 			if (!content.contains(e.target)) {
 				finish(null);
 			}
@@ -1115,7 +1123,7 @@
 				if (data) {
 					return data;
 				}
-			} catch (e) { }
+			} catch { /* Nothing */ }
 		}
 		let user = await getUserData(id);
 		if (typeof options.onUserInfo === 'function') {
@@ -1148,7 +1156,7 @@
 		if (options.useCache) {
 			try {
 				localStorage.setItem('cached-' + id, JSON.stringify({ user, scores }));
-			} catch (e) { }
+			} catch { /* Nothing */ }
 		}
 		return { user, scores, rawScores };
 	}
@@ -1202,14 +1210,14 @@
 			pushToHistory(user);
 			fullPP = getFullPPWithUpdate(0, 0);
 			updatePlayerProfile();
-		} catch (e) { /* Nothing */ }
+		} catch { /* Nothing */ }
 		// Also update the list of ranked maps
 		let newRankedRequest = fetchRanked(new Date(rankedMapsUpdate));
 		try {
 			// If the request fails, just keep the previous data
 			await newRankedRequest;
 			rankedMapsPromise = newRankedRequest;
-		} catch (e) {}
+		} catch { /* Nothing */ }
 		let rankedMapsData = await rankedMapsPromise;
 		updateLists(rankedMapsData, playerSongs);
 		document.body.classList.remove('refreshing');
@@ -1345,7 +1353,7 @@
 		ctx.stroke();
 		ctx.fillStyle = options.playerSongsColor || 'rgba(120, 10, 0, .9)';
 		ctx.globalCompositeOperation = 'lighter';
-		Object.values(playerSongs).forEach(song => {
+		Object.values(playerSongs).forEach((song) => {
 			let x = marginX + (song.stars / maxStars) * (c.width - marginX);
 			let y = (c.height - marginY) * (1 - song.score / maxPercentage);
 			ctx.fillRect(x - 1, y - 1, 2, 2);
@@ -1382,12 +1390,12 @@
 		median: document.querySelector('.player .stats .median'),
 	};
 	function updatePlayerProfile() {
-		$profile.avatar.style.backgroundImage = 'url('+user.avatar+')';
+		$profile.avatar.style.backgroundImage = `url(${user.avatar})`;
 		let countryCodePoints = [...user.country.toLowerCase()].map(c => (c.codePointAt(0) + 127365).toString(16));
-		let countryFlag = 'https://twemoji.maxcdn.com/v/13.1.0/svg/' + countryCodePoints.join('-') + '.svg';
-		$profile.flag.style.backgroundImage = 'url('+countryFlag+')';
+		let countryFlag = `https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/${countryCodePoints.join('-')}.svg`;
+		$profile.flag.style.backgroundImage = `url(${countryFlag})`;
 		$profile.name.textContent = user.name;
-		$profile.name.href = 'https://scoresaber.com/u/' + user.id;
+		$profile.name.href = `https://scoresaber.com/u/${user.id}`;
 		$profile.rank.textContent = user.rank.toLocaleString();
 		$profile.pp.textContent = user.pp.toLocaleString();
 		let ranks = Object.values(playerSongs).map(e => e.rank).sort((a, b) => a - b);
@@ -1445,7 +1453,10 @@
 
 		createOptionsMarkup() {
 			let rankForm = create('form', 'rank-form');
-			rankForm.addEventListener('submit', e => { e.preventDefault(); this.triggerUpdate(); });
+			rankForm.addEventListener('submit', (e) => {
+				e.preventDefault();
+				this.triggerUpdate();
+			});
 			this.rankInput = create('input', 'rank-input');
 			this.rankInput.type = 'text';
 			this.rankInput.placeholder = (user.rank || 1).toLocaleString() + ' (desired rank)';
@@ -1458,6 +1469,7 @@
 			rankForm.appendChild(submit);
 			return rankForm;
 		}
+
 		onShow() { this.rankInput.tabIndex = 0; }
 		onHide() { this.rankInput.tabIndex = -1; }
 
@@ -1496,7 +1508,6 @@
 					rankScoreCheckCount++;
 					usePause = true;
 				}
-				// eslint-disable-next-line require-atomic-updates
 				element[key] = score;
 			}
 			if (isCanceled()) {
@@ -1634,6 +1645,7 @@
 			compareForm.appendChild(submit);
 			return compareForm;
 		}
+
 		onShow() { this.compareInput.tabIndex = this.autoButton.tabIndex = 0; }
 		onHide() { this.compareInput.tabIndex = this.autoButton.tabIndex = -1; }
 
@@ -1648,7 +1660,8 @@
 				let result = await compareCache[this.userId];
 				this.user = result.user;
 				this.scores = result.scores;
-			} catch (e) {
+			} catch (err) {
+				console.log('Cannot get comparison data', err);
 				this.user = {};
 				this.scores = {};
 			}
@@ -1688,6 +1701,7 @@
 			fixedForm.appendChild(submit);
 			return fixedForm;
 		}
+
 		onShow() { this.fixedInput.tabIndex = 0; }
 		onHide() { this.fixedInput.tabIndex = -1; }
 
@@ -1725,6 +1739,7 @@
 			this.editButton = editButton;
 			return container;
 		}
+
 		onShow() { this.editButton.tabIndex = 0; }
 		onHide() { this.editButton.tabIndex = -1; }
 
@@ -1779,7 +1794,7 @@
 			this.mapCount = span('selection-map-count', '0 maps');
 			let selectionTooltipClear = create('button', 'selection-clear', 'clear');
 			selectionTooltipClear.onclick = this.clearSelection.bind(this);
-			selectionTooltipFirstLine.append('Selection: ', this.mapCount, ' (',  selectionTooltipClear,')');
+			selectionTooltipFirstLine.append('Selection: ', this.mapCount, ' (', selectionTooltipClear, ')');
 			this.selectionTooltip.appendChild(selectionTooltipFirstLine);
 			this.selectionTooltipPP = div('line', '+0.00pp');
 			this.selectionTooltip.appendChild(this.selectionTooltipPP);
@@ -1814,7 +1829,7 @@
 			});
 			method.appendChild(unpause);
 			methodWrapper.appendChild(method);
-			this.methods.forEach(method => {
+			this.methods.forEach((method) => {
 				let markup = method.createOptionsMarkup();
 				if (markup) {
 					methodWrapper.appendChild(markup);
@@ -1972,7 +1987,7 @@
 
 			let left = div('list-element-content-left');
 			let pic = div('list-element-pic');
-			pic.style.backgroundImage = 'url(https://cdn.scoresaber.com/covers/'+element.id+'.png)';
+			pic.style.backgroundImage = `url(https://cdn.scoresaber.com/covers/${element.id}.png)`;
 			left.appendChild(pic);
 			let nameGroup = div('list-element-name-group');
 			let nameAndArtist = div('list-element-name-and-artist');
@@ -2237,7 +2252,6 @@
 			console.error(err);
 			triggerAnimation(userForm, 'invalid');
 		}
-		// eslint-disable-next-line require-atomic-updates
 		profileInput.disabled = false;
 		userForm.classList.remove('loading');
 	}
@@ -2246,7 +2260,9 @@
 	profileInput.addEventListener('focus', () => profileInput.select());
 
 	let $helpCheckbox = document.getElementById('show-help');
-	function toggleHelp() { $helpCheckbox.checked = !$helpCheckbox.checked; }
+	function toggleHelp() {
+		$helpCheckbox.checked = !$helpCheckbox.checked;
+	}
 	document.getElementById('back').addEventListener('click', () => {
 		profileInput.value = '';
 		document.body.classList.remove('step-results');

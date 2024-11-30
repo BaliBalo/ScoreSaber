@@ -102,7 +102,7 @@ body { font-family: "Comic Sans MS", "Comic Sans", cursive; font-size: 20px; fon
 			action: (e) => {
 				let initX = e.pageX || 0;
 				let initY = e.pageY || 0;
-				let trail = ['👌','👀','✔','💯','🔥','🍆','💦','👁','👅','👁'].map((e, i) => {
+				let trail = ['👌', '👀', '✔', '💯', '🔥', '🍆', '💦', '👁', '👅', '👁'].map((e, i) => {
 					let dom = document.createElement('div');
 					dom.className = 'trail';
 					dom.textContent = e;
@@ -116,7 +116,7 @@ body { font-family: "Comic Sans MS", "Comic Sans", cursive; font-size: 20px; fon
 					};
 				});
 				let mouse = { x: initX, y: initY };
-				document.body.addEventListener('mousemove', e => {
+				document.body.addEventListener('mousemove', (e) => {
 					mouse.x = e.pageX;
 					mouse.y = e.pageY;
 				});

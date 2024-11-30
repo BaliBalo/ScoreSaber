@@ -1,4 +1,4 @@
-const pad2 = v => ('0'+v).slice(-2);
+const pad2 = v => ('0' + v).slice(-2);
 
 const timetag = (d = new Date()) => {
 	let date = [d.getDate(), d.getMonth() + 1, d.getYear() % 100].map(pad2).join('/');

@@ -7,7 +7,7 @@ async function getDataFromPage(page, list = []) {
 	let data;
 	try {
 		data = await scoresaber.ranked(page, ~~(Date.now() / 3600000));
-	} catch (e) {}
+	} catch { /* ignore */ }
 	if (!data?.leaderboards) {
 		return;
 	}

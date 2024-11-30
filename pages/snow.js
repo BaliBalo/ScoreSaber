@@ -1,4 +1,4 @@
-(function() {
+(function () {
 	let c = document.createElement('canvas');
 	let ctx = c.getContext('2d');
 	let particles = [];
@@ -8,7 +8,7 @@
 		let interval = .2;
 		return {
 			setInterval: v => interval = v || 1,
-			tick: dt => {
+			tick: (dt) => {
 				last += dt || 0;
 				while (last >= interval) {
 					let colorMix = Math.random() * .7;

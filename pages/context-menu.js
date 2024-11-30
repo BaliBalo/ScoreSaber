@@ -59,14 +59,14 @@
 		$wrapper = div('context-menu--wrapper');
 
 		let $modal = div('context-menu--modal');
-		$modal.addEventListener('mousedown', e => {
+		$modal.addEventListener('mousedown', (e) => {
 			e.preventDefault();
 			hide();
 		});
 		$wrapper.appendChild($modal);
 
 		$menu = div('context-menu--menu');
-		$menu.addEventListener('mousedown', e => {
+		$menu.addEventListener('mousedown', (e) => {
 			if (e.button === 2) {
 				e.preventDefault();
 				hide(e);
@@ -90,7 +90,7 @@
 		if ($wrapper.classList.contains('context-menu--shown')) {
 			return;
 		}
-		let $elements = elements.map(element => {
+		let $elements = elements.map((element) => {
 			if (element.separator) {
 				return div('context-menu--sep');
 			}
@@ -104,14 +104,16 @@
 			if (element.disabled) {
 				$element.classList.add('context-menu--disabled');
 			} else {
-				$element.addEventListener('click', e => {
+				$element.addEventListener('click', (e) => {
 					if (element.hideOnClick || element.hideOnClick === undefined) {
 						hide();
 					}
 					if (typeof element.action === 'function') {
 						try {
 							element.action(e, element);
-						} catch (e) {}
+						} catch (err) {
+							console.log('Error in context menu action', err);
+						}
 					}
 				});
 			}

@@ -50,7 +50,7 @@
 		list: $('.preview .list'),
 	};
 	let diffContainer = $('.difficulties');
-	difficulties.forEach(difficulty => {
+	difficulties.forEach((difficulty) => {
 		let label = document.createElement('label');
 		let input = document.createElement('input');
 		let span = document.createElement('span');
@@ -126,7 +126,7 @@
 			parseDuration(fields.duration.from.value, 0),
 			parseDuration(fields.duration.to.value, Infinity)
 		].sort((a, b) => a - b);
-		let leaderboards = ranked.filter(ldb => {
+		let leaderboards = ranked.filter((ldb) => {
 			if (!fields.difficulty[ldb.diff].checked) {
 				return false;
 			}

@@ -10,7 +10,7 @@ async function addNew(songsRaw) {
 	if (!newRanked.length) {
 		return 0;
 	}
-	let songs = newRanked.map(song => {
+	let songs = newRanked.map((song) => {
 		// Only Standard for now
 		let diffMatch = song?.difficulty?.difficultyRaw?.match(/^_(Easy|Normal|Hard|Expert|ExpertPlus)_SoloStandard$/);
 		if (!diffMatch || !song.stars) {
@@ -33,7 +33,7 @@ async function addNew(songsRaw) {
 	try {
 		let beatsaverCache = {};
 		await promiseSequence(songs, song => beatsaver.addData(song, beatsaverCache));
-	} catch (e) {}
+	} catch { /* ignore */ }
 	songs = songs.filter(e => e?.beatSaverKey);
 	if (songs.length) {
 		await ranked.insert(songs);
@@ -51,7 +51,7 @@ async function checkFromPage(page, log) {
 	let data;
 	try {
 		data = await scoresaber.recentRanks(page, ~~(Date.now() / 3600000));
-	} catch (e) {}
+	} catch { /* ignore */ }
 	if (!data?.leaderboards?.length) {
 		return;
 	}
@@ -67,7 +67,7 @@ async function checkFull(page, log) {
 	let data;
 	try {
 		data = await scoresaber.ranked(page);
-	} catch (e) {}
+	} catch { /* ignore */ }
 	if (!data?.leaderboards?.length) {
 		return;
 	}
@@ -78,6 +78,6 @@ async function checkFull(page, log) {
 if (require.main === module) {
 	checkFromPage(1, true);
 } else {
-	module.exports = async (log) => checkFromPage(1, log);
-	module.exports.full = async (log) => checkFull(1, log);
+	module.exports = async log => checkFromPage(1, log);
+	module.exports.full = async log => checkFull(1, log);
 }

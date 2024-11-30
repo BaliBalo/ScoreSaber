@@ -50,7 +50,7 @@ app.use('/scoresaber-api', proxy('https://scoresaber.com/api'));
 	'peepee',
 	'overlay',
 	'playlist-maker',
-].forEach(data => {
+].forEach((data) => {
 	if (typeof data === 'string') {
 		data = { url: '/' + data, file: 'pages/' + data + '.html' };
 	}

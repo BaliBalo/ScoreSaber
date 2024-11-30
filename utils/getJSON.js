@@ -1,4 +1,4 @@
-module.exports = async function(url) {
+module.exports = async function (url) {
 	const result = await fetch(url, {
 		headers: {
 			'User-Agent': 'Peepee/1.0.0',
@@ -8,5 +8,5 @@ module.exports = async function(url) {
 	if (!result.ok) {
 		throw new Error('Request failed: ' + result.status + ' ' + result.statusText);
 	}
-	return result.json();
+	return await result.json();
 };

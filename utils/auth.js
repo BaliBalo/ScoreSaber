@@ -1,7 +1,7 @@
 let auth = {};
 try {
 	auth = require('../data/auth');
-} catch (e) {}
+} catch { /* ignore */ }
 
 module.exports = {
 	check: (req, res, next) => {

@@ -5,7 +5,7 @@ const lastUpdateFile = path.resolve(__dirname, '../../data/lastUpdate');
 // Ensure the last update file exists
 try {
 	if (!fs.existsSync(lastUpdateFile)) {
-		fs.closeSync(fs.openSync(lastUpdateFile, 'w'));
+		fs.appendFileSync(lastUpdateFile, '');
 	}
 } catch (e) {
 	console.log('Error creating last update file', e);
@@ -21,8 +21,12 @@ function removeListener(fn) {
 	listeners.delete(fn);
 }
 function callListeners() {
-	listeners.forEach(fn => {
-		try { fn(); } catch (e) {}
+	listeners.forEach((fn) => {
+		try {
+			fn();
+		} catch (err) {
+			console.error('Error in ranked update listener', err);
+		}
 	});
 }
 
@@ -35,16 +39,17 @@ async function setTime(time) {
 			time /= 1000;
 		}
 		await fs.promises.utimes(lastUpdateFile, time, time);
-	} catch (e) {}
+	} catch { /* ignore */ }
 	callListeners();
 }
 async function getTime() {
 	try {
 		let data = await fs.promises.stat(lastUpdateFile);
 		return data.mtimeMs;
-	} catch (e) {}
-	// If the time can't be read from the file, assume the last update is now
-	return Date.now();
+	} catch {
+		// If the time can't be read from the file, assume the last update is now
+		return Date.now();
+	}
 }
 
 module.exports = {

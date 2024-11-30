@@ -12,6 +12,7 @@ class Playlist {
 	setImage(image) {
 		this.image = image;
 	}
+
 	async setImageFromFile(filename) {
 		let image = await fs.promises.readFile(filename, { encoding: 'base64' });
 		this.setImage('data:image/png;base64,' + image);
@@ -23,6 +24,7 @@ class Playlist {
 		}
 		this.songs = list.map(e => ({ hash: e.id, songName: e.name, difficulties: [{ characteristic: 'Standard', name: e.diff }] }));
 	}
+
 	setSongsFromHashes(list) {
 		list = list.filter((song, i, self) => self.indexOf(song) === i);
 		this.songs = list.map(e => ({ hash: e }));

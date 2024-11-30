@@ -25,6 +25,8 @@ The `--dev` option (automatically use in `npm run dev` and `npm run serve-dev`) 
 Unless changed, the port defined in the main index.js file is `2148`, so access front-end pages using `http://localhost:2148`  
 On a production server, start the code using `node index.js`.
 
+In development the list of ranked maps will not update automatically. If you need it, you will likely need to generate it once. You can do so manually, for example by accessing `http://localhost:2148/admin/check-new/full?key=YOUR_SECURE_KEY` (see the [Endpoints](#endpoints) section below for more details)
+
 ### Scripts
 - `npm run dev`: starts the development setup, running the server in dev mode and auto-compiling files from `pages/` to `client/`
 - `npm run serve-dev`: runs the server in dev mode

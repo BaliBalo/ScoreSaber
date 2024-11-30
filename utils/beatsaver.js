@@ -33,7 +33,7 @@ async function addData(item, cache) {
 			getter = beatsaverData(hash);
 		}
 		song = await getter;
-	} catch (e) {
+	} catch {
 		// delete e.response;
 		// console.log('(beatsaver error)', e);
 	}

@@ -62,7 +62,7 @@ async function getData() {
 	const file = path.resolve(dataFolder, 'ml-source.json');
 	try {
 		return JSON.parse(await fs.promises.readFile(file));
-	} catch (e) {}
+	} catch { /* ignore */ }
 
 	const players = await getPlayers();
 	const maps = await getMaps();
@@ -71,7 +71,8 @@ async function getData() {
 	const data = { players, maps, scores };
 	try {
 		await fs.promises.writeFile(file, JSON.stringify(data));
-	} catch (e) {}
+	} catch { /* ignore */ }
+
 	return data;
 }
 
