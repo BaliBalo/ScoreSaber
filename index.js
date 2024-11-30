@@ -52,7 +52,7 @@ app.use('/scoresaber-api', proxy('https://scoresaber.com/api'));
 	'playlist-maker',
 ].forEach((data) => {
 	if (typeof data === 'string') {
-		data = { url: '/' + data, file: 'pages/' + data + '.html' };
+		data = { url: `/${data}`, file: 'pages/' + data + '.html' };
 	}
 	if (!data.url || !data.file) {
 		return;
@@ -60,6 +60,8 @@ app.use('/scoresaber-api', proxy('https://scoresaber.com/api'));
 	if (isDev) {
 		app.get(data.url, async (req, res) => {
 			try {
+				// TODO: way to disable that? To use compressed files in dev and simulate prod environment
+				//   maybe via query string, e.g. /page?compressed
 				let content = await fs.promises.readFile(path.resolve(__dirname, data.file), 'utf8');
 				content = content.replace(/\/client\/([^"' /]+)\.min\.js/g, '/dev/pages/$1.js');
 				res.send(content);
