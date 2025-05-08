@@ -10,7 +10,7 @@
 	<link rel="stylesheet" href="/client/peepee.css?v=1691467582604">
 </head>
 <body>
-	<input type="checkbox" id="show-help" autocomplete="off">
+	<button popovertarget="help" class="help-btn">Help</button>
 	<div class="pick">
 		<h1 class="title">
 			ThisIsMy<span class="blue">PeePee</span>
@@ -50,11 +50,9 @@
 			<div class="list played"></div>
 		</div>
 	</div>
-	<label for="show-help" class="help-btn">Help</label>
-	<div id="help">
-		<label for="show-help" class="backdrop"></label>
-		<div class="modal">
-			<h2>HELP</h2>
+	<dialog id="help" class="modal" popover>
+		<h2>HELP</h2>
+		<div class="content">
 			<div class="question">How do I start?</div>
 			<div class="answer">
 				Juste paste your profile url in the box. To find your profile URL, navigate to your profile on <a href="https://scoresaber.com/rankings" target="_blank">scoresaber.com</a>. Once that's done, the address of the page in your browser navigation bar is the URL that you need to copy.
@@ -118,11 +116,18 @@
 			<div class="question">Things are inaccurate</div>
 			<div class="answer">Due to ScoreSaber rounding some values and keeping some information private, the results of this tool are not 100% accurate. It's as close as possible though.</div>
 			<div class="question">Something is broken / I have an idea</div>
-			<div class="answer">You can find me on some Beat Saber-related discord servers, my username is Bali Balo#5436. You can also submit issues and pull requests on <a href="https://github.com/BaliBalo/ScoreSaber/issues" target="_blank">GitHub at BaliBalo/ScoreSaber</a></div>
+			<div class="answer">You can find me on some Beat Saber-related discord servers, my username is Bali Balo#5436. You can also submit issues and pull requests on GitHub at <a href="https://github.com/BaliBalo/ScoreSaber/issues" target="_blank">BaliBalo/ScoreSaber</a></div>
 		</div>
-	</div>
+		<div class="buttons">
+			<button popovertarget="help" popovertargetaction="hide">Close</button>
+		</div>
+	</dialog>
 	<script src="https://ajax.googleapis.com/ajax/libs/webfont/1.5.10/webfont.js"></script>
 	<script src="/client/context-menu.min.js"></script>
 	<script src="/client/peepee.min.js?v=1691467582604"></script>
+	<script type="module">
+		if (!("anchorName" in document.documentElement.style)) import("https://unpkg.com/@oddbird/css-anchor-positioning");
+	</script>
+	<!-- <script src="/client/snow.min.js" data-on="body"></script> -->
 </body>
 </html>

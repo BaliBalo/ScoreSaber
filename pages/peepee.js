@@ -515,62 +515,58 @@
 			}
 		};
 	}
-	function setFocusIn(element) {
-		let interactiveElement = element.querySelector(':is(input:not([type=hidden]), select, textarea, button):not([disabled])') || element;
-		interactiveElement?.focus();
-	}
 
-	function isOverflowElement(el) {
-		// From https://github.com/floating-ui/floating-ui
-		const { overflow, overflowX, overflowY, display } = getComputedStyle(el);
-		return /auto|scroll|overlay|hidden|clip/.test(overflow + overflowY + overflowX) && !['inline', 'contents'].includes(display);
-	}
-	function anchorTop(anchored, target) {
-		let update = () => {
-			let targetRect = target.getBoundingClientRect();
-			anchored.style.left = targetRect.left + 'px';
-			anchored.style.bottom = (window.innerHeight - targetRect.top) + 'px';
-			anchored.style.width = targetRect.width + 'px';
+	function showModal(options) {
+		let resolve;
+		let promise = new Promise(_resolve => resolve = _resolve);
+
+		let cleared = false;
+		let clear = async () => {
+			if (cleared) return;
+			cleared = true;
+			options.dispose?.();
+			resolve(container.returnValue);
+			await Promise.allSettled(container.getAnimations().map(animation => animation.finished));
+			container.remove();
 		};
 
-		let ancestors = [window];
-		let parent = target;
-		do {
-			parent = parent.parentNode;
-			if (isOverflowElement(parent)) {
-				ancestors.push(parent);
-			}
-		} while (parent.parentNode && parent.parentNode !== document);
+		let container = create('dialog', ['modal', options.class].filter(e => e).join(' '));
 
-		let resizeObserver = new ResizeObserver(update);
-		ancestors.forEach((ancestor) => {
-			ancestor.addEventListener('scroll', update, { passive: true });
-			if (ancestor !== window) {
-				resizeObserver.observe(ancestor);
-			}
-		});
+		if (options.title) {
+			let title = create('h2', null, options.title);
+			container.append(title);
+		}
+		let content = div('content');
+		content.append(...options.content);
+		container.append(content);
 
-		update();
+		if (options.buttons) {
+			let buttons = div('buttons');
+			buttons.append(...options.buttons);
+			container.append(buttons);
+		}
 
-		return {
-			stop: () => {
-				resizeObserver.disconnect();
-				ancestors.forEach(ancestor => ancestor.removeEventListener('scroll', update));
-			}
-		};
+		container.addEventListener('close', clear);
+		document.body.append(container);
+		container.showModal();
+		options.onShow?.();
+
+		return promise;
 	}
+
 	function tagSelector(selectedValues = []) {
 		let values = selectedValues.slice();
 		let selectionWrapper = span('selection-wrapper');
 		let input = textInput(null, '', 'Select a tag...');
 		input.id = 'tag-selector-input';
 		let asi = autosizeInput(input);
-		let wrapper = create('label', 'tag-selector', [selectionWrapper, input]);
+		let suggestions = div('tag-selector-suggestions');
+		suggestions.popover = 'manual';
+		suggestions.tabIndex = -1;
+
+		let wrapper = create('label', 'tag-selector', [selectionWrapper, input, suggestions]);
 		wrapper.htmlFor = input.id;
 		wrapper.tabIndex = -1;
-		let suggestions = div('tag-selector-suggestions');
-		suggestions.tabIndex = 0;
-		suggestions.addEventListener('focus', () => suggestions.firstElementChild?.focus());
 
 		let update = () => {
 			selectionWrapper.innerHTML = '';
@@ -598,6 +594,7 @@
 			suggestions.innerHTML = '';
 			suggestions.append(...matchingTags.map((suggestion, i) => {
 				let tag = create('button', `tag type-${suggestion?.type} ${!i ? 'selected' : ''}`, suggestion?.name || suggestion.slug);
+				tag.tabIndex = -1;
 				tag.addEventListener('click', () => {
 					values.push(suggestion);
 					input.value = '';
@@ -637,26 +634,14 @@
 		let suggestionVisibilityTimer;
 		let showSuggestions = () => {
 			cancelAnimationFrame(suggestionVisibilityTimer);
-			suggestions.classList.add('visible');
+			suggestions.showPopover();
 		};
 		let hideSuggestions = () => {
 			cancelAnimationFrame(suggestionVisibilityTimer);
-			suggestionVisibilityTimer = requestAnimationFrame(() => suggestions.classList.remove('visible'));
+			suggestionVisibilityTimer = requestAnimationFrame(() => suggestions.hidePopover());
 		};
 		wrapper.addEventListener('focusin', showSuggestions);
 		wrapper.addEventListener('focusout', hideSuggestions);
-
-		document.body.append(suggestions);
-
-		let suggestionsAnchor;
-		let observer = new MutationObserver(() => {
-			if (document.contains(wrapper)) {
-				suggestionsAnchor = anchorTop(suggestions, wrapper);
-				observer.disconnect();
-				observer = null;
-			}
-		});
-		observer.observe(document, { childList: true, subtree: true });
 
 		update();
 
@@ -668,10 +653,7 @@
 				update();
 			},
 			dispose: () => {
-				observer?.disconnect();
-				suggestionsAnchor?.stop();
 				asi.stop();
-				document.body.removeChild(suggestions);
 			},
 		};
 	}
@@ -679,31 +661,6 @@
 		filters = Object.assign({}, filters);
 		filters.hiddenMaps = filters.hiddenMaps.slice();
 		filters.tags = filters.tags.slice();
-
-		let resolve;
-		let promise = new Promise(_resolve => resolve = _resolve);
-		let autosizeInputs = [];
-		let cleared = false;
-		let clear = () => {
-			if (cleared) {
-				return;
-			}
-			cleared = true;
-			autosizeInputs.forEach(asi => asi.stop());
-			tagInput?.dispose();
-			document.body.removeChild(container);
-		};
-		let finish = (data) => {
-			clear();
-			resolve(data);
-		};
-		let container = div('filters-modal');
-		let content = div('content');
-		let title = create('h2', null, 'FILTERS');
-		let buttons = div('buttons');
-		let buttonCancel = create('button', 'cancel', 'Cancel');
-		let buttonOk = create('button', 'ok', 'OK');
-		let scroller = div('scroller');
 
 		let scoreFrom = textInput(null, filters.scoreFrom);
 		let scoreTo = textInput(null, filters.scoreTo);
@@ -715,21 +672,34 @@
 
 		let hiddenMapsSelect = create('select', null, filters.hiddenMaps.map((hiddenMap) => {
 			let map = rankedMaps[hiddenMap];
-			if (!map) {
-				return;
-			}
-			let optionText = map.name + ' - ' + map.artist + ' (' + map.mapper + ') | ' + map.diff;
-			return selectOption(optionText, hiddenMap);
+			if (!map) return;
+			return selectOption(`${map.name} - ${map.artist} (${map.mapper}) | ${map.diff}`, hiddenMap);
 		}));
 		hiddenMapsSelect.size = 6;
 		hiddenMapsSelect.multiple = true;
 		let hiddenMapsRemoveButton = create('button', null, 'Unhide selected');
-		hiddenMapsRemoveButton.disabled = true;
 		let hiddenMapsFilter = div('filter hidden-maps', ['Hide these specific maps (right click on a map to add it to this list):', hiddenMapsSelect, hiddenMapsRemoveButton]);
 
 		let tagInput = tagSelector(filters.tags);
 		let tagsFilter = div('filter tags', ['Only show maps with these BeatSaver tags:', tagInput.dom]);
 
+		let buttonOk = create('button', 'ok', 'OK');
+		buttonOk.addEventListener('click', (e) => {
+			validateData();
+			let stringValue = JSON.stringify({
+				scoreFrom: +scoreFrom.value,
+				scoreTo: +scoreTo.value,
+				starsFrom: +starsFrom.value,
+				starsTo: +starsTo.value,
+				hiddenMaps: [...hiddenMapsSelect.options].map(opt => +opt.value),
+				tags: tagInput.value
+			}, (k, v) => v === Infinity ? 'Infinity' : v);
+			e.currentTarget.closest('dialog').close(stringValue);
+		});
+		let buttonCancel = create('button', 'cancel', 'Cancel');
+		buttonCancel.addEventListener('click', e => e.currentTarget.closest('dialog').close());
+
+		let autosizeInputs = [scoreFrom, scoreTo, starsFrom, starsTo].map(autosizeInput);
 		let validateData = () => {
 			scoreFrom.value = +scoreFrom.value || 0;
 			scoreTo.value = !scoreTo.value || isNaN(+scoreTo.value) ? 'Infinity' : +scoreTo.value;
@@ -737,46 +707,30 @@
 			starsTo.value = !starsTo.value || isNaN(+starsTo.value) ? 'Infinity' : +starsTo.value;
 			autosizeInputs.forEach(asi => asi.check());
 		};
-		[
-			scoreFrom, scoreTo,
-			starsFrom, starsTo,
-		].forEach(input => input.addEventListener('change', validateData));
+		[scoreFrom, scoreTo, starsFrom, starsTo].forEach(input => input.addEventListener('change', validateData));
 		validateData();
-		autosizeInputs.push(...[
-			scoreFrom, scoreTo,
-			starsFrom, starsTo,
-		].map(autosizeInput));
-		hiddenMapsSelect.addEventListener('change', () => hiddenMapsRemoveButton.disabled = !hiddenMapsSelect.selectedOptions.length);
+
+		let checkHiddenMapsButton = () => hiddenMapsRemoveButton.disabled = !hiddenMapsSelect.selectedOptions.length;
+		hiddenMapsSelect.addEventListener('change', checkHiddenMapsButton);
 		hiddenMapsRemoveButton.addEventListener('click', () => {
 			let index = hiddenMapsSelect.selectedIndex;
 			[...hiddenMapsSelect.selectedOptions].forEach(option => hiddenMapsSelect.removeChild(option));
 			hiddenMapsSelect.selectedIndex = Math.min(index, hiddenMapsSelect.length - 1);
-			// hiddenMapsSelect.focus();
+			checkHiddenMapsButton();
 		});
-		buttonOk.addEventListener('click', () => {
-			validateData();
-			finish({
-				scoreFrom: +scoreFrom.value,
-				scoreTo: +scoreTo.value,
-				starsFrom: +starsFrom.value,
-				starsTo: +starsTo.value,
-				hiddenMaps: [...hiddenMapsSelect.options].map(opt => +opt.value),
-				tags: tagInput.value
-			});
+		checkHiddenMapsButton();
+
+		let value = await showModal({
+			class: 'filters',
+			title: 'FILTERS',
+			content: [scoreFilter, starsFilter, hiddenMapsFilter, tagsFilter],
+			buttons: [buttonCancel, buttonOk],
+			dispose: () => {
+				autosizeInputs.forEach(asi => asi.stop());
+				tagInput?.dispose();
+			},
 		});
-		buttonCancel.addEventListener('click', () => finish(null));
-		container.addEventListener('click', (e) => {
-			if (!content.contains(e.target)) {
-				finish(null);
-			}
-		});
-		scroller.append(scoreFilter, starsFilter, hiddenMapsFilter, tagsFilter);
-		buttons.append(buttonCancel, buttonOk);
-		content.append(title, scroller, buttons);
-		container.append(content);
-		document.body.append(container);
-		setFocusIn(container);
-		return promise;
+		return value ? JSON.parse(value, (k, v) => v === 'Infinity' ? Infinity : v) : null;
 	}
 
 	let customCurve = [];
@@ -801,31 +755,7 @@
 		});
 	}
 	async function editCustomCurveModal(curve = []) {
-		curve = JSON.parse(JSON.stringify(curve));
-		let resolve;
-		let promise = new Promise(_resolve => resolve = _resolve);
-		let cleared = false;
-		let clear = () => {
-			if (cleared) {
-				return;
-			}
-			cleared = true;
-			window.removeEventListener('resize', onResize);
-			document.removeEventListener('mousemove', onMouseMove);
-			document.removeEventListener('mouseup', onMouseUp);
-			document.body.removeChild(container);
-		};
-		let finish = (data) => {
-			clear();
-			resolve(data);
-		};
-		let container = div('custom-curve-modal');
-		let content = div('content');
-		let title = create('h2', null, 'CUSTOM CURVE EDITOR');
-		let buttons = div('buttons');
-		let buttonCancel = create('button', 'cancel', 'Cancel');
-		let buttonOk = create('button', 'ok', 'OK');
-		let scroller = div('scroller');
+		curve = structuredClone(curve);
 		let instructions = div('instructions', 'Left click to add or move points, right click to remove points');
 		let editor = div('editor');
 
@@ -943,9 +873,7 @@
 			grabbed = true;
 		});
 		canvas.addEventListener('contextmenu', e => e.preventDefault());
-		let onMouseUp = () => {
-			grabbed = false;
-		};
+		let onMouseUp = () => grabbed = false;
 		document.addEventListener('mouseup', onMouseUp);
 
 		let onResize = () => {
@@ -955,22 +883,27 @@
 		};
 		window.addEventListener('resize', onResize);
 
-		buttonOk.addEventListener('click', () => finish(curve));
-		buttonCancel.addEventListener('click', () => finish(null));
-		container.addEventListener('click', (e) => {
-			if (!content.contains(e.target)) {
-				finish(null);
-			}
-		});
 		editor.append(canvas, pointsDetails);
-		scroller.append(instructions, editor);
-		buttons.append(buttonCancel, buttonOk);
-		content.append(title, scroller, buttons);
-		container.append(content);
-		document.body.append(container);
 		updatePoints();
-		onResize();
-		return promise;
+
+		let buttonOk = create('button', 'ok', 'OK');
+		buttonOk.addEventListener('click', e => e.currentTarget.closest('dialog').close(JSON.stringify(curve)));
+		let buttonCancel = create('button', 'cancel', 'Cancel');
+		buttonCancel.addEventListener('click', e => e.currentTarget.closest('dialog').close());
+
+		let value = await showModal({
+			class: 'custom-curve',
+			title: 'CUSTOM CURVE EDITOR',
+			content: [instructions, editor],
+			buttons: [buttonCancel, buttonOk],
+			onShow: onResize,
+			dispose: () => {
+				window.removeEventListener('resize', onResize);
+				document.removeEventListener('mousemove', onMouseMove);
+				document.removeEventListener('mouseup', onMouseUp);
+			},
+		});
+		return value ? JSON.parse(value) : null;
 	}
 
 	function getPlaylistURL(list, filename, title) {
@@ -986,33 +919,6 @@
 		return str.toLowerCase().replace(/[\W-]+/g, '-').replace(/^-+|-+$/, '');
 	}
 	async function playlistDownloadModal(maps, options = {}) {
-		let resolve;
-		let promise = new Promise(_resolve => resolve = _resolve);
-		let cleared = false;
-		let clear = () => {
-			if (cleared) {
-				return;
-			}
-			cleared = true;
-			try {
-				titleAutosize.stop();
-				countAutosize.stop();
-				offsetAutosize.stop();
-			} catch { /* Nothing */ }
-			document.body.removeChild(container);
-		};
-		let finish = (data) => {
-			clear();
-			resolve(data);
-		};
-		let container = div('playlist-modal');
-		let content = div('content');
-		let modalTitle = create('h2', null, 'CREATE A PLAYLIST');
-		let buttons = div('buttons');
-		let buttonDone = create('button', 'done', 'Done');
-		let buttonFile = link('#', 'button file', '.bplist');
-		let buttonOneClick = link('#', 'button playlist-oneclick', 'OneClick™');
-		let scroller = div('scroller');
 		let defaultCount = 50;
 
 		let titleInput = textInput(null, '', options.title);
@@ -1083,20 +989,27 @@
 		titleInput.addEventListener('input', update);
 		count.addEventListener('input', update);
 		offset.addEventListener('input', update);
+
+		let buttonDone = create('button', 'done', 'Done');
+		let buttonFile = link('#', 'button file', '.bplist');
+		let buttonOneClick = link('#', 'button playlist-oneclick', 'OneClick™');
+		buttonDone.addEventListener('click', e => e.currentTarget.closest('dialog').close());
+
 		update();
-		buttonDone.addEventListener('click', () => finish(null));
-		container.addEventListener('click', (e) => {
-			if (!content.contains(e.target)) {
-				finish(null);
-			}
+
+		return showModal({
+			class: 'playlist',
+			title: 'CREATE A PLAYLIST',
+			content: [titleLine, countLine, offsetLine, estimateLine, oneClickWarningLine],
+			buttons: [buttonFile, buttonOneClick, buttonDone],
+			dispose: () => {
+				try {
+					titleAutosize.stop();
+					countAutosize.stop();
+					offsetAutosize.stop();
+				} catch { /* Nothing */ }
+			},
 		});
-		buttons.append(buttonFile, buttonOneClick, buttonDone);
-		scroller.append(titleLine, countLine, offsetLine, estimateLine, oneClickWarningLine);
-		content.append(modalTitle, scroller, buttons);
-		container.append(content);
-		document.body.append(container);
-		count.focus();
-		return promise;
 	}
 
 	let user = {};
@@ -1351,13 +1264,6 @@
 		ctx.lineTo(marginX, c.height - marginY);
 		ctx.lineTo(c.width, c.height - marginY);
 		ctx.stroke();
-		ctx.fillStyle = options.playerSongsColor || 'rgba(120, 10, 0, .9)';
-		ctx.globalCompositeOperation = 'lighter';
-		Object.values(playerSongs).forEach((song) => {
-			let x = marginX + (song.stars / maxStars) * (c.width - marginX);
-			let y = (c.height - marginY) * (1 - song.score / maxPercentage);
-			ctx.fillRect(x - 1, y - 1, 2, 2);
-		});
 		ctx.globalCompositeOperation = 'source-over';
 		ctx.beginPath();
 		for (let i = 0; i < numPoints; i++) {
@@ -1368,6 +1274,14 @@
 			ctx.lineTo(x, y);
 		}
 		ctx.stroke();
+		ctx.fillStyle = options.playerSongsColor || 'rgb(150 50 30 / 90%)';
+		// ctx.globalCompositeOperation = 'lighter';
+		Object.values(playerSongs).forEach((song) => {
+			let x = marginX + (song.stars / maxStars) * (c.width - marginX);
+			let y = (c.height - marginY) * (1 - song.score / maxPercentage);
+			ctx.fillRect(x - 1, y - 1, 2, 2);
+		});
+		ctx.globalCompositeOperation = 'source-over';
 	}
 
 	let lastUpdateElement = document.getElementById('last-update');
@@ -1678,7 +1592,9 @@
 			super(list);
 			this.name = 'Fixed score';
 			this.id = 'raw';
-			this.score = .94333333;
+			// Score needed to get 100% pp
+			this.defaultScore = applyCurve(1, ppCurve.map(({ at, value }) => ({ at: value, value: at })));
+			this.score = this.defaultScore;
 		}
 
 		createOptionsMarkup() {
@@ -1686,7 +1602,7 @@
 			fixedForm.addEventListener('submit', e => e.preventDefault());
 			this.fixedInput = create('input', 'fixed-input');
 			this.fixedInput.type = 'text';
-			this.fixedInput.placeholder = '94.3333%';
+			this.fixedInput.placeholder = `${+(this.defaultScore * 100).toFixed(2)}%`;
 			this.fixedInput.maxLength = 10;
 			this.fixedInput.tabIndex = -1;
 			this.fixedInput.addEventListener('change', () => {
@@ -1706,7 +1622,7 @@
 		onHide() { this.fixedInput.tabIndex = -1; }
 
 		init() {
-			this.score = (parseFloat(this.fixedInput.value.trim()) / 100) || .94333333;
+			this.score = (parseFloat(this.fixedInput.value.trim()) / 100) || this.defaultScore;
 			if (this.score <= 0) {
 				this.score = 0.01;
 			}
@@ -2259,9 +2175,8 @@
 	profileInput.addEventListener('paste', () => setTimeout(onSubmit, 0));
 	profileInput.addEventListener('focus', () => profileInput.select());
 
-	let $helpCheckbox = document.getElementById('show-help');
 	function toggleHelp() {
-		$helpCheckbox.checked = !$helpCheckbox.checked;
+		document.getElementById('help').showPopover();
 	}
 	document.getElementById('back').addEventListener('click', () => {
 		profileInput.value = '';
@@ -2270,10 +2185,7 @@
 	document.getElementById('refresh').addEventListener('click', refresh);
 	async function editFilters() {
 		let newFilters = await editFiltersModal(filters);
-		if (!newFilters) {
-			return;
-		}
-		updateFilters(newFilters);
+		if (newFilters) updateFilters(newFilters);
 	}
 	document.getElementById('show-filters').addEventListener('click', editFilters);
 	document.getElementById('export-curve').addEventListener('click', () => {
