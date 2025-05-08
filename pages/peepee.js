@@ -979,9 +979,9 @@
 			// buttonFile.href = getPlaylistURL(includedMaps, filename, options.title);
 			buttonFile.href = playlistDataUrl(included, title);
 			buttonFile.download = filename;
-			// Temp assign non-oneclick url to convert relative to absolute url
-			buttonOneClick.href = getPlaylistURL(included, filename, title);
-			buttonOneClick.href = 'bsplaylist://playlist/' + encodeURIComponent(buttonOneClick.href);
+
+			const playlistUrl = new URL(getPlaylistURL(included, filename, title), location.href);
+			buttonOneClick.href = 'bsplaylist://playlist/' + playlistUrl;
 
 			let tooLong = buttonOneClick.href.length > 7500;
 			oneClickWarningLine.style.display = tooLong ? 'block' : 'none';
@@ -1814,7 +1814,7 @@
 
 			let playlistData = this.getPlaylistName();
 			this.selectionTooltipBplist.href = getPlaylistURL(selectionElems, playlistData.filename, playlistData.title);
-			this.selectionTooltipOneClick.href = 'bsplaylist://playlist/' + encodeURIComponent(this.selectionTooltipBplist.href);
+			this.selectionTooltipOneClick.href = 'bsplaylist://playlist/' + this.selectionTooltipBplist.href;
 		}
 
 		getClosestElement(el) {
